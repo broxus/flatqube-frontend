@@ -26,6 +26,7 @@ deploy:dev:
   when: on_success
   environment:
     name: dev
+    on_stop: stop:dev
 
 stop:dev:
   only:
@@ -51,6 +52,7 @@ deploy:master:
   extends: .deploy
   environment:
     name: stage
+    on_stop: stop:master
 
 stop:master:
   only:
@@ -76,6 +78,7 @@ deploy:prod:
   extends: .deploy
   environment:
     name: prod
+    on_stop: stop:prod
 
 stop:prod:
   only:
