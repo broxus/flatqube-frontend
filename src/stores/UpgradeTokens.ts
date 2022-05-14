@@ -8,7 +8,7 @@ import {
     runInAction,
 } from 'mobx'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { MigrationTokenAbi, TokenWallet, TokenWalletV4 } from '@/misc'
 import { useWallet, WalletService } from '@/stores/WalletService'
 import { error } from '@/utils'
@@ -44,7 +44,7 @@ export type UpgradeTokensState = {
 }
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class UpgradeTokens {

@@ -1,12 +1,12 @@
-import { DexConstants } from '@/misc'
+import { USDTRootAddress, WEVERRootAddress } from '@/config'
 import { SwapBill } from '@/modules/Swap/types'
 
 
 /* WEVER root address */
-export const DEFAULT_LEFT_TOKEN_ROOT = DexConstants.WEVERRootAddress.toString()
+export const DEFAULT_LEFT_TOKEN_ROOT = WEVERRootAddress.toString()
 
 /* USDT root address */
-export const DEFAULT_RIGHT_TOKEN_ROOT = DexConstants.USDTRootAddress.toString()
+export const DEFAULT_RIGHT_TOKEN_ROOT = USDTRootAddress.toString()
 
 export const DEFAULT_DECIMALS = 18
 

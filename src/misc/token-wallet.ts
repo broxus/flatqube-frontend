@@ -4,7 +4,7 @@ import {
     TransactionId,
 } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { TokenAbi } from '@/misc/abi'
 import { debug, sliceAddress } from '@/utils'
 import { SupportedInterfaceDetection } from '@/misc/supported-interface-detection'
@@ -49,7 +49,7 @@ function params<T>(o?: T): Partial<T> | (<TOptional>(o: TOptional) => Partial<TO
 }
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class TokenWallet {

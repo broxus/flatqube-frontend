@@ -3,8 +3,9 @@ import { Address, Subscriber } from 'everscale-inpage-provider'
 import * as E from 'fp-ts/Either'
 import { computed, makeObservable, override } from 'mobx'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
-import { DexConstants, EverAbi, TokenAbi } from '@/misc'
+import { EverToTip3Address, EverWeverToTip3Address } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
+import { EverAbi, TokenAbi } from '@/misc'
 import { CoinSwapStore } from '@/modules/Swap/stores/CoinSwapStore'
 import { TokensCacheService } from '@/stores/TokensCacheService'
 import { WalletService } from '@/stores/WalletService'
@@ -17,7 +18,7 @@ import type {
 } from '@/modules/Swap/types'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class MultipleSwapStore extends CoinSwapStore {
@@ -52,14 +53,14 @@ export class MultipleSwapStore extends CoinSwapStore {
         const tokenRoot = new rpc.Contract(TokenAbi.Root, this.rightTokenAddress!)
         const walletAddress = (await tokenRoot.methods.walletOf({
             answerId: 0,
-            walletOwner: DexConstants.EverToTip3Address,
+            walletOwner: EverToTip3Address,
         }).call()).value0
 
         if (walletAddress === undefined) {
             return
         }
 
-        const everWeverToTip3Contract = new rpc.Contract(EverAbi.EverWeverToTipP3, DexConstants.EverWeverToTip3Address)
+        const everWeverToTip3Contract = new rpc.Contract(EverAbi.EverWeverToTipP3, EverWeverToTip3Address)
 
         const coinToTip3WalletContract = new rpc.Contract(TokenAbi.Wallet, walletAddress)
 
@@ -125,7 +126,7 @@ export class MultipleSwapStore extends CoinSwapStore {
         try {
             await tokenWalletContract.methods.transfer({
                 payload,
-                recipient: DexConstants.EverWeverToTip3Address,
+                recipient: EverWeverToTip3Address,
                 deployWalletValue: '0',
                 amount: this.leftToken!.balance!,
                 notify: true,

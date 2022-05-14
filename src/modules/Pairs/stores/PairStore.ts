@@ -8,7 +8,7 @@ import {
 } from 'mobx'
 import uniqBy from 'lodash.uniqby'
 
-import { DexConstants } from '@/misc'
+import { TokenListURI } from '@/config'
 import {
     CandlestickGraphShape,
     CommonGraphShape,
@@ -383,7 +383,7 @@ export class PairStore {
                     : 0,
                 ordering: this.transactionsOrdering,
                 poolAddress: this.address,
-                whiteListUri: DexConstants.TokenListURI,
+                whiteListUri: TokenListURI,
             }
             if (this.transactionsEvents.length > 0) {
                 body.eventType = this.transactionsEvents

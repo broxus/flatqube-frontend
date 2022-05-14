@@ -12,7 +12,7 @@ import {
 } from 'mobx'
 import { Address, Subscriber } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import {
     checkPair,
     Dex,
@@ -50,7 +50,7 @@ import {
 import { BaseStore } from '@/stores/BaseStore'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {

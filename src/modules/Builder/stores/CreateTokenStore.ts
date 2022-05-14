@@ -7,8 +7,9 @@ import {
 import * as E from 'fp-ts/Either'
 import { Address, AddressLiteral, Subscriber } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
-import { DexConstants, TokenAbi } from '@/misc'
+import { TokenFactoryAddress } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
+import { TokenAbi } from '@/misc'
 import {
     DEFAULT_CREATE_TOKEN_STORE_DATA,
     DEFAULT_CREATE_TOKEN_STORE_STATE,
@@ -24,7 +25,7 @@ import { useWallet, WalletService } from '@/stores/WalletService'
 import { error } from '@/utils'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class CreateTokenStore {
@@ -104,7 +105,7 @@ export class CreateTokenStore {
             this.transactionSubscriber = undefined
         }
 
-        this.transactionSubscriber = rpc.createSubscriber()
+        this.transactionSubscriber = new rpc.Subscriber()
 
         this.#walletAccountDisposer = reaction(() => this.wallet.address, this.handleWalletAccountChange)
     }
@@ -145,7 +146,7 @@ export class CreateTokenStore {
     /**
      * Success transaction callback handler
      * @param {CreateTokenSuccessResult['input']} input
-     * @param {CreateTokenFailureResult['transaction']} transaction
+     * @param {CreateTokenSuccessResult['transaction']} transaction
      * @protected
      */
     protected handleCreateTokenSuccess({ input, transaction }: CreateTokenSuccessResult): void {
@@ -203,9 +204,9 @@ export class CreateTokenStore {
         this.changeState('isCreating', true)
 
         try {
-            await rpc.createContract(
+            await new rpc.Contract(
                 TokenAbi.Factory,
-                DexConstants.TokenFactoryAddress,
+                TokenFactoryAddress,
             ).methods.createToken({
                 callId,
                 name: this.name.trim(),
@@ -229,7 +230,7 @@ export class CreateTokenStore {
             this.changeState('isCreating', false)
         }
 
-        const owner = rpc.createContract(TokenAbi.TokenRootDeployCallbacks, new Address(this.wallet.address))
+        const owner = new rpc.Contract(TokenAbi.TokenRootDeployCallbacks, new Address(this.wallet.address))
 
         let stream = this.transactionSubscriber?.transactions(
             new Address(this.wallet.address),

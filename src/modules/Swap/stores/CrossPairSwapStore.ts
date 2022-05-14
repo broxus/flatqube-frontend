@@ -6,8 +6,9 @@ import { Address, Subscriber } from 'everscale-inpage-provider'
 import * as E from 'fp-ts/Either'
 import type { DecodedAbiFunctionInputs, DecodedAbiFunctionOutputs } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
-import { DexAbi, DexConstants, TokenWallet } from '@/misc'
+import { TokenListURI } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
+import { DexAbi, TokenWallet } from '@/misc'
 import {
     DEFAULT_DECIMALS,
     DEFAULT_SLIPPAGE_VALUE,
@@ -42,7 +43,7 @@ import type {
 import { CrossChainKind, NewCrossPairsRequest, NewCrossPairsResponse } from '@/modules/Pairs/types'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, CrossPairSwapStoreState> {
@@ -1192,7 +1193,7 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
                     minTvl: '50000',
                     toCurrencyAddress: direction === 'expectedspendamount' ? this.leftToken.root : this.rightToken.root,
                     whiteListCurrencies: [],
-                    whiteListUri: DexConstants.TokenListURI,
+                    whiteListUri: TokenListURI,
                 } as NewCrossPairsRequest),
             })
         }

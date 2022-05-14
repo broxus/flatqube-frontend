@@ -18,7 +18,7 @@ export function useLocationFilter(prefix: string = ''): LocationFilter {
     const parse = () => {
         const searchParams = new URLSearchParams(location.search)
         const params = [...searchParams.entries()]
-        const filter = params.reduce<FarmingPoolFilter>((acc, [rawKey, value]) => {
+        return params.reduce<FarmingPoolFilter>((acc, [rawKey, value]) => {
             if (!hasPrefix(rawKey)) {
                 return acc
             }
@@ -49,8 +49,6 @@ export function useLocationFilter(prefix: string = ''): LocationFilter {
 
             return acc
         }, {})
-
-        return filter
     }
 
     const update = (actualFilter: FarmingPoolFilter) => {

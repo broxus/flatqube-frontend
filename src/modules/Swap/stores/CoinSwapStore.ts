@@ -3,8 +3,9 @@ import { Address, Subscriber } from 'everscale-inpage-provider'
 import * as E from 'fp-ts/Either'
 import { computed, makeObservable, override } from 'mobx'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
-import { DexConstants, EverAbi, TokenAbi } from '@/misc'
+import { EverToTip3Address, Tip3ToEverAddress, WeverVaultAddress } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
+import { EverAbi, TokenAbi } from '@/misc'
 import { DirectSwapStore } from '@/modules/Swap/stores/DirectSwapStore'
 import { WalletService } from '@/stores/WalletService'
 import { TokensCacheService } from '@/stores/TokensCacheService'
@@ -17,7 +18,7 @@ import type {
 } from '@/modules/Swap/types'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class CoinSwapStore extends DirectSwapStore {
@@ -102,7 +103,7 @@ export class CoinSwapStore extends DirectSwapStore {
         const tokenRoot = new rpc.Contract(TokenAbi.Root, this.rightTokenAddress!)
         const walletAddress = (await tokenRoot.methods.walletOf({
             answerId: 0,
-            walletOwner: DexConstants.EverToTip3Address,
+            walletOwner: EverToTip3Address,
         }).call()).value0
 
         if (walletAddress === undefined) {
@@ -130,7 +131,7 @@ export class CoinSwapStore extends DirectSwapStore {
             ) + 1,
         ).toFixed()
 
-        const coinToTip3Contract = new rpc.Contract(EverAbi.EverToTip3, DexConstants.EverToTip3Address)
+        const coinToTip3Contract = new rpc.Contract(EverAbi.EverToTip3, EverToTip3Address)
 
         const payload = (await coinToTip3Contract.methods.buildExchangePayload({
             amount: this.leftAmountNumber.toFixed(),
@@ -171,12 +172,12 @@ export class CoinSwapStore extends DirectSwapStore {
             return undefined
         }).first()
 
-        const weverVault = new rpc.Contract(EverAbi.WeverVault, DexConstants.WeverVaultAddress)
+        const weverVault = new rpc.Contract(EverAbi.WeverVault, WeverVaultAddress)
 
         try {
             await weverVault.methods.wrap({
                 gas_back_address: this.wallet.account!.address,
-                owner_address: DexConstants.EverToTip3Address,
+                owner_address: EverToTip3Address,
                 payload,
                 tokens: this.leftAmountNumber.toFixed(),
             }).send({
@@ -215,12 +216,12 @@ export class CoinSwapStore extends DirectSwapStore {
 
         this.setState('isSwapping', true)
 
-        const tip3ToCoinContract = new rpc.Contract(EverAbi.Tip3ToEver, DexConstants.Tip3ToEverAddress)
+        const tip3ToCoinContract = new rpc.Contract(EverAbi.Tip3ToEver, Tip3ToEverAddress)
 
         const tokenRoot = new rpc.Contract(TokenAbi.Root, new Address(this.leftToken!.root))
         const walletAddress = (await tokenRoot.methods.walletOf({
             answerId: 0,
-            walletOwner: DexConstants.Tip3ToEverAddress,
+            walletOwner: Tip3ToEverAddress,
         }).call()).value0
 
         if (walletAddress === undefined) {
@@ -293,7 +294,7 @@ export class CoinSwapStore extends DirectSwapStore {
                 deployWalletValue: deployGrams,
                 notify: true,
                 payload,
-                recipient: DexConstants.Tip3ToEverAddress,
+                recipient: Tip3ToEverAddress,
                 remainingGasTo: this.wallet.account!.address!,
             }).send({
                 amount: new BigNumber(3600000000).plus(deployGrams).toFixed(),

@@ -8,7 +8,7 @@ import {
     reaction,
 } from 'mobx'
 
-import { DexConstants } from '@/misc'
+import { EVERMultipleSwapFee, EVERWrapGas, WEVERRootAddress } from '@/config'
 import {
     DEFAULT_LEFT_TOKEN_ROOT,
     DEFAULT_RIGHT_TOKEN_ROOT,
@@ -1345,10 +1345,10 @@ export function useSwapFormStore(): SwapFormStore {
             useWallet(),
             useTokensCache(),
             {
-                multipleSwapFee: DexConstants.EVERMultipleSwapFee,
-                multipleSwapTokenRoot: DexConstants.WEVERRootAddress.toString(),
+                multipleSwapFee: EVERMultipleSwapFee,
+                multipleSwapTokenRoot: WEVERRootAddress.toString(),
                 useNativeCoinByDefault: true,
-                wrapGas: DexConstants.EVERWrapGas,
+                wrapGas: EVERWrapGas,
             },
         )
     }

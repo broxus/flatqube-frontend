@@ -2,15 +2,18 @@ import BigNumber from 'bignumber.js'
 import { makeAutoObservable, runInAction, toJS } from 'mobx'
 import { Address } from 'everscale-inpage-provider'
 
+import { TokenListURI } from '@/config'
+import { Farm } from '@/misc'
 import { FarmingApi, useApi } from '@/modules/Farming/hooks/useApi'
 import {
-    FarmingPoolFilter, FarmingPoolsItemResponse, FarmingPoolsRequest,
+    FarmingPoolFilter,
+    FarmingPoolsItemResponse,
+    FarmingPoolsRequest,
 } from '@/modules/Farming/types'
 import { useWallet, WalletService } from '@/stores/WalletService'
 import { getImportedTokens, TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
 import { FavoritePairs, useFavoriteFarmings } from '@/stores/FavoritePairs'
 import { error, lastOfCalls } from '@/utils'
-import { DexConstants, Farm } from '@/misc'
 
 type Reward = {
     vested?: string[];
@@ -86,7 +89,7 @@ export class FarmingListStore {
                 || (filter.state === 'noActive' ? false : undefined),
             favoritePoolAddresses: this.favoritePools,
             whiteCurrencyAddresses: getImportedTokens(),
-            whiteListUri: DexConstants.TokenListURI,
+            whiteListUri: TokenListURI,
             isLowBalance: this.favoritePairs ? undefined : Boolean(filter.isLowBalance),
         }
     }

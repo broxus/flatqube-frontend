@@ -26,10 +26,10 @@ import {
 } from '@/modules/Swap/utils'
 import { checkPair, DexAbi } from '@/misc'
 import { useSwapApi } from '@/modules/Swap/hooks/useApi'
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class BaseSwapStore<

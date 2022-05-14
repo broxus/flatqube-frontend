@@ -3,7 +3,7 @@ import { Address, Subscriber } from 'everscale-inpage-provider'
 import * as E from 'fp-ts/Either'
 import { computed, makeObservable, toJS } from 'mobx'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { TokenWallet } from '@/misc'
 import { DEFAULT_SWAP_BILL } from '@/modules/Swap/constants'
 import { BaseSwapStore } from '@/modules/Swap/stores/BaseSwapStore'
@@ -20,7 +20,7 @@ import type {
 } from '@/modules/Swap/types'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class DirectSwapStore extends BaseSwapStore<DirectSwapStoreData, BaseSwapStoreState> {

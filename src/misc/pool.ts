@@ -3,7 +3,7 @@ import {
     TransactionId,
 } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { DexAbi } from '@/misc/abi'
 import { Dex } from '@/misc/dex'
 import { TokenWallet } from '@/misc/token-wallet'
@@ -25,7 +25,7 @@ export type PoolData = {
 }
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 const WITHDRAW_SUCCESS_METHOD = 'dexPairWithdrawSuccess'
@@ -94,8 +94,8 @@ export class Pool {
         amount: string,
     ): Promise<TransactionId> {
         const payloadId = new Date().getTime().toString()
-        const owner = rpc.createContract(DexAbi.Callbacks, walletAddress)
-        const subscriber = rpc.createSubscriber()
+        const owner = new rpc.Contract(DexAbi.Callbacks, walletAddress)
+        const subscriber = new rpc.Subscriber()
         const transactionsStream = subscriber
             .transactions(walletAddress)
             .flatMap(item => item.transactions)

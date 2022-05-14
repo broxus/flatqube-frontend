@@ -3,12 +3,12 @@ import {
     hasEverscaleProvider,
 } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { Dex } from '@/misc/dex'
 import { debug, sliceAddress } from '@/utils'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export async function connectToWallet(): Promise<void> {

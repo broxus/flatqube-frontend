@@ -1,5 +1,6 @@
 import { makeAutoObservable } from 'mobx'
 
+import { TokenListURI } from '@/config'
 import {
     DEFAULT_CURRENCIES_STORE_DATA,
     DEFAULT_CURRENCIES_STORE_STATE,
@@ -10,7 +11,6 @@ import {
     CurrenciesStoreState,
 } from '@/modules/Currencies/types'
 import { getImportedTokens, TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
-import { DexConstants } from '@/misc'
 import { CurrenciesApi, useCurrenciesApi } from '@/modules/Currencies/hooks/useApi'
 
 
@@ -78,7 +78,7 @@ export class CurrenciesStore {
             limit: this.limit,
             offset: this.currentPage >= 1 ? (this.currentPage - 1) * this.limit : 0,
             ordering: this.ordering,
-            whiteListUri: DexConstants.TokenListURI,
+            whiteListUri: TokenListURI,
         }
 
         const result = await this.api.currencies({}, {

@@ -8,13 +8,9 @@ import {
 } from 'mobx'
 import { Address, Subscription } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
-import {
-    DexConstants,
-    isAddressValid,
-    Token,
-    TokenWallet,
-} from '@/misc'
+import { TokenListURI } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
+import { isAddressValid, Token, TokenWallet } from '@/misc'
 import { BaseStore } from '@/stores/BaseStore'
 import { TokensListService, useTokensList } from '@/stores/TokensListService'
 import { useWallet, WalletService } from '@/stores/WalletService'
@@ -47,7 +43,7 @@ export type TokensCacheCtorConfig = {
 }
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export const IMPORTED_TOKENS_STORAGE_KEY = 'imported_tokens'
@@ -113,7 +109,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         this.#tokensBalancesSubscribersMutex = new Mutex();
 
         (async () => {
-            await tokensList.fetch(DexConstants.TokenListURI)
+            await tokensList.fetch(TokenListURI)
         })()
     }
 

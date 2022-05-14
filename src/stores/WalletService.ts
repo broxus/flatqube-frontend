@@ -16,7 +16,8 @@ import {
     reaction,
 } from 'mobx'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { MinWalletVersion } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
 import {
     connectToWallet,
     DexAbi,
@@ -66,7 +67,7 @@ const DEFAULT_WALLET_STATE: WalletState = {
     isUpdatingContract: false,
 }
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class WalletService extends BaseStore<WalletData, WalletState> {
@@ -524,7 +525,7 @@ export function useWallet(): WalletService {
             name: DexConstants.CoinSymbol,
             symbol: DexConstants.CoinSymbol,
         }, {
-            minWalletVersion: DexConstants.MinWalletVersion,
+            minWalletVersion: MinWalletVersion,
         })
     }
     return wallet

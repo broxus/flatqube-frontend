@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 import { Address } from 'everscale-inpage-provider'
 import { makeAutoObservable, runInAction, toJS } from 'mobx'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { TokenWallet } from '@/misc'
 import { FarmingDataStore, useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
 import { useWallet, WalletService } from '@/stores/WalletService'
@@ -20,7 +20,7 @@ const defaultState: State = Object.freeze({
 })
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class FarmingAdminDepositStore {

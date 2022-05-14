@@ -3,7 +3,7 @@ import {
     FullContractState,
 } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { MigrationTokenAbi } from '@/misc/abi'
 
 
@@ -16,7 +16,7 @@ type WalletBalanceRequest = {
     wallet: Address;
 }
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class TokenWalletV4 {

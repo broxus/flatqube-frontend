@@ -1,10 +1,10 @@
 import { Address, FullContractState } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { error, sliceAddress } from '@/utils'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class SupportedInterfaceDetection {

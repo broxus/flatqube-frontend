@@ -4,9 +4,9 @@ import {
     TransactionId,
 } from 'everscale-inpage-provider'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { DexRootAddress } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
 import { DexAbi } from '@/misc/abi'
-import { DexConstants } from '@/misc/dex-constants'
 import { TokenWallet } from '@/misc/token-wallet'
 
 
@@ -37,7 +37,7 @@ export type PairExpectedDepositLiquidity = {
 }
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class Dex {
@@ -46,7 +46,7 @@ export class Dex {
         owner: Address,
         state?: FullContractState,
     ): Promise<Address> {
-        const rootContract = rpc.createContract(DexAbi.Root, DexConstants.DexRootAddress)
+        const rootContract = new rpc.Contract(DexAbi.Root, DexRootAddress)
         return (await rootContract.methods.getExpectedAccountAddress({
             answerId: 0,
             account_owner: owner,
@@ -57,7 +57,7 @@ export class Dex {
         account: Address,
         state?: FullContractState,
     ): Promise<Map<string, Address>> {
-        const accountContract = rpc.createContract(DexAbi.Account, account)
+        const accountContract = new rpc.Contract(DexAbi.Account, account)
         const {
             value0: wallets,
         } = await accountContract.methods.getWallets({}).call({
@@ -75,7 +75,7 @@ export class Dex {
         root: Address,
         state?: FullContractState,
     ): Promise<string> {
-        const accountContract = rpc.createContract(DexAbi.Account, account)
+        const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { balance } = await accountContract.methods.getWalletData({
             answerId: 0,
             token_root: root,
@@ -87,7 +87,7 @@ export class Dex {
         account: Address,
         state?: FullContractState,
     ): Promise<Map<string, string>> {
-        const accountContract = rpc.createContract(DexAbi.Account, account)
+        const accountContract = new rpc.Contract(DexAbi.Account, account)
         const {
             value0: balances,
         } = await accountContract.methods.getBalances({}).call({
@@ -104,7 +104,7 @@ export class Dex {
         account: Address,
         state?: FullContractState,
     ): Promise<string> {
-        const accountContract = rpc.createContract(DexAbi.Account, account)
+        const accountContract = new rpc.Contract(DexAbi.Account, account)
         const {
             value0: version,
         } = await accountContract.methods.getVersion({
@@ -118,7 +118,7 @@ export class Dex {
         right: Address,
         state?: FullContractState,
     ): Promise<Address> {
-        const rootContract = rpc.createContract(DexAbi.Root, DexConstants.DexRootAddress)
+        const rootContract = new rpc.Contract(DexAbi.Root, DexRootAddress)
         const {
             value0: pairAddress,
         } = await rootContract.methods.getExpectedPairAddress({
@@ -133,7 +133,7 @@ export class Dex {
         pair: Address,
         state?: FullContractState,
     ): Promise<boolean> {
-        const pairContract = rpc.createContract(DexAbi.Pair, pair)
+        const pairContract = new rpc.Contract(DexAbi.Pair, pair)
         const {
             value0: isActive,
         } = await pairContract.methods.isActive({
@@ -146,7 +146,7 @@ export class Dex {
         pair: Address,
         state?: FullContractState,
     ): Promise<Address> {
-        const pairContract = rpc.createContract(DexAbi.Pair, pair)
+        const pairContract = new rpc.Contract(DexAbi.Pair, pair)
         const { lp_root } = await pairContract.methods.lp_root({}).call({
             cachedState: state,
         })
@@ -157,7 +157,7 @@ export class Dex {
         pair: Address,
         state?: FullContractState,
     ): Promise<PairTokenRoots> {
-        const pairContract = rpc.createContract(DexAbi.Pair, pair)
+        const pairContract = new rpc.Contract(DexAbi.Pair, pair)
         const {
             left,
             right,
@@ -172,7 +172,7 @@ export class Dex {
         pair: Address,
         state?: FullContractState,
     ): Promise<PairBalances> {
-        const pairContract = rpc.createContract(DexAbi.Pair, pair)
+        const pairContract = new rpc.Contract(DexAbi.Pair, pair)
         const {
             value0: {
                 left_balance: left,
@@ -197,7 +197,7 @@ export class Dex {
         rightAmount: string,
         state?: FullContractState,
     ): Promise<PairExpectedDepositLiquidity> {
-        const pairContract = rpc.createContract(DexAbi.Pair, pair)
+        const pairContract = new rpc.Contract(DexAbi.Pair, pair)
 
         const { value0: result } = await pairContract.methods.expectedDepositLiquidity({
             answerId: 0,
@@ -210,7 +210,7 @@ export class Dex {
     }
 
     public static async createAccount(owner: Address): Promise<TransactionId> {
-        const rootContract = rpc.createContract(DexAbi.Root, DexConstants.DexRootAddress)
+        const rootContract = new rpc.Contract(DexAbi.Root, DexRootAddress)
         const { id } = await rootContract.methods.deployAccount({
             account_owner: owner,
             send_gas_to: owner,
@@ -227,7 +227,7 @@ export class Dex {
         right: Address,
         creator: Address,
     ): Promise<TransactionId> {
-        const rootContract = rpc.createContract(DexAbi.Root, DexConstants.DexRootAddress)
+        const rootContract = new rpc.Contract(DexAbi.Root, DexRootAddress)
         return (await rootContract.methods.deployPair({
             left_root: left,
             right_root: right,
@@ -245,7 +245,7 @@ export class Dex {
         right: Address,
         creator: Address,
     ): Promise<TransactionId> {
-        const accountContract = rpc.createContract(DexAbi.Account, account)
+        const accountContract = new rpc.Contract(DexAbi.Account, account)
         return (await accountContract.methods.addPair({
             left_root: left,
             right_root: right,
@@ -263,7 +263,7 @@ export class Dex {
         amount: string,
         callId: string,
     ): Promise<TransactionId> {
-        const accountContract = rpc.createContract(DexAbi.Account, account)
+        const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { id } = await accountContract.methods.withdraw({
             token_root: root,
             amount,
@@ -289,7 +289,7 @@ export class Dex {
         amount: string,
         callId: string,
     ): Promise<TransactionId> {
-        const accountContract = rpc.createContract(DexAbi.Account, account)
+        const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { id } = await accountContract.methods.withdrawLiquidity({
             call_id: callId,
             left_root: leftRoot,
@@ -342,7 +342,7 @@ export class Dex {
             && rightWalletUserState !== undefined
             && leftWalletUserState.isDeployed
             && rightWalletUserState.isDeployed
-        const pairContract = rpc.createContract(DexAbi.Pair, pairAddress)
+        const pairContract = new rpc.Contract(DexAbi.Pair, pairAddress)
         const { value0: withdrawPayload } = await pairContract.methods.buildWithdrawLiquidityPayload({
             id: payloadId || new Date().getTime().toString(),
             deploy_wallet_grams: allDeployed ? '0' : '100000000',
@@ -370,7 +370,7 @@ export class Dex {
         autoChange: boolean,
         callId: string,
     ): Promise<TransactionId> {
-        const accountContract = rpc.createContract(DexAbi.Account, account)
+        const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { id } = await accountContract.methods.depositLiquidity({
             call_id: callId,
             left_root: leftRoot,

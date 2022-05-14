@@ -8,7 +8,7 @@ import {
 } from 'mobx'
 import uniqBy from 'lodash.uniqby'
 
-import { DexConstants } from '@/misc'
+import { TokenListURI } from '@/config'
 import {
     CandlestickGraphShape,
     CommonGraphShape,
@@ -366,7 +366,7 @@ export class CurrencyStore {
                 limit: this.pairsLimit,
                 offset: this.pairsCurrentPage >= 1 ? (this.pairsCurrentPage - 1) * this.pairsLimit : 0,
                 ordering: this.pairsOrdering,
-                whiteListUri: DexConstants.TokenListURI,
+                whiteListUri: TokenListURI,
             }
 
             const result = await this.api.pairs({}, {
@@ -441,7 +441,7 @@ export class CurrencyStore {
                     ? (this.transactionsCurrentPage - 1) * this.transactionsLimit
                     : 0,
                 ordering: this.transactionsOrdering,
-                whiteListUri: DexConstants.TokenListURI,
+                whiteListUri: TokenListURI,
             }
             if (this.transactionsEvents.length > 0) {
                 body.eventType = this.transactionsEvents

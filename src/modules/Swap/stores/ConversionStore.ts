@@ -2,8 +2,9 @@ import BigNumber from 'bignumber.js'
 import { Address } from 'everscale-inpage-provider'
 import { computed, makeObservable } from 'mobx'
 
-import { DexConstants, TokenAbi } from '@/misc'
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { WeverVaultAddress } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
+import { TokenAbi } from '@/misc'
 import { BaseStore } from '@/stores/BaseStore'
 import { TokensCacheService } from '@/stores/TokensCacheService'
 import { WalletService } from '@/stores/WalletService'
@@ -17,7 +18,7 @@ import type {
 import type { TokenCache } from '@/stores/TokensCacheService'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class ConversionStore extends BaseStore<ConversionStoreData, ConversionStoreState> {
@@ -69,7 +70,7 @@ export class ConversionStore extends BaseStore<ConversionStoreData, ConversionSt
             const { transaction } = await rpc.sendMessage({
                 amount,
                 bounce: false,
-                recipient: DexConstants.WeverVaultAddress,
+                recipient: WeverVaultAddress,
                 sender: this.wallet.account.address,
             })
 
@@ -114,7 +115,7 @@ export class ConversionStore extends BaseStore<ConversionStoreData, ConversionSt
                     amount,
                     deployWalletValue: '0',
                     notify: true,
-                    recipient: DexConstants.WeverVaultAddress,
+                    recipient: WeverVaultAddress,
                     remainingGasTo: this.wallet.account.address,
                     payload: '',
                 })

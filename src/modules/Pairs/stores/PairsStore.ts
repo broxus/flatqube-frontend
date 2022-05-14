@@ -1,5 +1,6 @@
 import { makeAutoObservable } from 'mobx'
 
+import { TokenListURI } from '@/config'
 import {
     DEFAULT_PAIRS_STORE_DATA,
     DEFAULT_PAIRS_STORE_STATE,
@@ -11,7 +12,6 @@ import {
 } from '@/modules/Pairs/types'
 import { PairsApi, usePairsApi } from '@/modules/Pairs/hooks/useApi'
 import { getImportedTokens, TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
-import { DexConstants } from '@/misc'
 
 
 export class PairsStore {
@@ -81,7 +81,7 @@ export class PairsStore {
             limit: this.limit,
             offset: this.currentPage >= 1 ? (this.currentPage - 1) * this.limit : 0,
             ordering: this.ordering,
-            whiteListUri: DexConstants.TokenListURI,
+            whiteListUri: TokenListURI,
         }
         const result = await this.api.pairs({}, {
             body: JSON.stringify(body),

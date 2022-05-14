@@ -7,7 +7,7 @@ import {
 import { Address } from 'everscale-inpage-provider'
 import BigNumber from 'bignumber.js'
 
-import { useRpcClient } from '@/hooks/useRpcClient'
+import { useRpc } from '@/hooks/useRpc'
 import { Token, TokenAbi, TokenWallet } from '@/misc'
 import {
     DEFAULT_MANAGE_TOKEN_STORE_DATA,
@@ -18,7 +18,7 @@ import { useWallet, WalletService } from '@/stores/WalletService'
 import { error } from '@/utils'
 
 
-const rpc = useRpcClient()
+const rpc = useRpc()
 
 
 export class ManageTokenStore {
@@ -84,7 +84,7 @@ export class ManageTokenStore {
         this.changeState('isMinting', true)
 
         try {
-            await rpc.createContract(TokenAbi.Root, new Address(this.state.tokenRoot)).methods.mint({
+            await new rpc.Contract(TokenAbi.Root, new Address(this.state.tokenRoot)).methods.mint({
                 deployWalletValue: '100000000',
                 recipient: new Address(this.data.targetAddress),
                 remainingGasTo: new Address(this.wallet.address),
@@ -110,7 +110,7 @@ export class ManageTokenStore {
                         ...this.data.token!,
                         totalSupply: this.data.token?.totalSupply ? new BigNumber(this.data.token.totalSupply)
                             .plus(new BigNumber(this.data.amountToMint)
-                            .shiftedBy(+this.data.token!.decimals))
+                                .shiftedBy(+this.data.token!.decimals))
                             .decimalPlaces(+this.data.token!.decimals, BigNumber.ROUND_DOWN)
                             .toFixed() : undefined,
                     })
@@ -149,7 +149,7 @@ export class ManageTokenStore {
         })
 
         try {
-            await rpc.createContract(TokenAbi.Root, new Address(this.state.tokenRoot)).methods.burnTokens({
+            await new rpc.Contract(TokenAbi.Root, new Address(this.state.tokenRoot)).methods.burnTokens({
                 amount: new BigNumber(this.data.amountToBurn)
                     .shiftedBy(Number(this.data.token.decimals)).toFixed(),
                 walletOwner: new Address(this.data.targetAddress),
@@ -201,7 +201,7 @@ export class ManageTokenStore {
         this.changeState('isTransfer', true)
 
         try {
-            await rpc.createContract(TokenAbi.Root, new Address(this.state.tokenRoot)).methods.transferOwnership({
+            await new rpc.Contract(TokenAbi.Root, new Address(this.state.tokenRoot)).methods.transferOwnership({
                 newOwner: new Address(this.data.newOwnerAddress),
                 remainingGasTo: new Address(this.wallet.address),
                 callbacks: [],
