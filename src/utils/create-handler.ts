@@ -1,4 +1,4 @@
-import { API_URL } from '@/constants'
+import { API_URL } from '@/config'
 import { Params, Route } from '@/routes'
 
 export const createHandler = <P extends Params>(

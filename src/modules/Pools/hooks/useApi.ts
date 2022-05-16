@@ -1,4 +1,4 @@
-import { FARMING_POOL_API_URL } from '@/constants'
+import { FARMING_POOL_API_URL } from '@/config'
 import { FarmingPoolsResponse } from '@/modules/Farming/types'
 import { PairResponse } from '@/modules/Pairs/types'
 import { apiRoutes, farmingApiRoutes } from '@/routes'

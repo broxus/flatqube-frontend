@@ -1,4 +1,4 @@
-import { API_URL, FARMING_POOL_API_URL } from '@/constants'
+import { API_URL, FARMING_POOL_API_URL } from '@/config'
 import {
     FarmingGraphicRequest, FarmingGraphicResponse, FarmingPoolRequest,
     FarmingPoolResponse, FarmingPoolsRequest, FarmingPoolsResponse,

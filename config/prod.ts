@@ -26,3 +26,7 @@ export const TokenFactoryAddress = new AddressLiteral('0:d291ab784f3ce6958fad0e4
 export const TokenListURI = 'https://raw.githubusercontent.com/broxus/flatqube-assets/master/manifest.json'
 
 export const MinWalletVersion = '0.2.26'
+
+export const API_URL = 'https://ton-swap-indexer-test.broxus.com/v1'
+
+export const FARMING_POOL_API_URL = 'https://farming-pool-indexer.broxus.com/v1'
