@@ -12,7 +12,7 @@ import { debounce, debug, error } from '@/utils'
 
 type PoolFormShape = {
     isTokenListShown: boolean;
-    tokenSide: TokenSide | null;
+    tokenSide: TokenSide | undefined;
     debouncedSyncPoolShare: () => void;
     hideTokensList: () => void;
     showTokensList: (side: TokenSide) => () => void;
@@ -20,6 +20,8 @@ type PoolFormShape = {
     onSelectLeftToken: (root: string) => void;
     onSelectRightToken: (root: string) => void;
     onDismissTransactionReceipt: () => void;
+    onLeftImportConfirm: (root: string) => void;
+    onRightImportConfirm: (root: string) => void;
 }
 
 
@@ -37,14 +39,14 @@ export function usePoolForm(): PoolFormShape {
 
     const [isTokenListShown, setTokenListVisible] = React.useState(false)
 
-    const [tokenSide, setTokenSide] = React.useState<TokenSide | null>(null)
+    const [tokenSide, setTokenSide] = React.useState<TokenSide>()
 
     const debouncedSyncPoolShare = debounce(async () => {
         await pool.fetchPoolShare()
     }, 500)
 
     const hideTokensList = () => {
-        setTokenSide(null)
+        setTokenSide(undefined)
         setTokenListVisible(false)
     }
 
@@ -131,6 +133,18 @@ export function usePoolForm(): PoolFormShape {
         pool.cleanDepositLiquidityResult()
     }
 
+    const onLeftImportConfirm: PoolFormShape['onLeftImportConfirm'] = async root => {
+        await onSelectLeftToken(root)
+        await resolveStateFromUrl(root, rightTokenRoot)
+        hideTokensList()
+    }
+
+    const onRightImportConfirm: PoolFormShape['onRightImportConfirm'] = async root => {
+        await onSelectRightToken(root)
+        await resolveStateFromUrl(leftTokenRoot, root)
+        hideTokensList()
+    }
+
     React.useEffect(() => {
         const tokensListDisposer = reaction(
             () => tokensCache.isReady,
@@ -166,5 +180,7 @@ export function usePoolForm(): PoolFormShape {
         onChangeData,
         onSelectLeftToken,
         onDismissTransactionReceipt,
+        onLeftImportConfirm,
+        onRightImportConfirm,
     }
 }

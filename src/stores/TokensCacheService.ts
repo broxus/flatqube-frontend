@@ -657,8 +657,10 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
             if (customToken) {
                 const filtered = this.queue.filter(token => token.root !== root)
                 filtered.push(customToken)
-                this.setState('queue', filtered)
-                this.setState('isImporting', true)
+                this.setState({
+                    isImporting: true,
+                    queue: filtered,
+                })
             }
             else {
                 this.setState('isImporting', this.queue.length > 0)

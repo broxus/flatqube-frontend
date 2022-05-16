@@ -240,8 +240,22 @@ export function Swap(): JSX.Element {
             <Observer>
                 {() => (
                     <>
-                        {tokensCache.isImporting && (
-                            <TokenImportPopup key="tokenImport" />
+                        {(tokensCache.isImporting && form.tokenSide === 'leftToken') && (
+                            <TokenImportPopup
+                                key="tokenImportLeft"
+                                onImportConfirm={form.onLeftImportConfirm}
+                            />
+                        )}
+                        {(tokensCache.isImporting && form.tokenSide === 'rightToken') && (
+                            <TokenImportPopup
+                                key="tokenImportRight"
+                                onImportConfirm={form.onRightImportConfirm}
+                            />
+                        )}
+                        {(tokensCache.isImporting && form.tokenSide === undefined) && (
+                            <TokenImportPopup
+                                key="tokenImportUrl"
+                            />
                         )}
                     </>
                 )}

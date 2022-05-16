@@ -26,6 +26,8 @@ type SwapFormShape = {
     onSelectLeftToken: (root: string) => void;
     onSelectRightToken: (root: string) => void;
     onDismissTransactionReceipt: () => void;
+    onLeftImportConfirm: (root: string) => void;
+    onRightImportConfirm: (root: string) => void;
 }
 
 
@@ -573,6 +575,18 @@ export function useSwapForm(): SwapFormShape {
         formStore.cleanTransactionResult()
     }
 
+    const onLeftImportConfirm: SwapFormShape['onLeftImportConfirm'] = async root => {
+        await onSelectLeftToken(root)
+        await resolveStateFromUrl(root, rightTokenRoot)
+        hideTokensList()
+    }
+
+    const onRightImportConfirm: SwapFormShape['onRightImportConfirm'] = async root => {
+        await onSelectRightToken(root)
+        await resolveStateFromUrl(leftTokenRoot, root)
+        hideTokensList()
+    }
+
     React.useEffect(() => {
         const tokensListDisposer = reaction(
             () => tokensCache.isReady,
@@ -613,5 +627,7 @@ export function useSwapForm(): SwapFormShape {
         onSelectLeftToken,
         onSelectRightToken,
         onDismissTransactionReceipt,
+        onLeftImportConfirm,
+        onRightImportConfirm,
     }
 }
