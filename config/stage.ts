@@ -23,6 +23,6 @@ export const USDTRootAddress = new AddressLiteral('0:a519f99bb5d6d51ef958ed24d33
 
 export const TokenFactoryAddress = new AddressLiteral('0:d291ab784f3ce6958fad0e473bcd61891b303cfe7a96e2c7074f20eadd500f44')
 
-export const TokenListURI = 'https://raw.githubusercontent.com/broxus/ton-assets/master/manifest.json'
+export const TokenListURI = 'https://raw.githubusercontent.com/broxus/flatqube-assets/master/manifest.json'
 
 export const MinWalletVersion = '0.2.26'

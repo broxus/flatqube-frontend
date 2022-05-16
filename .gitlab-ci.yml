@@ -16,6 +16,8 @@ cloudbuild:image:dev:
   except:
     - tags
   extends: .cloudbuild:common
+  before_script:
+    - rm -rf src/config.ts && cp config/dev.ts src/config.ts
 
 deploy:dev:
   only:
@@ -43,6 +45,8 @@ cloudbuild:image:master:
   except:
     - tags
   extends: .cloudbuild:common
+  before_script:
+    - rm -rf src/config.ts && cp config/stage.ts src/config.ts
 
 deploy:master:
   only:
@@ -69,6 +73,8 @@ cloudbuild:image:prod:
   except:
     - tags
   extends: .cloudbuild:common
+  before_script:
+    - rm -rf src/config.ts && cp config/prod.ts src/config.ts
 
 deploy:prod:
   only:
