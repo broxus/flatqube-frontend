@@ -27,6 +27,6 @@ export const TokenListURI = 'https://raw.githubusercontent.com/broxus/flatqube-a
 
 export const MinWalletVersion = '0.2.26'
 
-export const API_URL = 'https://ton-swap-indexer-test.broxus.com/v1'
+export const API_URL = 'https://api.flatqube.io/v1'
 
-export const FARMING_POOL_API_URL = 'https://farming-pool-indexer.broxus.com/v1'
+export const FARMING_POOL_API_URL = 'https://farming.flatqube.io/v1'
