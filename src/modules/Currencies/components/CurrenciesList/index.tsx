@@ -1,10 +1,11 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
 
-import { ContentLoader } from '@/components/common/ContentLoader'
 import { OrderingSwitcher } from '@/components/common/OrderingSwitcher'
 import { Item } from '@/modules/Currencies/components/CurrenciesList/Item'
 import { CurrenciesOrdering, CurrencyInfo } from '@/modules/Currencies/types'
+import { Placeholder } from '@/modules/Currencies/components/CurrenciesList/Placeholder'
+import { PanelLoader } from '@/components/common/PanelLoader'
 
 import './index.scss'
 
@@ -65,15 +66,21 @@ export function CurrenciesList({
                 </div>
             </div>
 
-            {isLoading
-                ? <ContentLoader />
-                : currencies.map((currency, idx) => (
-                    <Item
-                        key={currency.address}
-                        currency={currency}
-                        idx={offset + idx + 1}
-                    />
-                ))}
+            {isLoading && currencies.length === 0 ? (
+                [...Array(10).keys()].map(() => (
+                    <Placeholder />
+                ))
+            ) : (
+                <PanelLoader loading={isLoading && currencies.length > 0}>
+                    {currencies.map((currency, idx) => (
+                        <Item
+                            key={currency.address}
+                            currency={currency}
+                            idx={offset + idx + 1}
+                        />
+                    ))}
+                </PanelLoader>
+            )}
         </div>
     )
 }

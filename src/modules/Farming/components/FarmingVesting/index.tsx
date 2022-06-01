@@ -1,34 +1,26 @@
 import * as React from 'react'
 import BigNumber from 'bignumber.js'
 import { useIntl } from 'react-intl'
+import { observer } from 'mobx-react-lite'
 
 import { Icon } from '@/components/common/Icon'
 import { Tooltip } from '@/components/common/Tooltip'
 import { formatDateUTC } from '@/utils'
 import { useTokensCache } from '@/stores/TokensCacheService'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { Placeholder } from '@/components/common/Placeholder'
 
-type Props = {
-    vestingRatio?: number;
-    vestingPeriodDays?: string;
-    vestingTime?: number[];
-    rewardTokensAddress?: string[];
-}
-
-export function FarmingVesting({
-    vestingRatio,
-    vestingPeriodDays,
-    vestingTime,
-    rewardTokensAddress,
-}: Props): JSX.Element {
+export function FarmingVestingInner(): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
+    const farmingData = useFarmingDataStore()
     const ratioRef = React.useRef<HTMLDivElement | null>(null)
     const periodRef = React.useRef<HTMLDivElement | null>(null)
     const untilRef = React.useRef<HTMLDivElement | null>(null)
     const nullMessage = intl.formatMessage({
         id: 'FARMING_VESTING_NULL',
     })
-    const rewardTokens = (rewardTokensAddress || []).map(root => tokensCache.get(root))
+    const rewardTokens = (farmingData.rewardTokensAddress || []).map(root => tokensCache.get(root))
 
     return (
         <div className="farming-panel">
@@ -53,18 +45,22 @@ export function FarmingVesting({
                         </Tooltip>
                     </div>
                     <div className="farming-map__value">
-                        {
-                            vestingRatio === undefined
-                                ? nullMessage
-                                : intl.formatMessage({
-                                    id: 'FARMING_VESTING_RATIO_VALUE',
-                                }, {
-                                    value: new BigNumber(vestingRatio)
-                                        .div(10)
-                                        .decimalPlaces(1, BigNumber.ROUND_DOWN)
-                                        .toFixed(),
-                                })
-                        }
+                        {farmingData.hasBaseData ? (
+                            <>
+                                {farmingData.vestingRatio === undefined
+                                    ? nullMessage
+                                    : intl.formatMessage({
+                                        id: 'FARMING_VESTING_RATIO_VALUE',
+                                    }, {
+                                        value: new BigNumber(farmingData.vestingRatio)
+                                            .div(10)
+                                            .decimalPlaces(1, BigNumber.ROUND_DOWN)
+                                            .toFixed(),
+                                    })}
+                            </>
+                        ) : (
+                            <Placeholder width={120} />
+                        )}
                     </div>
                 </div>
 
@@ -83,15 +79,19 @@ export function FarmingVesting({
                         </Tooltip>
                     </div>
                     <div className="farming-map__value">
-                        {
-                            vestingPeriodDays === undefined
-                                ? nullMessage
-                                : intl.formatMessage({
-                                    id: 'FARMING_VESTING_PERIOD_VALUE',
-                                }, {
-                                    days: vestingPeriodDays,
-                                })
-                        }
+                        {farmingData.hasBaseData ? (
+                            <>
+                                {farmingData.vestingPeriodDays === undefined
+                                    ? nullMessage
+                                    : intl.formatMessage({
+                                        id: 'FARMING_VESTING_PERIOD_VALUE',
+                                    }, {
+                                        days: farmingData.vestingPeriodDays,
+                                    })}
+                            </>
+                        ) : (
+                            <Placeholder width={120} />
+                        )}
                     </div>
                 </div>
 
@@ -113,29 +113,37 @@ export function FarmingVesting({
                     </div>
 
                     <div className="farming-map__value">
-                        {vestingTime ? (
-                            <div>
-                                {[...new Set(vestingTime)].length > 1 ? (
-                                    rewardTokens.map((token, index) => (
-                                        token && (
-                                            <div key={token.root}>
-                                                {intl.formatMessage({
-                                                    id: 'FARMING_VESTING_VESTING_TOKEN_DATE',
-                                                }, {
-                                                    token: token.symbol,
-                                                    date: formatDateUTC(vestingTime[index]),
-                                                })}
-                                            </div>
-                                        )
-                                    ))
-                                ) : (
-                                    formatDateUTC(vestingTime[0])
-                                )}
-                            </div>
-                        ) : nullMessage}
+                        {farmingData.hasBaseData ? (
+                            <>
+                                {farmingData.vestingTime ? (
+                                    <div>
+                                        {[...new Set(farmingData.vestingTime)].length > 1 ? (
+                                            rewardTokens.map((token, index) => (
+                                                token && farmingData.vestingTime && (
+                                                    <div key={token.root}>
+                                                        {intl.formatMessage({
+                                                            id: 'FARMING_VESTING_VESTING_TOKEN_DATE',
+                                                        }, {
+                                                            token: token.symbol,
+                                                            date: formatDateUTC(farmingData.vestingTime[index]),
+                                                        })}
+                                                    </div>
+                                                )
+                                            ))
+                                        ) : (
+                                            formatDateUTC(farmingData.vestingTime[0])
+                                        )}
+                                    </div>
+                                ) : nullMessage}
+                            </>
+                        ) : (
+                            <Placeholder width={120} />
+                        )}
                     </div>
                 </div>
             </div>
         </div>
     )
 }
+
+export const FarmingVesting = observer(FarmingVestingInner)

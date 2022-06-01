@@ -208,6 +208,9 @@ export default (_: any, options: any): WebpackConfig => {
             historyApiFallback: true,
             liveReload: false,
             hot: false,
+            client: {
+                overlay: false,
+            },
         }
     }
 
@@ -219,9 +222,8 @@ export default (_: any, options: any): WebpackConfig => {
 
     if (isDevelopment) {
         config.watchOptions = {
-            aggregateTimeout: 5,
+            aggregateTimeout: 100,
             ignored: /node_modules/,
-            poll: true,
         }
     }
 

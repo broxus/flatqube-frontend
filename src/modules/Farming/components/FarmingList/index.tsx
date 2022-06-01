@@ -13,37 +13,39 @@ import { appRoutes } from '@/routes'
 type Props = {
     title: string;
     lowBalanceEnabled: boolean;
-    onChangeQuery: (value: string) => void;
-    onChangeFilter: (filter: FarmingPoolFilter) => void;
     loading: boolean;
     data: FarmingPoolsItemResponse[];
     vestedRewards: (string[] | undefined)[];
     entitledRewards: (string[] | undefined)[];
     totalPages: number;
     currentPage: number;
+    queryParamPrefix?: string;
+    rewardsLoading: (boolean | undefined)[];
+    placeholderCount?: number;
+    onChangeQuery: (value: string) => void;
+    onChangeFilter: (filter: FarmingPoolFilter) => void;
     onNextPage: () => void;
     onPrevPage: () => void;
     onSubmitPage: (page: number) => void;
-    queryParamPrefix?: string;
-    rewardsLoading: (boolean | undefined)[];
 }
 
 export function FarmingListInner({
     title,
     lowBalanceEnabled,
-    onChangeQuery,
-    onChangeFilter,
     loading,
     data,
     vestedRewards,
     entitledRewards,
     totalPages,
     currentPage,
+    queryParamPrefix,
+    rewardsLoading,
+    placeholderCount,
+    onChangeQuery,
+    onChangeFilter,
     onNextPage,
     onPrevPage,
     onSubmitPage,
-    queryParamPrefix,
-    rewardsLoading,
 }: Props): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
@@ -134,6 +136,7 @@ export function FarmingListInner({
             </div>
 
             <FarmingTable
+                placeholderCount={placeholderCount}
                 loading={loading}
                 items={items}
                 totalPages={totalPages}

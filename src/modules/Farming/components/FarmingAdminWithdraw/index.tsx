@@ -6,23 +6,16 @@ import { Button } from '@/components/common/Button'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { useTokensCache } from '@/stores/TokensCacheService'
 import { formattedTokenAmount } from '@/utils'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { useFarmingAdminWithdrawStore } from '@/modules/Farming/stores/FarmingAdminWithdrawStore'
+import { Placeholder } from '@/components/common/Placeholder'
 
-type Props = {
-    tokensRoots: string[]
-    tokensAmounts: string[]
-    disabled?: boolean;
-    onSubmit: () => void;
-}
-
-function FarmingAdminWithdrawInner({
-    tokensRoots,
-    tokensAmounts,
-    disabled,
-    onSubmit,
-}: Props): JSX.Element {
+function FarmingAdminWithdrawInner(): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
-    const tokens = tokensRoots.map(root => tokensCache.get(root))
+    const farmingData = useFarmingDataStore()
+    const farmingAdminWithdrawStore = useFarmingAdminWithdrawStore()
+    const tokens = farmingData.rewardTokensAddress?.map(root => tokensCache.get(root))
 
     return (
         <div className="farming-panel">
@@ -40,15 +33,24 @@ function FarmingAdminWithdrawInner({
                     </div>
                 </div>
 
-                {tokens.length > 0 && (
-                    <div>
-                        <div className="farming-panel__title farming-panel__title_small">
-                            {intl.formatMessage({
-                                id: 'FARMING_ADMIN_WITHDRAW_TOKENS_TITLE',
-                            })}
-                        </div>
+                <div>
+                    <div className="farming-panel__title farming-panel__title_small">
+                        {intl.formatMessage({
+                            id: 'FARMING_ADMIN_WITHDRAW_TOKENS_TITLE',
+                        })}
+                    </div>
 
-                        {tokens.map((token, index) => (
+                    {tokens === undefined ? (
+                        <>
+                            <div className="farming-panel__token">
+                                <Placeholder width={100} />
+                            </div>
+                            <div className="farming-panel__token">
+                                <Placeholder width={100} />
+                            </div>
+                        </>
+                    ) : (
+                        tokens.map((token, index) => (
                             token && (
                                 <div className="farming-panel__token" key={token.root}>
                                     <TokenIcon
@@ -59,20 +61,24 @@ function FarmingAdminWithdrawInner({
                                     {intl.formatMessage({
                                         id: 'FARMING_TOKEN',
                                     }, {
-                                        amount: formattedTokenAmount(tokensAmounts[index], token.decimals),
+                                        amount: formattedTokenAmount(
+                                            farmingData.rewardTokensBalance?.[index],
+                                            token.decimals,
+                                        ),
                                         symbol: token.symbol,
                                     })}
                                 </div>
                             )
-                        ))}
-                    </div>
-                )}
+                        ))
+                    )}
+                </div>
 
                 <div>
                     <Button
-                        disabled={disabled}
+                        disabled={farmingAdminWithdrawStore.loading
+                            || !farmingAdminWithdrawStore.isEnabled}
                         type="secondary"
-                        onClick={onSubmit}
+                        onClick={farmingAdminWithdrawStore.submit}
                     >
                         {intl.formatMessage({
                             id: 'FARMING_ADMIN_WITHDRAW_BTN',

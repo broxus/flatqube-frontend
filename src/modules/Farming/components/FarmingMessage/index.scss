@@ -2,7 +2,7 @@
 
 .farming-message {
     background: #c5e4f3;
-    color: #000000;
+    color: #000;
     display: flex;
     font-size: 14px;
     gap: 24px;
@@ -14,7 +14,7 @@
 
     &_danger {
         background: #eb4361;
-        color: #ffffff;
+        color: #fff;
     }
 
     @media only screen and (max-width: 767px) {

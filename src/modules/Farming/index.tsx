@@ -3,7 +3,6 @@ import { useIntl } from 'react-intl'
 import { observer } from 'mobx-react-lite'
 
 import { Button } from '@/components/common/Button'
-import { ContentLoader } from '@/components/common/ContentLoader'
 import { SectionTitle } from '@/components/common/SectionTitle'
 import { FarmingList } from '@/modules/Farming/components/FarmingList'
 import {
@@ -12,14 +11,12 @@ import {
 } from '@/modules/Farming/stores/FarmingListStore'
 import { appRoutes } from '@/routes'
 import { useFavoriteFarmings } from '@/stores/FavoritePairs'
-import { useWallet } from '@/stores/WalletService'
 
 import './index.scss'
 
 
 function FarmingsInner(): JSX.Element {
     const intl = useIntl()
-    const wallet = useWallet()
     const favoriteFarmings = useFavoriteFarmings()
     const farmingListStore = useFarmingListStore()
     const favoriteFarmingListStore = useFavoriteFarmingListStore()
@@ -28,10 +25,6 @@ function FarmingsInner(): JSX.Element {
         farmingListStore.dispose()
         favoriteFarmingListStore.dispose()
     }, [])
-
-    if (wallet.isConnecting || wallet.isInitializing) {
-        return <ContentLoader />
-    }
 
     return (
         <div className="container container--large">
@@ -56,6 +49,7 @@ function FarmingsInner(): JSX.Element {
                 {favoriteFarmings.addresses.length > 0 && (
                     <FarmingList
                         key="favorite"
+                        queryParamPrefix="fav"
                         lowBalanceEnabled={false}
                         title={intl.formatMessage({
                             id: 'FARMING_LIST_TITLE_FAV',
@@ -72,7 +66,9 @@ function FarmingsInner(): JSX.Element {
                         vestedRewards={favoriteFarmingListStore.rewards.map(item => item.vested)}
                         entitledRewards={favoriteFarmingListStore.rewards.map(item => item.entitled)}
                         rewardsLoading={favoriteFarmingListStore.rewards.map(item => item.loading)}
-                        queryParamPrefix="fav"
+                        placeholderCount={favoriteFarmings.addresses.length < 10
+                            ? favoriteFarmings.addresses.length
+                            : 10}
                     />
                 )}
 
@@ -80,6 +76,7 @@ function FarmingsInner(): JSX.Element {
                     <FarmingList
                         key="all"
                         lowBalanceEnabled
+                        placeholderCount={10}
                         title={intl.formatMessage({
                             id: 'FARMING_LIST_TITLE_ALL',
                         })}

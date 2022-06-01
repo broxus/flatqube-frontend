@@ -10,7 +10,7 @@ type Props = {
     action: string;
     decimals?: number;
     hint?: string;
-    value: string;
+    value?: string;
     inputDisabled?: boolean;
     submitDisabled?: boolean;
     maxValue?: string;
@@ -23,7 +23,7 @@ export function FarmingAction({
     action,
     decimals,
     hint,
-    value,
+    value = '',
     inputDisabled,
     submitDisabled,
     maxValue,

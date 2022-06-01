@@ -16,12 +16,12 @@ export function ConnectWallet({
 
     return (
         <div className="card card--small card--flat">
-            <div className="message message_faded">
+            <div className="message message_system">
                 {message && (
                     <p>{message}</p>
                 )}
+
                 <Button
-                    size="md"
                     type="secondary"
                     onClick={onClickConnect}
                 >

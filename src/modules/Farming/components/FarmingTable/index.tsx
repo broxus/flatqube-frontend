@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
 
-import { ContentLoader } from '@/components/common/ContentLoader'
 import { PanelLoader } from '@/components/common/PanelLoader'
 import { Pagination } from '@/components/common/Pagination'
 import { FarmingTableItem, FarmingTableItemProps } from '@/modules/Farming/components/FarmingTable/item'
+import { Placeholder } from '@/modules/Farming/components/FarmingTable/placeholder'
 
 import './index.scss'
 
@@ -13,6 +13,7 @@ export type FarmingTableProps = {
     loading?: boolean;
     totalPages: number;
     currentPage?: number;
+    placeholderCount?: number;
     onNext?: () => void;
     onPrev?: () => void;
     onSubmit?: (page: number) => void;
@@ -23,6 +24,7 @@ export function FarmingTable({
     items,
     totalPages,
     currentPage,
+    placeholderCount = 10,
     onNext,
     onPrev,
     onSubmit,
@@ -57,9 +59,9 @@ export function FarmingTable({
                 </div>
 
                 {loading && items.length === 0 ? (
-                    <div className="farming-table__message">
-                        <ContentLoader slim />
-                    </div>
+                    [...Array(placeholderCount).keys()].map(item => (
+                        <Placeholder key={item} />
+                    ))
                 ) : (
                     <>
                         {!loading && items.length === 0 ? (
@@ -80,15 +82,13 @@ export function FarmingTable({
                 )}
             </div>
 
-            {totalPages > 1 && (
-                <Pagination
-                    currentPage={currentPage}
-                    onNext={onNext}
-                    onPrev={onPrev}
-                    onSubmit={onSubmit}
-                    totalPages={totalPages}
-                />
-            )}
+            <Pagination
+                currentPage={currentPage}
+                onNext={onNext}
+                onPrev={onPrev}
+                onSubmit={onSubmit}
+                totalPages={totalPages}
+            />
         </div>
     )
 }

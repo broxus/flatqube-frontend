@@ -5,25 +5,16 @@ import { useIntl } from 'react-intl'
 import { CopyToClipboard } from '@/components/common/CopyToClipboard'
 import { AccountExplorerLink } from '@/components/common/AccountExplorerLink'
 import { useTokensCache } from '@/stores/TokensCacheService'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { Placeholder } from '@/components/common/Placeholder'
+import { useWallet } from '@/stores/WalletService'
 
-type Props = {
-    poolAddress?: string;
-    ownerAddress?: string;
-    userAddress?: string;
-    tokenRoot?: string;
-    rewardTokensRoots?: string[];
-}
-
-function FarmingAddressesInner({
-    poolAddress,
-    ownerAddress,
-    userAddress,
-    tokenRoot,
-    rewardTokensRoots = [],
-}: Props): JSX.Element {
+function FarmingAddressesInner(): JSX.Element {
     const intl = useIntl()
+    const wallet = useWallet()
     const tokensCache = useTokensCache()
-    const rewardTokens = rewardTokensRoots.map(root => tokensCache.get(root))
+    const farmingData = useFarmingDataStore()
+    const rewardTokens = farmingData.rewardTokensAddress?.map(root => tokensCache.get(root))
 
     return (
         <div className="farming-panel">
@@ -33,36 +24,43 @@ function FarmingAddressesInner({
                 })}
             </h2>
             <div className="farming-map">
-                {poolAddress && (
-                    <div className="farming-map__item" key="pool-address">
-                        <div className="farming-map__label">
-                            {intl.formatMessage({
-                                id: 'FARMING_ADDRESSES_POOL',
-                            })}
-                        </div>
-                        <div className="farming-map__value">
-                            <AccountExplorerLink address={poolAddress} />
-                            <CopyToClipboard text={poolAddress} />
-                        </div>
+                <div className="farming-map__item" key="pool-address">
+                    <div className="farming-map__label">
+                        {intl.formatMessage({
+                            id: 'FARMING_ADDRESSES_POOL',
+                        })}
                     </div>
-                )}
-
-                {ownerAddress && (
-                    <div className="farming-map__item" key="owner-address">
-                        <div className="farming-map__label">
-                            {intl.formatMessage({
-                                id: 'FARMING_ADDRESSES_OWNER',
-                            })}
-                        </div>
-                        <div className="farming-map__value">
-                            <AccountExplorerLink address={ownerAddress} />
-                            <CopyToClipboard text={ownerAddress} />
-                        </div>
+                    <div className="farming-map__value">
+                        {farmingData.poolAddress ? (
+                            <>
+                                <AccountExplorerLink address={farmingData.poolAddress} />
+                                <CopyToClipboard text={farmingData.poolAddress} />
+                            </>
+                        ) : (
+                            <Placeholder width={120} />
+                        )}
                     </div>
-                )}
+                </div>
 
+                <div className="farming-map__item" key="owner-address">
+                    <div className="farming-map__label">
+                        {intl.formatMessage({
+                            id: 'FARMING_ADDRESSES_OWNER',
+                        })}
+                    </div>
+                    <div className="farming-map__value">
+                        {farmingData.poolOwnerAddress ? (
+                            <>
+                                <AccountExplorerLink address={farmingData.poolOwnerAddress} />
+                                <CopyToClipboard text={farmingData.poolOwnerAddress} />
+                            </>
+                        ) : (
+                            <Placeholder width={120} />
+                        )}
+                    </div>
+                </div>
 
-                {userAddress && (
+                {wallet.isConnected && (
                     <div className="farming-map__item" key="user-address">
                         <div className="farming-map__label">
                             {intl.formatMessage({
@@ -70,27 +68,37 @@ function FarmingAddressesInner({
                             })}
                         </div>
                         <div className="farming-map__value">
-                            <AccountExplorerLink address={userAddress} />
-                            <CopyToClipboard text={userAddress} />
+                            {farmingData.userPoolDataAddress ? (
+                                <>
+                                    <AccountExplorerLink address={farmingData.userPoolDataAddress} />
+                                    <CopyToClipboard text={farmingData.userPoolDataAddress} />
+                                </>
+                            ) : (
+                                <Placeholder width={120} />
+                            )}
                         </div>
                     </div>
                 )}
 
-                {tokenRoot && (
-                    <div className="farming-map__item" key="token-address">
-                        <div className="farming-map__label">
-                            {intl.formatMessage({
-                                id: 'FARMING_ADDRESSES_TOKEN_ROOT',
-                            })}
-                        </div>
-                        <div className="farming-map__value">
-                            <AccountExplorerLink address={tokenRoot} />
-                            <CopyToClipboard text={tokenRoot} />
-                        </div>
+                <div className="farming-map__item" key="token-address">
+                    <div className="farming-map__label">
+                        {intl.formatMessage({
+                            id: 'FARMING_ADDRESSES_TOKEN_ROOT',
+                        })}
                     </div>
-                )}
+                    <div className="farming-map__value">
+                        {farmingData.lpTokenAddress ? (
+                            <>
+                                <AccountExplorerLink address={farmingData.lpTokenAddress} />
+                                <CopyToClipboard text={farmingData.lpTokenAddress} />
+                            </>
+                        ) : (
+                            <Placeholder width={120} />
+                        )}
+                    </div>
+                </div>
 
-                {rewardTokens.map(token => (
+                {rewardTokens?.map(token => (
                     token && (
                         <div className="farming-map__item" key={token.root}>
                             <div className="farming-map__label">

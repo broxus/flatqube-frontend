@@ -1,0 +1,37 @@
+.error-block {
+    padding: 110px 0 46px;
+    text-align: center;
+
+    &__code {
+        font-size: 64px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        line-height: 80px;
+        margin-bottom: 4px;
+    }
+
+    &__title {
+        font-size: 28px;
+        font-weight: 700;
+        font-weight: 700;
+        letter-spacing: 0.25px;
+        line-height: 32px;
+        margin-bottom: 16px;
+    }
+
+    &__text {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+        line-height: 20px;
+        margin: 0 auto 40px;
+        max-width: 460px;
+    }
+
+    &__actions {
+        display: flex;
+        grid-gap: 16px;
+        justify-content: center;
+    }
+}

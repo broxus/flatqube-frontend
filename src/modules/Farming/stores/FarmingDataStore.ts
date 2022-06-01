@@ -14,40 +14,28 @@ import {
     Dex, Farm, PairBalances, PoolDetails,
     TokenWallet, UserPendingReward,
 } from '@/misc'
-import { error } from '@/utils'
+import { concatSymbols, error } from '@/utils'
 import { SECONDS_IN_DAY } from '@/constants'
 
-type PoolData = {
-    apiResponse: FarmingPoolResponse;
+type State = {
+    apiResponse?: FarmingPoolResponse;
     poolDetails?: PoolDetails;
     pairBalances?: PairBalances;
-    rewardCurrencies: (CurrencyInfo | undefined)[];
-}
-
-type UserData = {
-    userPoolDataAddress: Address;
-    userLpWalletAddress: Address;
-    userRewardTokensBalance: string[];
-    userLpWalletAmount: string;
-    userLpFarmingAmount: string;
+    rewardCurrencies?: (CurrencyInfo | undefined)[];
+    userPoolDataAddress?: Address;
+    userLpWalletAddress?: Address;
+    userRewardTokensBalance?: string[];
+    userLpWalletAmount?: string;
+    userLpFarmingAmount?: string;
     userPendingReward?: UserPendingReward;
     userLastWithdrawTransaction?: Transaction;
     userLastDepositTransaction?: Transaction;
+    loaded?: boolean;
 }
-
-type State = {
-    poolData?: PoolData;
-    userData?: UserData;
-    loading: boolean;
-}
-
-const defaultState: State = Object.freeze({
-    loading: true,
-})
 
 export class FarmingDataStore {
 
-    protected state: State = defaultState
+    protected state: State = {}
 
     constructor(
         protected api: FarmingApi,
@@ -58,220 +46,296 @@ export class FarmingDataStore {
     }
 
     public dispose(): void {
-        this.state = defaultState
+        this.state = {}
     }
 
-    protected async getPoolData(poolAddress: string): Promise<{
-        apiResponse: FarmingPoolResponse,
-        poolDetails?: PoolDetails,
-        pairBalances?: PairBalances,
-        rewardCurrencies: (CurrencyInfo | undefined)[],
-    }> {
-        const [apiResponse, poolDetails] = await Promise.all([
-            this.api.farmingPool({
+    protected async syncApiData(poolAddress: string): Promise<void> {
+        try {
+            const result = await this.api.farmingPool({
                 address: poolAddress,
             }, {}, {
                 userAddress: this.wallet.address,
                 afterZeroBalance: true,
-            }),
-            this.wallet.isConnected
-                ? Farm.poolGetDetails(
-                    new Address(poolAddress),
-                )
-                : undefined,
-        ])
-
-        const pairBalances = (
-            this.wallet.isConnected
-            && apiResponse.left_address
-            && apiResponse.right_address
-        ) ? await Dex.pairBalances(
-                await Dex.pairAddress(
-                    new Address(apiResponse.left_address),
-                    new Address(apiResponse.right_address),
-                ),
-            )
-            : undefined
-
-        // FIXME: Hotfix, need to refactoring using objects instead of arrays for rewards data
-        if (poolDetails) {
-            const cache = apiResponse.reward_token_root_info
-                .reduce<any>((acc, item) => ({
-                    ...acc,
-                    [item.reward_root_address]: item,
-                }), {})
-
-            apiResponse.reward_token_root_info = poolDetails.rewardTokenRoot
-                .map(root => cache[root.toString()])
-        }
-
-        const rewardCurrencies = await Promise.all(
-            apiResponse.reward_token_root_info
-                .map(reward => (
-                    this.api.currency({
-                        address: reward.reward_root_address,
-                    }).catch(() => undefined)
-                )),
-        )
-
-        return {
-            apiResponse,
-            poolDetails,
-            pairBalances,
-            rewardCurrencies,
-        }
-    }
-
-    protected async getUserLastTransactions(
-        poolAddress: Address,
-        ownerAddress: Address,
-    ): Promise<{
-        deposit?: Transaction,
-        withdraw?: Transaction,
-    }> {
-        const defaultParams = {
-            limit: 1,
-            offset: 0,
-            poolAddress: poolAddress.toString(),
-            userAddress: ownerAddress.toString(),
-            ordering: 'blocktimedescending',
-        } as TransactionsRequest
-
-        const [
-            depositTransactions,
-            withdrawTransactions,
-        ] = await Promise.all([
-            this.api.transactions({}, {}, {
-                ...defaultParams,
-                eventTypes: ['deposit'],
-            }),
-            this.api.transactions({}, {}, {
-                ...defaultParams,
-                eventTypes: ['withdraw'],
-            }),
-        ])
-
-        return {
-            deposit: depositTransactions.transactions?.[0],
-            withdraw: withdrawTransactions.transactions?.[0],
-        }
-    }
-
-    protected async getUserData(
-        poolAddress: Address,
-        lpTokenAddress: Address,
-        rewardTokensAddress: Address[],
-        farmEndSeconds: string,
-    ): Promise<{
-        userPoolDataAddress: Address,
-        userLpWalletAddress: Address,
-        userRewardTokensBalance: string[],
-        userLpWalletAmount: string,
-        userLpFarmingAmount: string,
-        userPendingReward?: UserPendingReward,
-        userLastWithdrawTransaction?: Transaction,
-        userLastDepositTransaction?: Transaction,
-    }> {
-        if (!this.wallet.address) {
-            throw new Error('Wallet must be connected')
-        }
-
-        const ownerAddress = new Address(this.wallet.address)
-
-        const [
-            userPoolDataAddress, userLpWalletAddress, userRewardTokensBalance,
-        ] = await Promise.all([
-            Farm.userDataAddress(
-                poolAddress,
-                ownerAddress,
-            ),
-            TokenWallet.walletAddress({
-                owner: ownerAddress,
-                root: lpTokenAddress,
-            }),
-            Promise.all(
-                rewardTokensAddress.map(tokenAddress => (
-                    TokenWallet.balanceByTokenRoot(
-                        ownerAddress,
-                        tokenAddress,
-                    )
-                )),
-            ),
-        ])
-
-        const [
-            userLpWalletAmount, userLpFarmingAmount, userPendingReward,
-            userLastTransactions,
-        ] = await Promise.all([
-            TokenWallet.balanceByWalletAddress(
-                userLpWalletAddress,
-            ),
-            getUserAmount(
-                userPoolDataAddress,
-            ),
-            getUserPendingReward(
-                poolAddress,
-                userPoolDataAddress,
-                farmEndSeconds,
-            ),
-            this.getUserLastTransactions(
-                poolAddress,
-                ownerAddress,
-            ),
-        ])
-
-        return {
-            userPoolDataAddress,
-            userLpWalletAddress,
-            userRewardTokensBalance,
-            userLpWalletAmount,
-            userLpFarmingAmount,
-            userPendingReward,
-            userLastDepositTransaction: userLastTransactions.deposit,
-            userLastWithdrawTransaction: userLastTransactions.withdraw,
-        }
-    }
-
-    public async getData(poolAddress: string): Promise<void> {
-        runInAction(() => {
-            this.state.loading = true
-        })
-
-        try {
-            const poolData = await this.getPoolData(poolAddress)
-            const userData = this.wallet.address && poolData.poolDetails
-                ? await this.getUserData(
-                    new Address(poolAddress),
-                    poolData.poolDetails.tokenRoot,
-                    poolData.poolDetails.rewardTokenRoot,
-                    poolData.poolDetails.farmEndTime,
-                )
-                : undefined
-
-            runInAction(() => {
-                this.state.poolData = poolData
-                this.state.userData = userData
             })
 
-            this.syncTokens()
+            runInAction(() => {
+                this.state.apiResponse = result
+            })
         }
         catch (e) {
             error(e)
         }
-        finally {
+    }
+
+    protected async syncPoolDetails(poolAddress: string): Promise<void> {
+        try {
+            if (!this.state.apiResponse) {
+                throw new Error('Api Response must be defined')
+            }
+
+            const result = this.wallet.isConnected
+                ? await Farm.poolGetDetails(new Address(poolAddress))
+                : undefined
+
+            // FIXME: Hotfix. Need to refactoring using objects instead arrays
+            if (result) {
+                const cache = this.state.apiResponse.reward_token_root_info
+                    .reduce<any>((acc, item) => ({
+                        ...acc,
+                        [item.reward_root_address]: item,
+                    }), {})
+
+                const fixedApiResponse = {
+                    ...this.state.apiResponse,
+                    reward_token_root_info: result.rewardTokenRoot
+                        .map(root => cache[root.toString()]),
+                }
+
+                runInAction(() => {
+                    this.state.apiResponse = fixedApiResponse
+                })
+            }
+
             runInAction(() => {
-                this.state.loading = false
+                this.state.poolDetails = result
             })
+        }
+        catch (e) {
+            error(e)
         }
     }
 
-    public async syncData(): Promise<void> {
+    protected async syncPairBalances(): Promise<void> {
         try {
-            if (!this.poolAddress) {
-                throw new Error('Pool address must be exist in state')
+            if (!this.state.apiResponse) {
+                throw new Error('Api Response must be defined')
             }
 
-            await this.getData(this.poolAddress)
+            if (
+                this.wallet.isConnected
+                && this.state.apiResponse.left_address
+                && this.state.apiResponse.right_address
+            ) {
+                const result = await Dex.pairBalances(
+                    await Dex.pairAddress(
+                        new Address(this.state.apiResponse.left_address),
+                        new Address(this.state.apiResponse.right_address),
+                    ),
+                )
+                runInAction(() => {
+                    this.state.pairBalances = result
+                })
+            }
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    protected async syncRewardCurrencies(): Promise<void> {
+        try {
+            if (!this.state.apiResponse) {
+                throw new Error('Api Response must be defined')
+            }
+
+            const result = await Promise.all(
+                this.state.apiResponse.reward_token_root_info.map(reward => (
+                    this.api.currency({
+                        address: reward.reward_root_address,
+                    }).catch(() => undefined)
+                )),
+            )
+
+            runInAction(() => {
+                this.state.rewardCurrencies = result
+            })
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    protected async syncUserPoolDataAddress(poolAddress: string): Promise<void> {
+        try {
+            if (!this.wallet.address) {
+                throw new Error('Wallet must be connected')
+            }
+
+            const userPoolDataAddress = await Farm.userDataAddress(
+                new Address(poolAddress),
+                new Address(this.wallet.address),
+            )
+
+            runInAction(() => {
+                this.state.userPoolDataAddress = userPoolDataAddress
+            })
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    protected async syncUserLpWalletAddress(): Promise<void> {
+        try {
+            if (!this.wallet.address) {
+                throw new Error('Wallet must be connected')
+            }
+
+            if (!this.state.poolDetails) {
+                throw new Error('poolDetails must be defined')
+            }
+
+            const userLpWalletAddress = await TokenWallet.walletAddress({
+                owner: new Address(this.wallet.address),
+                root: this.state.poolDetails.tokenRoot,
+            })
+
+            runInAction(() => {
+                this.state.userLpWalletAddress = userLpWalletAddress
+            })
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    protected async syncUserRewardTokensBalance(): Promise<void> {
+        try {
+            if (!this.wallet.address) {
+                throw new Error('Wallet must be connected')
+            }
+
+            if (!this.state.poolDetails) {
+                throw new Error('poolDetails must be defined')
+            }
+
+            const ownerAddress = new Address(this.wallet.address)
+
+            const userRewardTokensBalance = await Promise.all(
+                this.state.poolDetails.rewardTokenRoot.map(tokenAddress => (
+                    TokenWallet.balanceByTokenRoot(
+                        ownerAddress,
+                        tokenAddress,
+                    ).catch(() => '0')
+                )),
+            )
+
+            runInAction(() => {
+                this.state.userRewardTokensBalance = userRewardTokensBalance
+            })
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    protected async syncUserLpWalletAmount(): Promise<void> {
+        try {
+            if (!this.wallet.address) {
+                throw new Error('Wallet must be connected')
+            }
+
+            if (!this.state.userLpWalletAddress) {
+                throw new Error('userLpWalletAddress must be defined')
+            }
+
+            const userLpWalletAmount = await TokenWallet.balanceByWalletAddress(
+                this.state.userLpWalletAddress,
+            )
+
+            runInAction(() => {
+                this.state.userLpWalletAmount = userLpWalletAmount
+            })
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    protected async syncUserLpFarmingAmount(): Promise<void> {
+        try {
+            if (!this.wallet.address) {
+                throw new Error('Wallet must be connected')
+            }
+
+            if (!this.state.userPoolDataAddress) {
+                throw new Error('userPoolDataAddress must be defined')
+            }
+
+            const userLpFarmingAmount = await getUserAmount(
+                this.state.userPoolDataAddress,
+            )
+
+            runInAction(() => {
+                this.state.userLpFarmingAmount = userLpFarmingAmount
+            })
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    protected async syncUserPendingReward(poolAddress: string): Promise<void> {
+        try {
+            if (!this.wallet.address) {
+                throw new Error('Wallet must be connected')
+            }
+
+            if (!this.state.userPoolDataAddress) {
+                throw new Error('userPoolDataAddress must be defined')
+            }
+
+            if (!this.state.poolDetails) {
+                throw new Error('poolDetails must be defined')
+            }
+
+            const userPendingReward = await getUserPendingReward(
+                new Address(poolAddress),
+                this.state.userPoolDataAddress,
+                this.state.poolDetails.farmEndTime,
+            )
+
+            runInAction(() => {
+                this.state.userPendingReward = userPendingReward
+            })
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    protected async syncUserLastTransactions(poolAddress: string): Promise<void> {
+        try {
+            if (!this.wallet.address) {
+                throw new Error('Wallet must be connected')
+            }
+
+            const defaultParams = {
+                limit: 1,
+                offset: 0,
+                poolAddress: poolAddress.toString(),
+                userAddress: this.wallet.address.toString(),
+                ordering: 'blocktimedescending',
+            } as TransactionsRequest
+
+            const [
+                depositTransactions,
+                withdrawTransactions,
+            ] = await Promise.all([
+                this.api.transactions({}, {}, {
+                    ...defaultParams,
+                    eventTypes: ['deposit'],
+                }).catch(() => undefined),
+                this.api.transactions({}, {}, {
+                    ...defaultParams,
+                    eventTypes: ['withdraw'],
+                }).catch(() => undefined),
+            ])
+
+            runInAction(() => {
+                this.state.userLastDepositTransaction = depositTransactions?.transactions?.[0]
+                this.state.userLastWithdrawTransaction = withdrawTransactions?.transactions?.[0]
+            })
         }
         catch (e) {
             error(e)
@@ -298,20 +362,68 @@ export class FarmingDataStore {
         }
     }
 
-    public get loading(): boolean {
-        return this.state.loading
+    public async getData(poolAddress: string): Promise<void> {
+        try {
+            await this.syncApiData(poolAddress)
+            await Promise.allSettled([
+                this.syncPoolDetails(poolAddress),
+                this.syncPairBalances(),
+            ])
+            await this.syncRewardCurrencies()
+
+            if (this.wallet.address) {
+                await Promise.allSettled([
+                    this.syncUserPoolDataAddress(poolAddress),
+                    this.syncUserLpWalletAddress(),
+                    this.syncUserRewardTokensBalance(),
+                ])
+                await Promise.allSettled([
+                    this.syncUserLpWalletAmount(),
+                    this.syncUserLpFarmingAmount(),
+                    this.syncUserPendingReward(poolAddress),
+                    this.syncUserLastTransactions(poolAddress),
+                ])
+            }
+
+            this.syncTokens()
+        }
+        catch (e) {
+            error(e)
+        }
+        finally {
+            runInAction(() => {
+                this.state.loaded = true
+            })
+        }
     }
 
-    public get dataIsExists(): boolean {
-        return this.state.poolData !== undefined
+    public async syncData(): Promise<void> {
+        try {
+            if (!this.poolAddress) {
+                throw new Error('Pool address must be exist in state')
+            }
+
+            await this.getData(this.poolAddress)
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    public get loaded(): boolean {
+        return !!this.state.loaded
+    }
+
+    public get hasBaseData(): boolean {
+        return !!this.state.apiResponse
     }
 
     public get isExternalLpToken(): boolean | undefined {
-        if (!this.state.poolData) {
+        const { apiResponse } = this.state
+
+        if (!apiResponse) {
             return undefined
         }
-
-        const { apiResponse } = this.state.poolData
 
         if (!apiResponse.left_address || !apiResponse.right_address) {
             return true
@@ -325,7 +437,7 @@ export class FarmingDataStore {
             return null
         }
 
-        return this.state.poolData?.apiResponse.apr
+        return this.state.apiResponse?.apr
     }
 
     public get tvl(): string | undefined | null {
@@ -333,7 +445,7 @@ export class FarmingDataStore {
             return null
         }
 
-        return this.state.poolData?.apiResponse.tvl
+        return this.state.apiResponse?.tvl
     }
 
     public get userUsdtBalance(): string | undefined | null {
@@ -341,7 +453,7 @@ export class FarmingDataStore {
             return null
         }
 
-        return this.state.poolData?.apiResponse.user_usdt_balance
+        return this.state.apiResponse?.user_usdt_balance
     }
 
     public get userHistoryUsdtBalance(): string | undefined | null {
@@ -349,7 +461,7 @@ export class FarmingDataStore {
             return null
         }
 
-        return this.state.poolData?.apiResponse.history_info.usdt_amount
+        return this.state.apiResponse?.history_info?.usdt_amount
     }
 
     public get userHistoryLeftAmount(): string | undefined | null {
@@ -357,7 +469,7 @@ export class FarmingDataStore {
             return null
         }
 
-        return this.state.poolData?.apiResponse.history_info.left_amount
+        return this.state.apiResponse?.history_info?.left_amount
     }
 
     public get userHistoryRightAmount(): string | undefined | null {
@@ -365,18 +477,12 @@ export class FarmingDataStore {
             return null
         }
 
-        return this.state.poolData?.apiResponse.history_info.right_amount
+        return this.state.apiResponse?.history_info?.right_amount
     }
 
     public get userHistoryLastUpdateTime(): number | undefined {
-        const { userData } = this.state
-
-        if (!userData) {
-            return undefined
-        }
-
-        const depositTimestamp = userData.userLastDepositTransaction?.timestampBlock
-        const withdrawTimestamp = userData.userLastWithdrawTransaction?.timestampBlock
+        const depositTimestamp = this.state.userLastDepositTransaction?.timestampBlock
+        const withdrawTimestamp = this.state.userLastWithdrawTransaction?.timestampBlock
 
         if (!depositTimestamp && !withdrawTimestamp) {
             return undefined
@@ -390,107 +496,113 @@ export class FarmingDataStore {
     }
 
     public get leftTokenAddress(): string | undefined {
-        return this.state.poolData?.apiResponse.left_address
+        return this.state.apiResponse?.left_address
     }
 
     public get leftTokenSymbol(): string | undefined {
-        return this.state.poolData?.apiResponse.left_currency
+        return this.state.apiResponse?.left_currency
     }
 
     public get rightTokenAddress(): string | undefined {
-        return this.state.poolData?.apiResponse.right_address
+        return this.state.apiResponse?.right_address
     }
 
     public get rightTokenSymbol(): string | undefined {
-        return this.state.poolData?.apiResponse.right_currency
+        return this.state.apiResponse?.right_currency
+    }
+
+    public get symbol(): string | undefined {
+        return this.leftTokenSymbol || this.rightTokenSymbol
+            ? concatSymbols(this.leftTokenSymbol, this.rightTokenSymbol)
+            : this.lpTokenSymbol
     }
 
     public get pairBalanceLeft(): string | undefined {
-        return this.state.poolData?.pairBalances?.left
+        return this.state.pairBalances?.left
     }
 
     public get pairBalanceRight(): string | undefined {
-        return this.state.poolData?.pairBalances?.right
+        return this.state.pairBalances?.right
     }
 
     public get pairBalanceLp(): string | undefined {
-        return this.state.poolData?.pairBalances?.lp
+        return this.state.pairBalances?.lp
     }
 
     public get userLpWalletAmount(): string | undefined {
-        return this.state.userData?.userLpWalletAmount
+        return this.state.userLpWalletAmount
     }
 
     public get userLpFarmingAmount(): string | undefined {
-        return this.state.userData?.userLpFarmingAmount
+        return this.state.userLpFarmingAmount
     }
 
     public get lpTokenAddress(): string | undefined {
-        return this.state.poolData?.apiResponse.token_root_address
+        return this.state.apiResponse?.token_root_address
     }
 
     public get lpTokenSymbol(): string | undefined {
-        return this.state.poolData?.apiResponse.token_root_currency
+        return this.state.apiResponse?.token_root_currency
     }
 
     public get lpTokenDecimals(): number | undefined {
-        return this.state.poolData?.apiResponse.token_root_scale
+        return this.state.apiResponse?.token_root_scale
     }
 
     public get lpTokenBalance(): string | undefined {
-        return this.state.poolData?.apiResponse.pool_balance
+        return this.state.apiResponse?.pool_balance
     }
 
     public get leftTokenBalance(): string | undefined {
-        return this.state.poolData?.apiResponse.left_balance
+        return this.state.apiResponse?.left_balance
     }
 
     public get rightTokenBalance(): string | undefined {
-        return this.state.poolData?.apiResponse.right_balance
+        return this.state.apiResponse?.right_balance
     }
 
     public get poolAddress(): string | undefined {
-        return this.state.poolData?.apiResponse.pool_address
+        return this.state.apiResponse?.pool_address
     }
 
     public get poolOwnerAddress(): string | undefined {
-        return this.state.poolData?.apiResponse.pool_owner_address
+        return this.state.apiResponse?.pool_owner_address
     }
 
     public get userPoolDataAddress(): string | undefined {
-        return this.state.userData?.userPoolDataAddress.toString()
+        return this.state.userPoolDataAddress?.toString()
     }
 
     public get userLpWalletAddress(): string | undefined {
-        return this.state.userData?.userLpWalletAddress.toString()
+        return this.state.userLpWalletAddress?.toString()
     }
 
     public get poolWalletAddress(): string | undefined {
-        return this.state.poolData?.poolDetails?.tokenWallet.toString()
+        return this.state.poolDetails?.tokenWallet.toString()
     }
 
     public get startTime(): number | undefined {
-        return this.state.poolData?.apiResponse.farm_start_time
+        return this.state.apiResponse?.farm_start_time
     }
 
     public get rewardTokensAddress(): string[] | undefined {
-        return this.state.poolData?.apiResponse.reward_token_root_info
+        return this.state.apiResponse?.reward_token_root_info
             .map(reward => reward.reward_root_address)
     }
 
     public get rewardTokensBalanceCumulative(): string[] | undefined {
-        return toJS(this.state.poolData?.poolDetails?.rewardTokenBalanceCumulative)
+        return toJS(this.state.poolDetails?.rewardTokenBalanceCumulative)
     }
 
     public get rewardTokensBalance(): string[] | undefined {
-        return toJS(this.state.poolData?.poolDetails?.rewardTokenBalance)
+        return toJS(this.state.poolDetails?.rewardTokenBalance)
     }
 
     public get rewardTotalBalance(): string | undefined {
-        const { poolData } = this.state
+        const { rewardCurrencies } = this.state
 
         if (
-            !poolData
+            !rewardCurrencies
             || !this.userPendingRewardDebt
             || !this.userPendingRewardEntitled
             || !this.userPendingRewardVested
@@ -499,7 +611,6 @@ export class FarmingDataStore {
             return undefined
         }
 
-        const { rewardCurrencies } = poolData
         if (rewardCurrencies.includes(undefined)) {
             return undefined
         }
@@ -538,61 +649,68 @@ export class FarmingDataStore {
     }
 
     public get userInFarming(): boolean {
-        return Boolean(this.state.userData?.userPendingReward)
+        if (this.wallet.isConnected && this.state.apiResponse) {
+            if (
+                new BigNumber(this.state.apiResponse.user_token_balance).gt(0)
+                || new BigNumber(this.state.apiResponse.user_usdt_balance).gt(0)
+            ) {
+                return true
+            }
+        }
+
+        return Boolean(this.state.userPendingReward)
     }
 
     public get userPendingRewardVested(): string[] | undefined {
-        return toJS(this.state.userData?.userPendingReward?._vested || [])
+        return toJS(this.state.userPendingReward?._vested)
     }
 
     public get userPendingRewardEntitled(): string[] | undefined {
-        return toJS(this.state.userData?.userPendingReward?._entitled || [])
+        return toJS(this.state.userPendingReward?._entitled)
     }
 
     public get userPendingRewardDebt(): string[] | undefined {
-        return toJS(this.state.userData?.userPendingReward?._pool_debt || [])
+        return toJS(this.state.userPendingReward?._pool_debt)
     }
 
     public get userRewardTokensBalance(): string[] | undefined {
-        return toJS(this.state.userData?.userRewardTokensBalance)
+        return toJS(this.state.userRewardTokensBalance)
     }
 
     public get userShare(): string | undefined {
-        return this.state.poolData?.apiResponse.share
+        return this.state.apiResponse?.share
     }
 
     public get vestingTime(): number[] | undefined {
-        const { userData } = this.state
-
-        if (!userData || !userData.userPendingReward) {
+        if (!this.state.userPendingReward) {
             return undefined
         }
 
-        return userData.userPendingReward._vesting_time
+        return this.state.userPendingReward._vesting_time
             .map(seconds => parseInt(seconds, 10) * 1000)
     }
 
     public get vestingRatio(): number | undefined {
-        return this.state.poolData?.apiResponse?.pool_info.vesting_ratio
+        return this.state.apiResponse?.pool_info.vesting_ratio
     }
 
     public get vestingPeriodDays(): string | undefined {
-        if (!this.state.poolData?.apiResponse) {
+        if (!this.state.apiResponse) {
             return undefined
         }
 
-        return new BigNumber(this.state.poolData.apiResponse.pool_info.vesting_period)
+        return new BigNumber(this.state.apiResponse.pool_info.vesting_period)
             .div(SECONDS_IN_DAY)
             .decimalPlaces(0, BigNumber.ROUND_DOWN)
             .toFixed()
     }
 
     public get endTime(): number {
-        if (!this.state.poolData?.apiResponse) {
+        if (!this.state.apiResponse) {
             return 0
         }
 
-        const rounds = this.state.poolData.apiResponse.pool_info.rounds_info
+        const rounds = this.state.apiResponse.pool_info.rounds_info
         const lastRound = rounds[rounds.length - 1]
 
         return lastRound.end_time ? (lastRound.end_time * 1000) : 0
@@ -611,7 +729,7 @@ export class FarmingDataStore {
     }
 
     public get rpsAmount(): string[] | undefined {
-        const apiResponse = this.state.poolData?.apiResponse
+        const { apiResponse } = this.state
 
         if (!apiResponse) {
             return undefined
@@ -641,7 +759,7 @@ export class FarmingDataStore {
     }
 
     public get roundRps(): string[][] | undefined {
-        const apiResponse = this.state.poolData?.apiResponse
+        const { apiResponse } = this.state
 
         if (!apiResponse) {
             return undefined
@@ -661,11 +779,11 @@ export class FarmingDataStore {
     }
 
     public get roundStartTimes(): number[] | undefined {
-        if (!this.state.poolData?.apiResponse) {
+        if (!this.state.apiResponse) {
             return undefined
         }
 
-        return toJS(this.state.poolData.apiResponse.pool_info.rounds_info)
+        return toJS(this.state.apiResponse.pool_info.rounds_info)
             .map(round => round.start_time * 1000)
     }
 
@@ -679,7 +797,7 @@ export class FarmingDataStore {
     }
 
     public get rewardBalanceIsLow(): boolean | undefined {
-        return this.state.poolData?.apiResponse.is_low_balance
+        return this.state.apiResponse?.is_low_balance
     }
 
 }

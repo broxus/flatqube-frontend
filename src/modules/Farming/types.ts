@@ -208,6 +208,7 @@ export type FarmingPoolResponse = {
     tvl_change: string;
     is_low_balance: boolean;
     user_usdt_balance: string;
+    user_token_balance: string;
     pool_info: {
         vesting_period: number;
         vesting_ratio: number;
@@ -217,7 +218,7 @@ export type FarmingPoolResponse = {
             reward_info: RewardInfo[];
         }[];
     };
-    history_info: {
+    history_info?: {
         left_amount: string;
         right_amount: string;
         usdt_amount: string;

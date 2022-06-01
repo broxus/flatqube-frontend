@@ -65,8 +65,8 @@ export function Chart({
                 && typeof barsInfo.from === 'number'
             ) {
                 const tf = timeframe === 'D1' ? 86400 : 3600
-                const newFrom = barsInfo?.from * 1000 + Math.ceil(barsInfo?.barsBefore) * tf * 1000
-                const newTo = barsInfo?.from * 1000
+                const newFrom = barsInfo.from * 1000 + Math.ceil(barsInfo?.barsBefore) * tf * 1000
+                const newTo = barsInfo.from * 1000
 
                 await load?.(
                     newFrom,
@@ -96,6 +96,17 @@ export function Chart({
             window.removeEventListener('orientationchange', handleResize)
         }
     }, [])
+
+    React.useEffect(() => {
+        if (chartRef.current) {
+            const resizeObserver = new ResizeObserver(handleResize)
+            resizeObserver.observe(chartRef.current)
+            return () => {
+                resizeObserver.disconnect()
+            }
+        }
+        return undefined
+    }, [chartRef.current])
 
     React.useEffect(() => {
         if (chartRef.current != null && chart.current === undefined) {

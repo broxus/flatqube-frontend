@@ -157,23 +157,37 @@ export function usePoolsContent(): UsePoolsContent {
             addresses: Address[],
             userAddress: string,
         ): Promise<[PoolData[], LockedLp]> => {
-            const result = await Promise.all([
-                Pool.pools(addresses, new Address(userAddress)),
+            const walletAddress = new Address(userAddress)
+            const [pools, lockedLps] = await Promise.all([
+                Promise.all(addresses.map(address => (
+                    Pool.pool(address, walletAddress)
+                        .catch(() => {
+                            favoritePairs.remove(address.toString())
+                            return undefined
+                        })
+                ))),
                 getLockedLpInFarming(userAddress),
             ])
-            const addressesToSync: string[] = result[0].reduce((acc: string[], pool) => {
-                if (!acc.includes(pool.left.address)) {
-                    acc.push(pool.left.address)
-                }
-                if (!acc.includes(pool.right.address)) {
-                    acc.push(pool.right.address)
-                }
-                return acc
-            }, [])
+
+            const addressesToSync: string[] = pools
+                .reduce((acc: string[], pool) => {
+                    if (pool && !acc.includes(pool.left.address)) {
+                        acc.push(pool.left.address)
+                    }
+                    if (pool && !acc.includes(pool.right.address)) {
+                        acc.push(pool.right.address)
+                    }
+                    return acc
+                }, [])
+
             await Promise.all(
                 addressesToSync.map(address => tokensCache.syncCustomToken(address)),
             )
-            return result
+
+            return [
+                pools.filter(item => item !== undefined) as PoolData[],
+                lockedLps,
+            ]
         }),
         [],
     )

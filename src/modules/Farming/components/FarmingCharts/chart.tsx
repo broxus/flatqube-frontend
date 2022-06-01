@@ -67,13 +67,13 @@ export function FarmingChart({
     }, [timeframe])
 
     return loaded && data.length === 0 ? (
-        <div className="farming-chart__message">
+        <div className="farming-charts__message">
             {intl.formatMessage({
                 id: 'FARMING_CHART_NO_DATA',
             })}
         </div>
     ) : (
-        <div className="farming-chart__chart-wrapper">
+        <div className="farming-charts__chart-wrapper">
             <Chart
                 data={data}
                 timeframe={timeframe}

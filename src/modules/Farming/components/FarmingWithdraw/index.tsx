@@ -6,62 +6,52 @@ import { observer } from 'mobx-react-lite'
 import { FarmingAction } from '@/modules/Farming/components/FarmingAction'
 import { useTokensCache } from '@/stores/TokensCacheService'
 import { formattedAmount, isExists } from '@/utils'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { useFarmingClaimStore } from '@/modules/Farming/stores/FarmingClaimStore'
+import { useFarmingWithdrawStore } from '@/modules/Farming/stores/FarmingWithdrawStore'
 
 enum Tab {
     Claim = 1,
     Withdraw = 2,
 }
 
-type Props = {
-    loading?: boolean;
-    farmingAmount?: string;
-    withdrawAmount?: string;
-    withdrawDisabled?: boolean;
-    claimDisabled?: boolean;
-    tokenSymbol: string;
-    tokenDecimals: number;
-    rewardTokenRoots: string[];
-    rewardAmounts: string[];
-    onChangeWithdraw: (value: string) => void;
-    onWithdraw: (amount: string) => void;
-    onClaim: () => void;
-}
-
-export function FarmingWithdrawInner({
-    loading,
-    farmingAmount = '0',
-    withdrawAmount,
-    withdrawDisabled,
-    claimDisabled,
-    tokenSymbol,
-    tokenDecimals,
-    rewardTokenRoots,
-    rewardAmounts,
-    onChangeWithdraw,
-    onWithdraw,
-    onClaim,
-}: Props): JSX.Element {
+export function FarmingWithdrawInner(): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
+    const farmingData = useFarmingDataStore()
+    const farmingClaimStore = useFarmingClaimStore()
+    const farmingWithdrawStore = useFarmingWithdrawStore()
     const [activeTab, setActiveTab] = React.useState(Tab.Claim)
-    const rewardTokens = rewardTokenRoots.map(root => tokensCache.get(root))
-    const rewards = rewardTokens
-        .map((token, index) => (
-            token && {
-                amount: formattedAmount(rewardAmounts[index], token.decimals, { preserve: true }),
-                symbol: token.symbol,
-            }
-        ))
-        .filter(isExists)
+
+    const rewardTokens = farmingData.rewardTokensAddress?.map(root => tokensCache.get(root))
+
+    const rewards = farmingData.userPendingRewardVested && rewardTokens
+        ? rewardTokens
+            .map((token, index) => (
+                token && farmingData.userPendingRewardVested
+                    ? {
+                        symbol: token.symbol,
+                        amount: formattedAmount(
+                            farmingData.userPendingRewardVested[index],
+                            token.decimals,
+                            { preserve: true },
+                        ),
+                    }
+                    : undefined
+            ))
+            .filter(isExists)
+        : undefined
 
     const maxValue = React.useMemo(
-        () => new BigNumber(farmingAmount).shiftedBy(-tokenDecimals).toFixed(),
-        [farmingAmount, tokenDecimals],
+        () => (farmingData.userLpFarmingAmount !== undefined && farmingData.lpTokenDecimals !== undefined
+            ? new BigNumber(farmingData.userLpFarmingAmount).shiftedBy(-farmingData.lpTokenDecimals).toFixed()
+            : '0'),
+        [farmingData.userLpFarmingAmount, farmingData.lpTokenDecimals],
     )
 
     const balance = React.useMemo(
-        () => formattedAmount(farmingAmount, tokenDecimals, { preserve: true }),
-        [farmingAmount, tokenDecimals],
+        () => formattedAmount(farmingData.userLpFarmingAmount, farmingData.lpTokenDecimals, { preserve: true }),
+        [farmingData.userLpFarmingAmount, farmingData.lpTokenDecimals],
     )
 
     const onClickClaimTab = () => {
@@ -71,6 +61,11 @@ export function FarmingWithdrawInner({
     const onClickWithdrawTab = () => {
         setActiveTab(Tab.Withdraw)
     }
+
+    React.useEffect(() => () => {
+        farmingWithdrawStore.dispose()
+        farmingClaimStore.dispose()
+    }, [])
 
     return (
         <div className="farming-balance-panel farming-balance-panel_withdraw">
@@ -101,32 +96,34 @@ export function FarmingWithdrawInner({
 
             {activeTab === Tab.Claim && (
                 <FarmingAction
-                    decimals={tokenDecimals}
+                    decimals={farmingData.lpTokenDecimals}
                     inputDisabled
-                    loading={loading}
-                    submitDisabled={claimDisabled}
+                    loading={farmingWithdrawStore.loading || farmingClaimStore.loading}
+                    submitDisabled={!farmingClaimStore.claimIsAvailable}
                     action={intl.formatMessage({
                         id: 'FARMING_BALANCE_WITHDRAW_ACTION_CLAIM',
                     })}
-                    value={rewards.map(({ amount, symbol }) => (
-                        intl.formatMessage({
-                            id: 'FARMING_BALANCE_TOKEN',
-                        }, {
-                            amount,
-                            symbol,
-                        })
-                    )).join(', ')}
-                    onSubmit={onClaim}
+                    value={rewards
+                        ?.map(({ amount, symbol }) => (
+                            intl.formatMessage({
+                                id: 'FARMING_BALANCE_TOKEN',
+                            }, {
+                                amount,
+                                symbol,
+                            })
+                        ))
+                        .join(', ')}
+                    onSubmit={farmingClaimStore.claim}
                 />
             )}
 
             {activeTab === Tab.Withdraw && (
                 <FarmingAction
-                    decimals={tokenDecimals}
-                    loading={loading}
-                    value={withdrawAmount || ''}
+                    decimals={farmingData.lpTokenDecimals}
+                    loading={farmingWithdrawStore.loading || farmingClaimStore.loading}
+                    value={farmingWithdrawStore.amount || ''}
                     maxValue={maxValue}
-                    submitDisabled={withdrawDisabled}
+                    submitDisabled={!farmingWithdrawStore.amountIsValid}
                     action={intl.formatMessage({
                         id: 'FARMING_BALANCE_WITHDRAW_ACTION_WITHDRAW',
                     })}
@@ -134,10 +131,10 @@ export function FarmingWithdrawInner({
                         id: 'FARMING_BALANCE_WITHDRAW_BALANCE',
                     }, {
                         value: balance,
-                        symbol: tokenSymbol,
+                        symbol: farmingData.lpTokenSymbol,
                     })}
-                    onChange={onChangeWithdraw}
-                    onSubmit={onWithdraw}
+                    onChange={farmingWithdrawStore.setAmount}
+                    onSubmit={farmingWithdrawStore.withdraw}
                 />
             )}
         </div>

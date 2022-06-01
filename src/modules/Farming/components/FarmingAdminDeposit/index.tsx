@@ -7,32 +7,34 @@ import { FarmingAdminDepositBalance } from '@/modules/Farming/components/Farming
 import { FarmingAdminDepositInput } from '@/modules/Farming/components/FarmingAdminDeposit/input'
 import { useTokensCache } from '@/stores/TokensCacheService'
 import { formattedTokenAmount } from '@/utils'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { useFarmingAdminDepositStore } from '@/modules/Farming/stores/FarmingAdminDepositStore'
 
 import './index.scss'
 
-type Props = {
-    formData: {
-        amount: string;
-        loading: boolean;
-        tokenRoot: string;
-        userBalance: string;
-        poolBalance: string;
-        valid: boolean;
-    }[];
-    showWarning?: boolean;
-    onChange: (index: number, value: string) => void;
-    onSubmit: (index: number) => void;
-}
-
-function FarmingAdminDepositInner({
-    showWarning,
-    formData,
-    onChange,
-    onSubmit,
-}: Props): JSX.Element {
+function FarmingAdminDepositInner(): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
+    const farmingData = useFarmingDataStore()
+    const farmingAdminDepositStore = useFarmingAdminDepositStore()
+
+    const formData = (farmingData.rewardTokensAddress || []).map((address, index) => ({
+        tokenRoot: address,
+        amount: farmingAdminDepositStore.amounts[index],
+        loading: farmingAdminDepositStore.loadings[index],
+        valid: farmingAdminDepositStore.amountsIsValid[index],
+        userBalance: (farmingData.userRewardTokensBalance || [])[index],
+        poolBalance: (farmingData.rewardTokensBalanceCumulative || [])[index],
+    }))
+
     const tokens = formData.map(({ tokenRoot }) => tokensCache.get(tokenRoot))
+
+    const showWarning = !farmingAdminDepositStore.enoughTokensBalance
+        && farmingData.rewardTokensBalanceCumulative !== undefined
+
+    React.useEffect(() => () => {
+        farmingAdminDepositStore.dispose()
+    }, [])
 
     return (
         <div className="farming-panel">
@@ -80,8 +82,8 @@ function FarmingAdminDepositInner({
                                 valid={formData[index].valid}
                                 loading={formData[index].loading}
                                 index={index}
-                                onChange={onChange}
-                                onSubmit={onSubmit}
+                                onChange={farmingAdminDepositStore.setAmount}
+                                onSubmit={farmingAdminDepositStore.deposit}
                             />
                         </div>
                     )

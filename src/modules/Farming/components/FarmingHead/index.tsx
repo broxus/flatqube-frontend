@@ -9,8 +9,11 @@ import { AccountExplorerLink } from '@/components/common/AccountExplorerLink'
 import { FarmingStatus } from '@/modules/Farming/components/FarmingStatus'
 import { FarmingToggleButton } from '@/modules/Farming/components/FarmingToggleButton'
 import { useTokensCache } from '@/stores/TokensCacheService'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { Placeholder } from '@/components/common/Placeholder'
+import { Button } from '@/components/common/Button'
+import { appRoutes } from '@/routes'
 import {
-    concatSymbols,
     formatDate,
     formattedAmount,
     isExists,
@@ -18,94 +21,105 @@ import {
 
 import './index.scss'
 
-type Props = {
-    apr?: string | null;
-    leftTokenRoot?: string;
-    rightTokenRoot?: string;
-    rootTokenAddress: string;
-    rootTokenSymbol: string;
-    startTime: number;
-    endTime?: number;
-    rewardTokenRoots: string[];
-    poolAddress: string;
-}
-
-export function FarmingHeadInner({
-    apr,
-    leftTokenRoot,
-    rightTokenRoot,
-    rootTokenAddress,
-    rootTokenSymbol,
-    startTime,
-    endTime,
-    rewardTokenRoots,
-    poolAddress,
-}: Props): JSX.Element {
+export function FarmingHeadInner(): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
-    const leftToken = leftTokenRoot && tokensCache.get(leftTokenRoot)
-    const rightToken = rightTokenRoot && tokensCache.get(rightTokenRoot)
-    const symbol = leftToken && rightToken
-        ? concatSymbols(leftToken.symbol, rightToken.symbol)
-        : rootTokenSymbol
+    const farmingData = useFarmingDataStore()
 
-    const rewardTokens = rewardTokenRoots
-        .map(root => tokensCache.get(root))
+    const leftToken = farmingData.leftTokenAddress
+        && tokensCache.get(farmingData.leftTokenAddress)
+
+    const rightToken = farmingData.rightTokenAddress
+        && tokensCache.get(farmingData.rightTokenAddress)
+
+    const rewardTokens = farmingData.rewardTokensAddress
+        ?.map(root => tokensCache.get(root))
         .filter(isExists)
+
+    if (!farmingData.hasBaseData) {
+        return (
+            <div className="farming-header">
+                <div className="farming-header__info">
+                    <Placeholder circle width={32} />
+                    <div className="farming-header__main">
+                        <h2 className="section-title">
+                            <Placeholder width={370} />
+                        </h2>
+                        <div className="farming-header__status">
+                            <Placeholder width={50} />
+                            <Placeholder width={130} />
+                            <Placeholder width={50} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="farming-header">
             <div className="farming-header__info">
                 {leftToken && rightToken ? (
                     <PairIcons
-                        leftToken={leftToken && {
+                        leftToken={{
                             icon: leftToken.icon,
                             root: leftToken.root,
                             name: leftToken.symbol,
                         }}
-                        rightToken={rightToken && {
+                        rightToken={{
                             icon: rightToken.icon,
                             root: rightToken.root,
                             name: rightToken.symbol,
                         }}
                     />
                 ) : (
-                    <PairIcons
-                        leftToken={{
-                            root: rootTokenAddress,
-                        }}
-                    />
+                    farmingData.lpTokenAddress && (
+                        <PairIcons
+                            leftToken={{
+                                root: farmingData.lpTokenAddress,
+                            }}
+                        />
+                    )
                 )}
+
                 <div className="farming-header__main">
                     <h2 className="section-title">
-                        {intl.formatMessage({
-                            id: 'FARMING_ITEM_TITLE',
-                        }, {
-                            symbol,
-                        })}
+                        {farmingData.symbol ? (
+                            intl.formatMessage({
+                                id: 'FARMING_ITEM_TITLE',
+                            }, {
+                                symbol: farmingData.symbol,
+                            })
+                        ) : (
+                            '\u200B'
+                        )}
                     </h2>
+
                     <div className="farming-header__status">
-                        {apr && (
+                        {farmingData.apr && (
                             <div>
                                 {intl.formatMessage({
                                     id: 'FARMING_ITEM_APR',
                                 }, {
-                                    value: formattedAmount(apr),
+                                    value: formattedAmount(farmingData.apr),
                                 })}
                             </div>
                         )}
+
                         <div>
-                            {startTime ? formatDate(startTime) : ''}
-                            {endTime ? ` - ${formatDate(endTime)}` : ''}
+                            {farmingData.startTime ? formatDate(farmingData.startTime) : '\u200B'}
+                            {farmingData.endTime ? ` - ${formatDate(farmingData.endTime)}` : ''}
                         </div>
-                        {startTime && (
+
+                        {farmingData.startTime && (
                             <FarmingStatus
-                                startTime={startTime}
-                                endTime={endTime}
+                                startTime={farmingData.startTime}
+                                endTime={farmingData.endTime}
                             />
                         )}
                     </div>
                 </div>
+
                 {rewardTokens && (
                     <>
                         <Icon icon="directionRight" ratio={1.8} />
@@ -120,17 +134,31 @@ export function FarmingHeadInner({
                 )}
             </div>
 
-            {poolAddress && (
-                <div>
-                    <FarmingToggleButton
-                        poolAddress={poolAddress}
-                    />
-                    <AccountExplorerLink
-                        address={poolAddress}
-                        className="btn btn-md btn-square btn-icon"
-                    >
-                        <Icon icon="externalLink" />
-                    </AccountExplorerLink>
+            {farmingData.poolAddress && (
+                <div className="farming-header__actions">
+                    <div>
+                        <FarmingToggleButton
+                            poolAddress={farmingData.poolAddress}
+                        />
+                        <AccountExplorerLink
+                            address={farmingData.poolAddress}
+                            className="btn btn-md btn-square btn-icon"
+                        >
+                            <Icon icon="externalLink" />
+                        </AccountExplorerLink>
+                    </div>
+                    {farmingData.leftTokenAddress && farmingData.rightTokenAddress && (
+                        <Button
+                            size="md"
+                            type="secondary"
+                            link={appRoutes.poolCreate.makeUrl({
+                                leftTokenRoot: farmingData.leftTokenAddress,
+                                rightTokenRoot: farmingData.rightTokenAddress,
+                            })}
+                        >
+                            {intl.formatMessage({ id: 'FARMING_MESSAGE_GET_LP_GET' })}
+                        </Button>
+                    )}
                 </div>
             )}
         </div>

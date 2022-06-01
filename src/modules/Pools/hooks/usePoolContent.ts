@@ -6,11 +6,9 @@ import { useIntl } from 'react-intl'
 
 import { PairResponse } from '@/modules/Pairs/types'
 import { FarmingPoolsItemResponse, RewardTokenRootInfo } from '@/modules/Farming/types'
-import { useDexAccount } from '@/stores/DexAccountService'
 import { useWallet } from '@/stores/WalletService'
 import { TokenCache, useTokensCache } from '@/stores/TokensCacheService'
 import { useApi } from '@/modules/Pools/hooks/useApi'
-import { useDexBalances } from '@/modules/Pools/hooks/useDexBalances'
 import { FarmingTableProps } from '@/modules/Farming/components/FarmingTable'
 import {
     error, formattedAmount, formattedTokenAmount,
@@ -40,8 +38,7 @@ type FarmInfo = {
     balance: FarmingBalanceInfo;
 }
 
-type UsePoolContent = {
-    loading?: boolean;
+export type PoolContent = {
     priceLeftToRight?: string;
     priceRightToLeft?: string;
     lockedLp?: string;
@@ -54,35 +51,42 @@ type UsePoolContent = {
     totalRight?: string;
     farmItems?: FarmingTableProps['items'];
     pool?: PoolData;
-    pairAddress?: Address;
-    ownerAddress?: Address;
+    pairAddress?: string;
+    ownerAddress?: string;
     leftToken?: TokenCache;
     rightToken?: TokenCache;
     totalShare?: string;
+    farmLoading?: boolean;
+    notFounded?: boolean;
 }
 
-export function usePoolContent(): UsePoolContent {
+type Params = {
+    address: string;
+}
+
+export function usePoolContent(): PoolContent {
     const intl = useIntl()
     const api = useApi()
-    const params = useParams<{ address: string }>()
+    const params = useParams<Params>()
     const wallet = useWallet()
-    const dexAccount = useDexAccount()
-    const dexBalances = useDexBalances()
     const tokensCache = useTokensCache()
-    const [loading, setLoading] = React.useState(true)
     const [pool, setPool] = React.useState<PoolData | undefined>()
     const [pair, setPair] = React.useState<PairResponse | undefined>()
     const [farm, setFarm] = React.useState<FarmInfo[]>([])
+    const [farmLoading, setFarmLoading] = React.useState(true)
+    const [notFounded, setNotFounded] = React.useState(false)
 
-    if (!wallet.address || !dexAccount.address) {
+    if (!wallet.address) {
         return {}
     }
 
-    const pairAddress = new Address(params.address)
-    const ownerAddress = new Address(wallet.address)
+    const leftToken = React.useMemo(() => (
+        pool && tokensCache.get(pool.left.address)
+    ), [pool])
 
-    const leftToken = pool && tokensCache.get(pool.left.address)
-    const rightToken = pool && tokensCache.get(pool.right.address)
+    const rightToken = React.useMemo(() => (
+        pool && tokensCache.get(pool.right.address)
+    ), [pool])
 
     const priceLeftToRight = React.useMemo(() => (
         pair && pool && leftToken && rightToken && getPrice(
@@ -104,8 +108,8 @@ export function usePoolContent(): UsePoolContent {
 
     const lockedLp = React.useMemo(() => (
         pool && farm.reduce((acc, item) => (
-            acc.plus(item.info.user_token_balance).shiftedBy(item.info.token_root_scale)
-        ), new BigNumber(0)).toFixed()
+            acc.plus(item.info.user_token_balance)
+        ), new BigNumber(0)).shiftedBy(pool.lp.decimals).toFixed()
     ), [pool, farm])
 
     const lockedLeft = React.useMemo(() => (
@@ -318,40 +322,74 @@ export function usePoolContent(): UsePoolContent {
         }))
     }
 
-    const getData = async () => {
+    const syncPoolData = async () => {
+        if (wallet.address) {
+            try {
+                const poolData = await Pool.pool(
+                    new Address(params.address),
+                    new Address(wallet.address),
+                )
+                tokensCache.syncCustomToken(poolData.left.address)
+                tokensCache.syncCustomToken(poolData.right.address)
+                setPool(poolData)
+            }
+            catch (e) {
+                error(e)
+            }
+        }
+        else {
+            setPool(undefined)
+        }
+    }
+
+    const syncPairData = async () => {
         try {
-            const [poolData, pairData] = await Promise.all([
-                Pool.pool(pairAddress, ownerAddress),
-                api.pair({ address: pairAddress.toString() }),
-            ])
-            await Promise.all([
-                tokensCache.syncCustomToken(poolData.left.address),
-                tokensCache.syncCustomToken(poolData.right.address),
-            ])
-            const farmData = await getFarmData(
-                new Address(poolData.lp.address),
-                ownerAddress,
-            )
-            setPool(poolData)
+            const pairData = await api.pair({
+                address: params.address,
+            })
             setPair(pairData)
-            setFarm(farmData)
         }
         catch (e) {
+            setNotFounded(true)
             error(e)
         }
-        setLoading(false)
+    }
+
+    const syncFarmData = async () => {
+        if (pool && wallet.address) {
+            setFarmLoading(true)
+            try {
+                const farmData = await getFarmData(
+                    new Address(pool.lp.address),
+                    new Address(wallet.address),
+                )
+                setFarm(farmData)
+            }
+            catch (e) {
+                error(e)
+            }
+            finally {
+                setFarmLoading(false)
+            }
+        }
+        else {
+            setFarm([])
+        }
     }
 
     React.useEffect(() => {
-        getData()
-    }, [
-        dexBalances,
-        params.address,
-        wallet.address,
-    ])
+        syncPoolData()
+    }, [params.address, wallet.address])
+
+    React.useEffect(() => {
+        syncPairData()
+    }, [params.address])
+
+    React.useEffect(() => {
+        syncFarmData()
+    }, [pool])
 
     return {
-        loading,
         priceLeftToRight,
         priceRightToLeft,
         lockedLp,
@@ -364,10 +402,12 @@ export function usePoolContent(): UsePoolContent {
         totalRight,
         farmItems,
         pool,
-        pairAddress,
-        ownerAddress,
         leftToken,
         rightToken,
         totalShare,
+        farmLoading,
+        notFounded,
+        pairAddress: params.address,
+        ownerAddress: wallet.address,
     }
 }

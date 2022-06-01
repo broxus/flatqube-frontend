@@ -14,6 +14,7 @@ import { Stats } from '@/modules/Currencies/components/Stats'
 import { useCurrencyStore } from '@/modules/Currencies/providers/CurrencyStoreProvider'
 import { useTokensCache } from '@/stores/TokensCacheService'
 import { parseCurrencyBillions, sliceAddress } from '@/utils'
+import { Placeholder } from '@/components/common/Placeholder'
 
 import './currency.scss'
 
@@ -28,7 +29,9 @@ function CurrencyInner(): JSX.Element {
     ), [store.currency?.address, tokensCache.tokens])
 
     const price = React.useMemo(
-        () => parseCurrencyBillions(store.currency?.price),
+        () => (store.currency?.price
+            ? parseCurrencyBillions(store.currency?.price)
+            : undefined),
         [store.currency?.price],
     )
 
@@ -36,7 +39,7 @@ function CurrencyInner(): JSX.Element {
         <div className="container container--large">
             <section className="section">
                 <Breadcrumb
-                    items={[{
+                    items={store.currency ? [{
                         link: '/tokens',
                         title: intl.formatMessage({ id: 'CURRENCY_BREADCRUMB_ROOT' }),
                     }, {
@@ -46,65 +49,87 @@ function CurrencyInner(): JSX.Element {
                                 <span>{sliceAddress(store.currency?.address)}</span>
                             </>
                         ),
+                    }] : [{
+                        title: (
+                            <Placeholder width={150} />
+                        ),
                     }]}
                 />
 
                 <header className="currency-page__header">
                     <div>
                         <div className="currency-page__token">
-                            <TokenIcon
-                                address={token?.root || store.currency?.address}
-                                className="currency-page__token-icon"
-                                name={token?.symbol}
-                                size="small"
-                                icon={token?.icon}
-                            />
-                            <div className="currency-page__token-name">
-                                {token?.name || store.currency?.currency}
-                                <span>
-                                    {token?.symbol}
-                                </span>
-                            </div>
+                            {token || store.currency ? (
+                                <>
+                                    <TokenIcon
+                                        address={token?.root || store.currency?.address}
+                                        className="currency-page__token-icon"
+                                        name={token?.symbol}
+                                        size="small"
+                                        icon={token?.icon}
+                                    />
+                                    <div className="currency-page__token-name">
+                                        {token?.name || store.currency?.currency}
+                                        <span>
+                                            {token?.symbol}
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Placeholder circle width={24} />
+                                    <Placeholder width={170} />
+                                </>
+                            )}
                         </div>
                         <div className="currency-page__price">
                             <div className="currency-page__price-currency-cost">
-                                {price}
+                                {price ?? (
+                                    <Placeholder width={100} />
+                                )}
                             </div>
                             {store.currency?.priceChange !== undefined && (
                                 <RateChange value={store.currency.priceChange} />
                             )}
                         </div>
                     </div>
-                    {store.currency?.address !== undefined && (
-                        <div className="currency-page__header-actions">
+
+                    <div className="currency-page__header-actions">
+                        {store.currency?.address && (
                             <AccountExplorerLink
                                 address={store.currency?.address}
                                 className="btn btn-md btn-icon"
                             >
                                 <Icon icon="externalLink" />
                             </AccountExplorerLink>
-                            <div className="currency-page__header-actions-inner">
-                                <Button
-                                    size="md"
-                                    type="secondary"
-                                    link={`/pool/${store.currency?.address}`}
-                                >
-                                    {intl.formatMessage({
-                                        id: 'CURRENCY_ADD_LIQUIDITY_BTN_TEXT',
-                                    })}
-                                </Button>
-                                <Button
-                                    size="md"
-                                    type="primary"
-                                    link={`/swap/${store.currency?.address}`}
-                                >
-                                    {intl.formatMessage({
-                                        id: 'CURRENCY_TRADE_BTN_TEXT',
-                                    })}
-                                </Button>
-                            </div>
+                        )}
+                        <div className="currency-page__header-actions-inner">
+                            <Button
+                                size="md"
+                                type="secondary"
+                                link={store.currency
+                                    ? `/pool/${store.currency?.address}`
+                                    : undefined}
+                                disabled={!store.currency}
+                            >
+                                {intl.formatMessage({
+                                    id: 'CURRENCY_ADD_LIQUIDITY_BTN_TEXT',
+                                })}
+                            </Button>
+                            <Button
+                                size="md"
+                                type="primary"
+                                link={store.currency
+                                    ? `/swap/${store.currency?.address}`
+                                    : undefined}
+                                disabled={!store.currency}
+                            >
+                                {intl.formatMessage({
+                                    id: 'CURRENCY_TRADE_BTN_TEXT',
+                                })}
+                            </Button>
                         </div>
-                    )}
+                    </div>
                 </header>
 
                 <Stats />

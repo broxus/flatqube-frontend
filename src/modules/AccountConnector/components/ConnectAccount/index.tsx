@@ -2,9 +2,9 @@ import * as React from 'react'
 import { useIntl } from 'react-intl'
 import { observer } from 'mobx-react-lite'
 
-import { ContentLoader } from '@/components/common/ContentLoader'
 import { useDexAccount } from '@/stores/DexAccountService'
 import { error } from '@/utils'
+import { Button } from '@/components/common/Button'
 
 export const ConnectAccount = observer((): JSX.Element => {
     const intl = useIntl()
@@ -26,22 +26,18 @@ export const ConnectAccount = observer((): JSX.Element => {
 
     return (
         <div className="card card--small card--flat">
-            <div className="message message_faded">
+            <div className="message message_system">
                 <p>
                     {intl.formatMessage({ id: 'ACCOUNT_CONNECTOR_NOTE' })}
                 </p>
 
-                <button
-                    className="btn btn-secondary btn-with-icon"
-                    onClick={connect}
+                <Button
+                    type="secondary"
                     disabled={loading}
-                    type="button"
+                    onClick={connect}
                 >
-                    {intl.formatMessage({ id: 'ACCOUNT_CONNECTOR_BUTTON' })}
-                    {loading && (
-                        <ContentLoader slim size="s" />
-                    )}
-                </button>
+                    {intl.formatMessage({ id: 'EVER_WALLET_CONNECT_BTN_TEXT' })}
+                </Button>
             </div>
         </div>
     )

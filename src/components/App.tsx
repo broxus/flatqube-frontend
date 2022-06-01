@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom'
 import { Observer } from 'mobx-react-lite'
 
+import { ScrollManager } from '@/components/layout/ScrollManager'
 import { Footer } from '@/components/layout/Footer'
 import { TokensUpgradeModal } from '@/components/common/TokensUpgradeModal'
 import { WalletConnectingModal } from '@/components/common/WalletConnectingModal'
@@ -56,69 +57,71 @@ export function App(): JSX.Element {
             onError={noop}
         >
             <Router>
-                <div className="wrapper">
-                    <Header key="header" />
+                <ScrollManager>
+                    <div className="wrapper">
+                        <Header key="header" />
 
-                    <main className="main">
-                        <Switch>
-                            <Route exact path="/">
-                                <Redirect exact to={appRoutes.swap.makeUrl()} />
-                            </Route>
+                        <main className="main">
+                            <Switch>
+                                <Route exact path="/">
+                                    <Redirect exact to={appRoutes.swap.makeUrl()} />
+                                </Route>
 
-                            <Route path={appRoutes.swap.path}>
-                                <Swap />
-                            </Route>
+                                <Route path={appRoutes.swap.path}>
+                                    <Swap />
+                                </Route>
 
-                            <Route exact path={appRoutes.poolList.path}>
-                                <Pools />
-                            </Route>
-                            <Route exact path={appRoutes.poolRemoveLiquidity.path}>
-                                <BurnLiquidity />
-                            </Route>
-                            <Route exact path={appRoutes.poolItem.path}>
-                                <Pool />
-                            </Route>
-                            <Route exact path={appRoutes.poolCreate.path}>
-                                <AddLiquidityPool />
-                            </Route>
+                                <Route exact path={appRoutes.poolList.path}>
+                                    <Pools />
+                                </Route>
+                                <Route exact path={appRoutes.poolRemoveLiquidity.path}>
+                                    <BurnLiquidity />
+                                </Route>
+                                <Route exact path={appRoutes.poolItem.path}>
+                                    <Pool />
+                                </Route>
+                                <Route exact path={appRoutes.poolCreate.path}>
+                                    <AddLiquidityPool />
+                                </Route>
 
-                            <Route exact path={appRoutes.tokenList.path}>
-                                <Tokens />
-                            </Route>
-                            <Route exact path={appRoutes.tokenItem.path}>
-                                <Token />
-                            </Route>
+                                <Route exact path={appRoutes.tokenList.path}>
+                                    <Tokens />
+                                </Route>
+                                <Route exact path={appRoutes.tokenItem.path}>
+                                    <Token />
+                                </Route>
 
-                            <Route exact path={appRoutes.pairList.path}>
-                                <Pairs />
-                            </Route>
-                            <Route exact path={appRoutes.pairItem.path}>
-                                <Pair />
-                            </Route>
+                                <Route exact path={appRoutes.pairList.path}>
+                                    <Pairs />
+                                </Route>
+                                <Route exact path={appRoutes.pairItem.path}>
+                                    <Pair />
+                                </Route>
 
-                            <Route exact path={appRoutes.farming.path}>
-                                <Farming />
-                            </Route>
-                            <Route exact path={appRoutes.farmingCreate.path}>
-                                <CreateFarmPool />
-                            </Route>
-                            <Route exact path={appRoutes.farmingItem.path}>
-                                <FarmingItem />
-                            </Route>
+                                <Route exact path={appRoutes.farming.path}>
+                                    <Farming />
+                                </Route>
+                                <Route exact path={appRoutes.farmingCreate.path}>
+                                    <CreateFarmPool />
+                                </Route>
+                                <Route exact path={appRoutes.farmingItem.path}>
+                                    <FarmingItem />
+                                </Route>
 
-                            <Route exact path={appRoutes.builder.path}>
-                                <Builder />
-                            </Route>
-                            <Route path={appRoutes.builderCreate.path}>
-                                <CreateToken />
-                            </Route>
-                            <Route exact path={appRoutes.builderItem.path}>
-                                <CustomToken />
-                            </Route>
-                        </Switch>
-                    </main>
-                    <Footer key="footer" />
-                </div>
+                                <Route exact path={appRoutes.builder.path}>
+                                    <Builder />
+                                </Route>
+                                <Route path={appRoutes.builderCreate.path}>
+                                    <CreateToken />
+                                </Route>
+                                <Route exact path={appRoutes.builderItem.path}>
+                                    <CustomToken />
+                                </Route>
+                            </Switch>
+                        </main>
+                        <Footer key="footer" />
+                    </div>
+                </ScrollManager>
                 <WalletConnectingModal />
                 <Observer>
                     {() => (

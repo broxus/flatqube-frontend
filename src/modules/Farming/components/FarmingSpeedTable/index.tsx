@@ -5,25 +5,19 @@ import { useIntl } from 'react-intl'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { useTokensCache } from '@/stores/TokensCacheService'
 import { formatDateUTC, formattedAmount } from '@/utils'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { Placeholder } from '@/components/common/Placeholder'
 
 import './index.scss'
 
-type Props = {
-    rewardTokensRoots: string[];
-    roundStartTimes: number[];
-    roundRps: string[][];
-    endTime: number;
-}
-
-export function FarmingSpeedTableInner({
-    rewardTokensRoots,
-    roundStartTimes,
-    roundRps,
-    endTime,
-}: Props): JSX.Element {
+export function FarmingSpeedTableInner(): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
-    const rewardTokens = rewardTokensRoots.map(root => tokensCache.get(root))
+    const farmingData = useFarmingDataStore()
+    const rewardTokens = farmingData.rewardTokensAddress
+        ?.map(root => tokensCache.get(root))
+
+    const { roundStartTimes, roundRps, endTime } = farmingData
 
     return (
         <div className="card card--small card--flat">
@@ -46,46 +40,83 @@ export function FarmingSpeedTableInner({
                     </div>
                 </div>
 
-                {roundRps.map((rps, index) => (
-                    /* eslint-disable react/no-array-index-key */
-                    <div className="list__row" key={index}>
-                        <div className="list__cell list__cell--left">
-                            {rewardTokens.map((token, idx) => (
-                                token && (
-                                    <div className="farming-speed__token" key={token.root}>
-                                        <TokenIcon
-                                            size="xsmall"
-                                            icon={token.icon}
-                                            address={token.root}
-                                        />
-                                        {intl.formatMessage({
-                                            id: 'FARMING_TOKEN',
-                                        }, {
-                                            amount: formattedAmount(rps[idx], undefined, {
-                                                preserve: true,
-                                            }),
-                                            symbol: token.symbol,
-                                        })}
-                                    </div>
-                                )
-                            ))}
+                {(roundRps === undefined || rewardTokens === undefined) ? (
+                    <>
+                        <div className="list__row">
+                            <div className="list__cell list__cell--left">
+                                <div className="farming-speed__token">
+                                    <Placeholder width={120} />
+                                </div>
+                                <div className="farming-speed__token">
+                                    <Placeholder width={120} />
+                                </div>
+                            </div>
+                            <div className="list__cell list__cell--right">
+                                <Placeholder width={120} />
+                            </div>
+                            <div className="list__cell list__cell--right">
+                                <Placeholder width={120} />
+                            </div>
                         </div>
-                        <div className="list__cell list__cell--right">
-                            {roundStartTimes[index] ? formatDateUTC(roundStartTimes[index]) : '—'}
+                        <div className="list__row">
+                            <div className="list__cell list__cell--left">
+                                <div className="farming-speed__token">
+                                    <Placeholder width={120} />
+                                </div>
+                                <div className="farming-speed__token">
+                                    <Placeholder width={120} />
+                                </div>
+                            </div>
+                            <div className="list__cell list__cell--right">
+                                <Placeholder width={120} />
+                            </div>
+                            <div className="list__cell list__cell--right">
+                                <Placeholder width={120} />
+                            </div>
                         </div>
-                        <div className="list__cell list__cell--right">
-                            {endTime > 0 && !roundStartTimes[index + 1] ? (
-                                formatDateUTC(endTime)
-                            ) : (
-                                <>
-                                    {roundStartTimes[index + 1]
-                                        ? formatDateUTC(roundStartTimes[index + 1])
-                                        : '—'}
-                                </>
-                            )}
+                    </>
+                ) : (
+                    roundRps?.map((rps, index) => (
+                        /* eslint-disable react/no-array-index-key */
+                        <div className="list__row" key={index}>
+                            <div className="list__cell list__cell--left">
+                                {rewardTokens.map((token, idx) => (
+                                    token && (
+                                        <div className="farming-speed__token" key={token.root}>
+                                            <TokenIcon
+                                                size="xsmall"
+                                                icon={token.icon}
+                                                address={token.root}
+                                            />
+                                            {intl.formatMessage({
+                                                id: 'FARMING_TOKEN',
+                                            }, {
+                                                amount: formattedAmount(rps[idx], undefined, {
+                                                    preserve: true,
+                                                }),
+                                                symbol: token.symbol,
+                                            })}
+                                        </div>
+                                    )
+                                ))}
+                            </div>
+                            <div className="list__cell list__cell--right">
+                                {roundStartTimes?.[index] ? formatDateUTC(roundStartTimes[index]) : '—'}
+                            </div>
+                            <div className="list__cell list__cell--right">
+                                {endTime > 0 && !roundStartTimes?.[index + 1] ? (
+                                    formatDateUTC(endTime)
+                                ) : (
+                                    <>
+                                        {roundStartTimes?.[index + 1]
+                                            ? formatDateUTC(roundStartTimes[index + 1])
+                                            : '—'}
+                                    </>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))
+                )}
             </div>
         </div>
     )

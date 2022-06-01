@@ -1,30 +1,39 @@
 import * as React from 'react'
 import { observer } from 'mobx-react-lite'
-import { FormattedMessage, useIntl } from 'react-intl'
-import { Link } from 'react-router-dom'
+import { useIntl } from 'react-intl'
 
+import { useFavoritePairs } from '@/stores/FavoritePairs'
 import { usePoolsContent } from '@/modules/Pools/hooks/usePoolsContent'
 import { Pagination } from '@/components/common/Pagination'
-import { ContentLoader } from '@/components/common/ContentLoader'
 import { PanelLoader } from '@/components/common/PanelLoader'
-
-import { Item } from './item'
+import { Item } from '@/modules/Pools/components/PoolsContent/item'
+import { Placeholder } from '@/modules/Pools/components/PoolsContent/Placeholder'
+import { EmptyMessage } from '@/modules/Pools/components/PoolsContent/EmptyMessage'
 
 import './index.scss'
 
-
 export const PoolsContent = observer((): JSX.Element => {
     const intl = useIntl()
+    const favoritePairs = useFavoritePairs()
+    const placeholderCount = favoritePairs.data.length < 10
+        ? favoritePairs.data.length
+        : 10
+
     const {
         loading,
         totalPages,
         items,
-        query,
         currentPage,
         onSubmit,
         onNext,
         onPrev,
     } = usePoolsContent()
+
+    if (favoritePairs.data.length === 0 || (!loading && items.length === 0)) {
+        return (
+            <EmptyMessage />
+        )
+    }
 
     return (
         <>
@@ -45,54 +54,26 @@ export const PoolsContent = observer((): JSX.Element => {
                         </div>
                     </div>
 
-                    {!loading && items.length === 0 ? (
-                        <div className="message">
-                            {query ? (
-                                <p>{intl.formatMessage({ id: 'POOLS_LIST_NOTHING_FOUND' })}</p>
-                            ) : (
-                                <>
-                                    <p>{intl.formatMessage({ id: 'POOLS_LIST_EMPTY_TABLE' })}</p>
-                                    <p className="message_faded__text small">
-                                        <FormattedMessage
-                                            id="POOLS_LIST_EMPTY_TABLE_META"
-                                            values={{
-                                                link: (
-                                                    <Link to="/pairs">
-                                                        {intl.formatMessage({
-                                                            id: 'POOLS_LIST_EMPTY_TABLE_META_LINK_TEXT',
-                                                        })}
-                                                    </Link>
-                                                ),
-                                            }}
-                                        />
-                                    </p>
-                                </>
-                            )}
-                        </div>
+                    {loading && items.length === 0 ? (
+                        [...Array(placeholderCount).keys()].map(item => (
+                            <Placeholder key={item} />
+                        ))
                     ) : (
-                        <>
-                            {loading && items.length === 0 ? (
-                                <ContentLoader />
-                            ) : (
-                                <PanelLoader loading={loading && items.length > 0}>
-                                    {items.map(item => (
-                                        <Item key={item.pair.pairLabel} {...item} />
-                                    ))}
-                                </PanelLoader>
-                            )}
-                        </>
+                        <PanelLoader loading={loading && items.length > 0}>
+                            {items.map(item => (
+                                <Item key={item.pair.pairLabel} {...item} />
+                            ))}
+                        </PanelLoader>
                     )}
                 </div>
 
-                {totalPages > 1 && (
-                    <Pagination
-                        totalPages={totalPages}
-                        currentPage={currentPage}
-                        onNext={onNext}
-                        onPrev={onPrev}
-                        onSubmit={onSubmit}
-                    />
-                )}
+                <Pagination
+                    totalPages={totalPages}
+                    currentPage={currentPage}
+                    onNext={onNext}
+                    onPrev={onPrev}
+                    onSubmit={onSubmit}
+                />
             </div>
         </>
     )

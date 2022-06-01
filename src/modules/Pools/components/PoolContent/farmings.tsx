@@ -1,42 +1,36 @@
 import * as React from 'react'
-import { useIntl } from 'react-intl'
 
-import { SectionTitle } from '@/components/common/SectionTitle'
-import { FarmingTable, FarmingTableProps } from '@/modules/Farming/components/FarmingTable'
+import { FarmingTable } from '@/modules/Farming/components/FarmingTable'
 import { usePagination } from '@/hooks/usePagination'
-
-type Props = {
-    items: FarmingTableProps['items']
-}
+import { PoolContent } from '@/modules/Pools/hooks/usePoolContent'
 
 const PAGE_SIZE = 10
 
+type Props = {
+    poolContent: PoolContent
+}
+
 export function PoolFarmings({
-    items,
+    poolContent,
 }: Props): JSX.Element | null {
-    const intl = useIntl()
+    const { farmItems, farmLoading } = poolContent
+
     const pagination = usePagination()
-    const totalPages = Math.ceil(items.length / PAGE_SIZE)
+    const totalPages = farmItems ? Math.ceil(farmItems.length / PAGE_SIZE) : 0
     const startIndex = PAGE_SIZE * (pagination.currentPage - 1)
     const endIndex = startIndex + PAGE_SIZE
-    const visibleItems = items.slice(startIndex, endIndex)
+    const visibleItems = farmItems ? farmItems.slice(startIndex, endIndex) : []
 
     return (
-        <>
-            <div className="pools-sub-header">
-                <SectionTitle size="small">
-                    {intl.formatMessage({ id: 'POOLS_FARMINGS_TITLE' })}
-                </SectionTitle>
-            </div>
-
-            <FarmingTable
-                items={visibleItems}
-                totalPages={totalPages}
-                onNext={pagination.onNext}
-                onPrev={pagination.onPrev}
-                currentPage={pagination.currentPage}
-                onSubmit={pagination.onSubmit}
-            />
-        </>
+        <FarmingTable
+            loading={farmLoading}
+            items={visibleItems}
+            totalPages={totalPages}
+            onNext={pagination.onNext}
+            onPrev={pagination.onPrev}
+            currentPage={pagination.currentPage}
+            onSubmit={pagination.onSubmit}
+            placeholderCount={1}
+        />
     )
 }

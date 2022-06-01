@@ -1,10 +1,12 @@
 .desktop-nav {
-    overflow: hidden;
     height: 64px;
+    overflow: hidden;
+
     > li > a {
         font-weight: 500;
         letter-spacing: 0.25px;
     }
+
     > li > a.active {
         color: #fff;
     }

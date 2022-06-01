@@ -1,5 +1,5 @@
 .rate-change {
-    color: #ffffff;
+    color: #fff;
     display: inline-block;
     font-size: 14px;
     font-weight: 500;
@@ -17,17 +17,21 @@
         position: absolute;
     }
 }
+
 .rate-change-up {
     color: #4ab44a;
     opacity: 1;
+
     &::before {
         border-bottom-color: #4ab44a;
         top: 2px;
     }
 }
+
 .rate-change-down {
     color: #eb4361;
     opacity: 1;
+
     &::before {
         border-top-color: #eb4361;
         top: 7.5px;

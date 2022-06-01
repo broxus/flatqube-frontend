@@ -10,10 +10,10 @@ import { Chart } from '@/modules/Chart'
 import { usePairStore } from '@/modules/Pairs/providers/PairStoreProvider'
 import { PairStoreState } from '@/modules/Pairs/types'
 import { TokenCache } from '@/stores/TokensCacheService'
-import { formattedTokenAmount } from '@/utils'
+import { concatSymbols, formattedTokenAmount } from '@/utils'
+import { Placeholder } from '@/components/common/Placeholder'
 
 import './index.scss'
-
 
 type Props = {
     baseToken?: TokenCache;
@@ -62,38 +62,50 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
                     <div className="pair-stats__stat-value">
                         <div className="pair-stats__ttl">
                             <div>
-                                <div className="pair-stats__token">
-                                    <TokenIcon
-                                        address={baseToken?.root || store.pair?.meta.baseAddress}
-                                        className="pair-stats__token-icon"
-                                        name={baseToken?.symbol || store.pair?.meta.base}
-                                        size="small"
-                                        icon={baseToken?.icon}
-                                    />
-                                    <div className="pair-stats__token-name">
-                                        {baseToken?.symbol || store.pair?.meta.base}
-                                    </div>
-                                </div>
-                                <div className="pair-stats__token-locked-value">
-                                    {leftLocked}
-                                </div>
+                                {baseToken || store.pair ? (
+                                    <>
+                                        <div className="pair-stats__token">
+                                            <TokenIcon
+                                                address={baseToken?.root || store.pair?.meta.baseAddress}
+                                                className="pair-stats__token-icon"
+                                                name={baseToken?.symbol || store.pair?.meta.base}
+                                                size="small"
+                                                icon={baseToken?.icon}
+                                            />
+                                            <div className="pair-stats__token-name">
+                                                {baseToken?.symbol || store.pair?.meta.base}
+                                            </div>
+                                        </div>
+                                        <div className="pair-stats__token-locked-value">
+                                            {leftLocked}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <Placeholder height={24} width={70} />
+                                )}
                             </div>
                             <div>
-                                <div className="pair-stats__token">
-                                    <TokenIcon
-                                        address={counterToken?.root || store.pair?.meta.counterAddress}
-                                        className="pair-stats__token-icon"
-                                        name={counterToken?.symbol || store.pair?.meta.counter}
-                                        size="small"
-                                        icon={counterToken?.icon}
-                                    />
-                                    <div className="pair-stats__token-name">
-                                        {counterToken?.symbol || store.pair?.meta.counter}
-                                    </div>
-                                </div>
-                                <div className="pair-stats__token-locked-value">
-                                    {rightLocked}
-                                </div>
+                                {counterToken || store.pair ? (
+                                    <>
+                                        <div className="pair-stats__token">
+                                            <TokenIcon
+                                                address={counterToken?.root || store.pair?.meta.counterAddress}
+                                                className="pair-stats__token-icon"
+                                                name={counterToken?.symbol || store.pair?.meta.counter}
+                                                size="small"
+                                                icon={counterToken?.icon}
+                                            />
+                                            <div className="pair-stats__token-name">
+                                                {counterToken?.symbol || store.pair?.meta.counter}
+                                            </div>
+                                        </div>
+                                        <div className="pair-stats__token-locked-value">
+                                            {rightLocked}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <Placeholder height={24} width={70} />
+                                )}
                             </div>
                         </div>
                     </div>
@@ -105,10 +117,16 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
                         })}
                     </div>
                     <div className="pair-stats__stat-value">
-                        <strong>{store.formattedTvl}</strong>
+                        {store.formattedTvl ? (
+                            <strong>{store.formattedTvl}</strong>
+                        ) : (
+                            <Placeholder width={100} />
+                        )}
                     </div>
-                    {store.pair?.tvlChange !== undefined && (
+                    {store.pair?.tvlChange !== undefined ? (
                         <RateChange value={store.pair.tvlChange} />
+                    ) : (
+                        <Placeholder height={20} width={50} />
                     )}
                 </div>
                 <div className="pair-stats__sidebar-item">
@@ -118,10 +136,16 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
                         })}
                     </div>
                     <div className="pair-stats__stat-value">
-                        <strong>{store.formattedVolume24h}</strong>
+                        {store.formattedVolume24h ? (
+                            <strong>{store.formattedVolume24h}</strong>
+                        ) : (
+                            <Placeholder width={100} />
+                        )}
                     </div>
-                    {store.pair?.volumeChange24h !== undefined && (
+                    {store.pair?.volumeChange24h !== undefined ? (
                         <RateChange value={store.pair.volumeChange24h} />
+                    ) : (
+                        <Placeholder height={20} width={50} />
                     )}
                 </div>
                 <div className="pair-stats__sidebar-item">
@@ -131,7 +155,11 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
                         })}
                     </div>
                     <div className="pair-stats__stat-value">
-                        <strong>{store.formattedFees24h}</strong>
+                        {store.formattedFees24h ? (
+                            <strong>{store.formattedFees24h}</strong>
+                        ) : (
+                            <Placeholder width={100} />
+                        )}
                     </div>
                 </div>
             </div>
@@ -165,9 +193,10 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
                                         })}
                                     >
                                         <a onClick={toggleGraph('ohlcv')}>
-                                            {baseToken?.symbol || store.pair?.meta.base}
-                                            /
-                                            {counterToken?.symbol || store.pair?.meta.counter}
+                                            {concatSymbols(
+                                                baseToken?.symbol || store.pair?.meta.base,
+                                                counterToken?.symbol || store.pair?.meta.counter,
+                                            )}
                                         </a>
                                     </li>
                                     <li
@@ -176,9 +205,10 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
                                         })}
                                     >
                                         <a onClick={toggleGraph('ohlcv-inverse')}>
-                                            {counterToken?.symbol || store.pair?.meta.counter}
-                                            /
-                                            {baseToken?.symbol || store.pair?.meta.base}
+                                            {concatSymbols(
+                                                counterToken?.symbol || store.pair?.meta.counter,
+                                                baseToken?.symbol || store.pair?.meta.base,
+                                            )}
                                         </a>
                                     </li>
                                     <li

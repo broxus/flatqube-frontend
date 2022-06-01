@@ -88,6 +88,7 @@ export function Token(): JSX.Element {
                                                 value="Mainnet"
                                             />
                                             <BuilderField
+                                                showCopy
                                                 className="builder-address-field"
                                                 label={intl.formatMessage({
                                                     id: 'BUILDER_MANAGE_TOKEN_LABEL_ROOT',
