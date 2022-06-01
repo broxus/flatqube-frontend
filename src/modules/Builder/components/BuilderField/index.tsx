@@ -3,6 +3,7 @@ import classNames from 'classnames'
 import { observer } from 'mobx-react-lite'
 
 import { useField } from '@/hooks/useField'
+import { CopyToClipboard } from '@/components/common/CopyToClipboard'
 
 type Props = {
     className?: string;
@@ -16,6 +17,7 @@ type Props = {
     pattern?: string;
     placeholder?: string;
     value?: string;
+    showCopy?: boolean;
     onChange?: (value: string) => void;
     onClick?: () => void;
 }
@@ -25,6 +27,7 @@ function Field({
     className,
     isValid = true,
     type = 'text',
+    showCopy,
     ...props
 }: Props): JSX.Element {
     const isDirty = React.useRef<boolean>(false)
@@ -68,6 +71,11 @@ function Field({
                         onChange={type === 'number' ? numberField.onChange : onChangeTextInput}
                         onBlur={type === 'number' ? numberField.onBlur : undefined}
                     />
+                    {showCopy && (
+                        <CopyToClipboard
+                            text={props.value ?? ''}
+                        />
+                    )}
                 </div>
             </fieldset>
         </label>

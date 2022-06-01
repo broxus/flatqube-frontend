@@ -24,9 +24,9 @@
 .manage-token {
     .card-parts {
         align-items: flex-start;
-        gap: 40px;
         display: flex;
         flex-direction: column;
+        gap: 40px;
         justify-content: space-between;
 
         &__part {
@@ -40,6 +40,7 @@
             &__part:first-child {
                 width: 45%;
             }
+
             &__part:last-child {
                 width: 55%;
             }
@@ -47,7 +48,7 @@
     }
 
     .card-block {
-        border: 1px solid rgba(255, 255, 255, 0.16);
+        border: 1px solid rgb(255 255 255 / 16%);
         margin-bottom: 32px;
         padding: 12px 16px;
 

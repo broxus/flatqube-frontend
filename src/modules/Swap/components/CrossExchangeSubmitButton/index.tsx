@@ -75,6 +75,7 @@ function SubmitButton(): JSX.Element {
 
         case !formStore.isLeftAmountValid:
             buttonProps.disabled = true
+            // @ts-ignore need react 18
             buttonText = intl.formatMessage({
                 id: 'SWAP_BTN_TEXT_INSUFFICIENT_TOKEN_BALANCE',
             }, {

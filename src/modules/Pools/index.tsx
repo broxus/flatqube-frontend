@@ -5,7 +5,6 @@ import { Button } from '@/components/common/Button'
 import { SectionTitle } from '@/components/common/SectionTitle'
 import { PoolsContent } from '@/modules/Pools/components/PoolsContent'
 import { WalletConnector } from '@/modules/WalletConnector'
-import { AccountConnector } from '@/modules/AccountConnector'
 
 import './index.scss'
 
@@ -30,12 +29,11 @@ export function Pools(): JSX.Element {
                         </Button>
                     </div>
                 </div>
+
                 <WalletConnector
                     message={intl.formatMessage({ id: 'POOLS_LIST_CONNECT_WALLET_TITLE' })}
                 >
-                    <AccountConnector>
-                        <PoolsContent />
-                    </AccountConnector>
+                    <PoolsContent />
                 </WalletConnector>
             </section>
         </div>

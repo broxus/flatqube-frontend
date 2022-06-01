@@ -1,10 +1,11 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
 
-import { ContentLoader } from '@/components/common/ContentLoader'
 import { OrderingSwitcher } from '@/components/common/OrderingSwitcher'
 import { Item } from '@/modules/Pairs/components/PairsList/Item'
 import { PairInfo, PairsOrdering } from '@/modules/Pairs/types'
+import { Placeholder } from '@/modules/Pairs/components/PairsList/Placeholder'
+import { PanelLoader } from '@/components/common/PanelLoader'
 
 import './index.scss'
 
@@ -74,15 +75,21 @@ export function PairsList({
                 </div>
             </div>
 
-            {isLoading
-                ? <ContentLoader />
-                : pairs.map((pair, idx) => (
-                    <Item
-                        key={pair.meta.poolAddress}
-                        pair={pair}
-                        idx={offset + idx + 1}
-                    />
-                ))}
+            {isLoading && pairs.length === 0 ? (
+                [...Array(10).keys()].map(() => (
+                    <Placeholder />
+                ))
+            ) : (
+                <PanelLoader loading={isLoading && pairs.length > 0}>
+                    {pairs.map((pair, idx) => (
+                        <Item
+                            key={pair.meta.poolAddress}
+                            pair={pair}
+                            idx={offset + idx + 1}
+                        />
+                    ))}
+                </PanelLoader>
+            )}
         </div>
     )
 }

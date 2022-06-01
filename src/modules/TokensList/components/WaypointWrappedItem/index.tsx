@@ -12,6 +12,7 @@ export function WaypointWrappedItem(props: ItemProps): JSX.Element {
     }
 
     return (
+        // @ts-ignore need react 18
         <Waypoint onPositionChange={onPositionChange}>
             <div
                 className="popup-item-wrapper"

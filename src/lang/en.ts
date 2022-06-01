@@ -171,7 +171,7 @@ export default {
     REMOVE_LIQUIDITY_SUCCESS_PLUS: '+{value}',
     REMOVE_LIQUIDITY_SUCCESS_MINUS: '-{value}',
 
-    POOLS_LIST_CONNECT_WALLET_TITLE: 'Your liquidity positions will appear here.',
+    POOLS_LIST_CONNECT_WALLET_TITLE: 'Your liquidity positions will appear here',
     POOLS_LIST_TITLE: 'Pools Overview',
     POOLS_LIST_HEADER_NEW: 'New position',
     POOLS_LIST_HEADER_REMOVE: 'Remove Liquidity',
@@ -661,6 +661,7 @@ export default {
     BUILDER_MANAGE_TOKEN_BTN_TEXT_SUBMIT: 'Confirm',
     BUILDER_MANAGE_TOKEN_BTN_TEXT_CANCEL: 'Cancel',
     BUILDER_MANAGE_TOKEN_MESSAGE_ENTER_VALID_ADDRESS: 'Enter valid target address',
+    BUILDER_MANAGE_TOKEN_MESSAGE_ENTER_VALID_AMOUNT: 'Enter valid amount',
     BUILDER_MANAGE_TOKEN_MESSAGE_INVALID_CALLBACK_ADDRESS: 'Invalid callback address',
     BUILDER_MANAGE_TOKEN_CONFIRMATION_MINT_TITLE: 'Waiting for minting',
     BUILDER_MANAGE_TOKEN_CONFIRMATION_MINT_DESCRIPTION: 'Minting tokens',
@@ -686,4 +687,9 @@ export default {
     TRANSACTIONS_LIST_NO_TRANSACTIONS: 'No transactions',
     TRANSACTIONS_LIST_NULL: 'N/A',
     TRANSACTIONS_LIST_TITLE: 'Transactions',
+
+    ERROR_PAGE_NOT_FOUND: 'Page not found',
+    ERROR_PAGE_NOT_FOUND_TEXT: 'Ooops! This page does not exist or is unavailable at the moment. Please go back or refresh the page.',
+    ERROR_BACK: 'Back',
+    ERROR_RELOAD: 'Reload',
 }

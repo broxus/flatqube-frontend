@@ -10,11 +10,11 @@
             align-items: flex-end;
             flex-flow: row nowrap;
             justify-content: space-between;
-            margin: 64px 0 32px;
         }
     }
 
     &-toolbar {
+        align-items: center;
         display: flex;
         flex-flow: column wrap;
         gap: 10px;

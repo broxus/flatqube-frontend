@@ -13,6 +13,8 @@ import { EventType, Transaction, TransactionsOrdering } from '@/modules/Farming/
 import { useApi } from '@/modules/Farming/hooks/useApi'
 import { FarmingTransactionsItem } from '@/modules/Farming/components/FarmingTransactions/item'
 import { usePagination } from '@/hooks/usePagination'
+import { useWallet } from '@/stores/WalletService'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
 import { error } from '@/utils'
 
 import './index.scss'
@@ -21,23 +23,14 @@ const LIMIT = 10
 
 type Props = {
     poolAddress: string;
-    userAddress?: string;
-    lpTokenSymbol: string;
-    leftTokenSymbol?: string;
-    rightTokenSymbol?: string;
-    isExternalLpToken: boolean;
 }
 
 export function FarmingTransactionsInner({
     poolAddress,
-    userAddress,
-    lpTokenSymbol,
-    leftTokenSymbol,
-    rightTokenSymbol,
-    isExternalLpToken,
 }: Props): JSX.Element {
     const api = useApi()
     const intl = useIntl()
+    const farmingData = useFarmingDataStore()
     const pagination = usePagination()
     const { currentPage } = pagination
     const [loading, setLoading] = React.useState(true)
@@ -48,6 +41,7 @@ export function FarmingTransactionsInner({
     const [onlyUser, setOnlyUser] = React.useState(false)
     const [isActionTable, setIsActionTable] = React.useState(false)
     const totalPages = Math.ceil(totalCount / LIMIT)
+    const wallet = useWallet()
 
     const getData = async (event: EventType | null) => {
         setLoading(true)
@@ -58,7 +52,7 @@ export function FarmingTransactionsInner({
                 limit: LIMIT,
                 offset: currentPage > 0 ? (currentPage - 1) * LIMIT : 0,
                 eventTypes: event ? [event] : ['claim', 'deposit', 'withdraw', 'rewarddeposit'],
-                userAddress: onlyUser ? userAddress : undefined,
+                userAddress: onlyUser ? wallet.address : undefined,
             })
             setTransactions(data.transactions)
             setTotalCount(data.totalCount)
@@ -76,7 +70,7 @@ export function FarmingTransactionsInner({
 
     React.useEffect(() => {
         pagination.onSubmit(1)
-    }, [eventType, onlyUser])
+    }, [eventType, onlyUser, wallet.address])
 
     React.useEffect(() => {
         getData(eventType)
@@ -119,7 +113,7 @@ export function FarmingTransactionsInner({
                     }]}
                 />
 
-                {userAddress && (
+                {wallet.address && (
                     <Checkbox
                         label={intl.formatMessage({
                             id: 'FARMING_TRANSACTIONS_FILTER_ONLY_USER_TRANSACTIONS',
@@ -216,10 +210,10 @@ export function FarmingTransactionsInner({
                                         <FarmingTransactionsItem
                                             key={index}
                                             transaction={transaction}
-                                            lpTokenSymbol={lpTokenSymbol}
-                                            leftTokenSymbol={leftTokenSymbol}
-                                            rightTokenSymbol={rightTokenSymbol}
-                                            isExternalLpToken={isExternalLpToken}
+                                            lpTokenSymbol={farmingData.lpTokenSymbol}
+                                            leftTokenSymbol={farmingData.leftTokenSymbol}
+                                            rightTokenSymbol={farmingData.rightTokenSymbol}
+                                            isExternalLpToken={farmingData.isExternalLpToken}
                                             isActionTable={isActionTable}
                                         />
                                     ))}

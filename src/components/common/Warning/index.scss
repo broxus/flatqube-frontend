@@ -1,6 +1,6 @@
 .warning {
     border-left: 4px solid transparent;
-    color: #ffffff;
+    color: #fff;
     padding: 12px;
 
     &__title {
@@ -32,12 +32,12 @@
 
     &_theme {
         &_danger {
-            background: rgba(235, 67, 97, 0.48);
+            background: rgb(235 67 97 / 48%);
             border-left-color: #eb4361;
         }
 
         &_warning {
-            background: rgba(230, 172, 0, 0.48);
+            background: rgb(230 172 0 / 48%);
             border-left-color: #e6ac00;
         }
     }

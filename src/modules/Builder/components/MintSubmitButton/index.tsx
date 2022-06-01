@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import * as React from 'react'
 import { useParams } from 'react-router-dom'
 import { useIntl } from 'react-intl'
@@ -45,6 +46,11 @@ function SubmitButton({ closePopup }: Props): JSX.Element {
         case !managingToken.targetAddress || !managingToken.amountToMint:
             buttonProps.disabled = true
             buttonText = intl.formatMessage({ id: 'BUILDER_MANAGE_TOKEN_BTN_TEXT_ENTER_ALL_DATA' })
+            break
+
+        case new BigNumber(managingToken.amountToMint).isZero():
+            buttonProps.disabled = true
+            buttonText = intl.formatMessage({ id: 'BUILDER_MANAGE_TOKEN_MESSAGE_ENTER_VALID_AMOUNT' })
             break
 
         case managingToken.targetAddress != null && managingToken.amountToMint != null:

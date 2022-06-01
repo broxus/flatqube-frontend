@@ -1,5 +1,5 @@
 .breadcrumb {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgb(255 255 255 / 75%);
     display: flex;
     flex-direction: row;
     font-size: 14px;
@@ -15,7 +15,7 @@
 
             &::after {
                 border: 5px solid transparent;
-                border-left-color: rgba(255, 255, 255, 0.75);
+                border-left-color: rgb(255 255 255 / 75%);
                 content: '';
                 display: block;
                 margin-top: -5px;
@@ -26,14 +26,15 @@
         }
 
         a {
-            color: rgba(255, 255, 255, 0.48);
+            color: rgb(255 255 255 / 48%);
             text-decoration: none;
 
-            &:hover { color: #ffffff; }
+            &:hover { color: #fff; }
         }
 
         span {
-            color: #ffffff;
+            color: #fff;
+
             > span {
                 margin-left: 10px;
                 opacity: 0.8;

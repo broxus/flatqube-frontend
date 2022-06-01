@@ -18,6 +18,7 @@ import { getDefaultPerPrice } from '@/modules/Swap/utils'
 import { TokenImportPopup } from '@/modules/TokensList/components'
 import { TokenCache, useTokensCache } from '@/stores/TokensCacheService'
 import { concatSymbols, formattedTokenAmount, isGoodBignumber } from '@/utils'
+import { Placeholder } from '@/components/common/Placeholder'
 
 import './pair.scss'
 
@@ -111,29 +112,41 @@ function PairInner(): JSX.Element {
             <div className="container container--large">
                 <section className="section">
                     <Breadcrumb
-                        items={[{
+                        items={(baseToken || counterToken) ? [{
                             link: '/pairs',
                             title: intl.formatMessage({ id: 'PAIR_BREADCRUMB_ROOT' }),
                         }, {
                             title: concatSymbols(baseToken?.symbol, counterToken?.symbol),
+                        }] : [{
+                            title: (
+                                <Placeholder width={150} />
+                            ),
                         }]}
                     />
 
                     <header className="pair-page__header">
                         <div>
                             <div className="pair-page__token">
-                                <PairIcons
-                                    leftToken={baseToken}
-                                    rightToken={counterToken}
-                                />
-                                <div className="pair-page__token-name">
-                                    {baseToken?.symbol}
-                                    /
-                                    {counterToken?.symbol}
-                                </div>
+                                {baseToken || counterToken ? (
+                                    <>
+                                        <PairIcons
+                                            leftToken={baseToken}
+                                            rightToken={counterToken}
+                                        />
+                                        <div className="pair-page__token-name">
+                                            {concatSymbols(baseToken?.symbol, counterToken?.symbol)}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Placeholder circle width={32} />
+                                        <Placeholder width={120} />
+                                    </>
+                                )}
                             </div>
-                            {(baseToken !== undefined && counterToken !== undefined) && (
-                                <div className="pair-page__tokens-prices">
+
+                            <div className="pair-page__tokens-prices">
+                                {baseToken && counterToken ? (
                                     <PairRates
                                         tokenIcon={{
                                             address: baseToken.root,
@@ -152,7 +165,11 @@ function PairInner(): JSX.Element {
                                         })}
                                         link={`/tokens/${baseToken.root}`}
                                     />
+                                ) : (
+                                    <Placeholder height={36} width={200} />
+                                )}
 
+                                {counterToken && baseToken ? (
                                     <PairRates
                                         tokenIcon={{
                                             address: counterToken.root,
@@ -171,8 +188,10 @@ function PairInner(): JSX.Element {
                                         })}
                                         link={`/tokens/${counterToken.root}`}
                                     />
-                                </div>
-                            )}
+                                ) : (
+                                    <Placeholder height={36} width={200} />
+                                )}
+                            </div>
                         </div>
                         <div className="pair-page__header-actions">
                             {store.pair?.meta.poolAddress !== undefined && (
@@ -193,18 +212,24 @@ function PairInner(): JSX.Element {
                             )}
                             <div className="pair-page__header-actions-inner">
                                 <Button
-                                    link={`/pool/${baseToken?.root || store.pair?.meta.baseAddress}/${counterToken?.root || store.pair?.meta.counterAddress}`}
+                                    link={baseToken || store.pair
+                                        ? `/pool/${baseToken?.root || store.pair?.meta.baseAddress}/${counterToken?.root || store.pair?.meta.counterAddress}`
+                                        : undefined}
                                     size="md"
                                     type="secondary"
+                                    disabled={!baseToken && !store.pair}
                                 >
                                     {intl.formatMessage({
                                         id: 'PAIR_ADD_LIQUIDITY_BTN_TEXT',
                                     })}
                                 </Button>
                                 <Button
-                                    link={`/swap/${baseToken?.root || store.pair?.meta.baseAddress}/${counterToken?.root || store.pair?.meta.counterAddress}`}
+                                    link={baseToken || store.pair
+                                        ? `/swap/${baseToken?.root || store.pair?.meta.baseAddress}/${counterToken?.root || store.pair?.meta.counterAddress}`
+                                        : undefined}
                                     size="md"
                                     type="primary"
+                                    disabled={!baseToken && !store.pair}
                                 >
                                     {intl.formatMessage({
                                         id: 'PAIR_TRADE_BTN_TEXT',

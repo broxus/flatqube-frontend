@@ -33,7 +33,13 @@
         column-gap: 16px;
         display: flex;
         font-size: 14px;
-        line-height: 20px;
+        line-height: 24px;
         margin: 4px 0 0;
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        grid-gap: 16px;
     }
 }

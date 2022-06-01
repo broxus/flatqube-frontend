@@ -135,22 +135,28 @@ export class CurrencyStore {
     /**
      *
      */
-    public get formattedVolume24h(): string {
-        return parseCurrencyBillions(this.currency?.volume24h)
+    public get formattedVolume24h(): string | undefined {
+        return this.currency?.volume24h
+            ? parseCurrencyBillions(this.currency?.volume24h)
+            : undefined
     }
 
     /**
      *
      */
-    public get formattedVolume7d(): string {
-        return parseCurrencyBillions(this.currency?.volume7d)
+    public get formattedVolume7d(): string | undefined {
+        return this.currency?.volume7d
+            ? parseCurrencyBillions(this.currency?.volume7d)
+            : undefined
     }
 
     /**
      *
      */
-    public get formattedTvl(): string {
-        return parseCurrencyBillions(this.currency?.tvl)
+    public get formattedTvl(): string | undefined {
+        return this.currency?.tvl
+            ? parseCurrencyBillions(this.currency?.tvl)
+            : undefined
     }
 
     /**

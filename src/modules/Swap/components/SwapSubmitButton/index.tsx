@@ -78,6 +78,7 @@ function SubmitButton(): JSX.Element {
             buttonProps.disabled = true
             buttonText = formStore.isMultipleSwapMode ? intl.formatMessage({
                 id: 'SWAP_BTN_TEXT_INSUFFICIENT_BALANCE',
+            // @ts-ignore need react 18
             }) : intl.formatMessage({
                 id: 'SWAP_BTN_TEXT_INSUFFICIENT_TOKEN_BALANCE',
             }, {

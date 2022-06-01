@@ -12,10 +12,10 @@ import './index.scss'
 
 type Props = {
     transaction: Transaction;
-    lpTokenSymbol: string;
+    lpTokenSymbol?: string;
     leftTokenSymbol?: string;
     rightTokenSymbol?: string;
-    isExternalLpToken: boolean;
+    isExternalLpToken?: boolean;
     isActionTable: boolean;
 }
 
@@ -45,7 +45,8 @@ export function FarmingTransactionsItem({
 
             <div className={`list__cell list__cell--${isActionTable ? 'left' : 'right'}`}>
                 {
-                    transaction.tokenCurrency === lpTokenSymbol
+                    lpTokenSymbol
+                    && transaction.tokenCurrency === lpTokenSymbol
                     && isExternalLpToken === true
                         ? nullMessage
                         : parseCurrencyBillions(transaction.tvExec)

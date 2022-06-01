@@ -644,4 +644,10 @@ export default {
     FOOTER_NAV_TON_SCAN_LINK_TEXT: '에버스캔',
     FOOTER_NAV_WTON_LINK_TEXT: 'Wrapped EVER ',
     FOOTER_NAV_CRYSTAL_WALLET_LINK_TEXT: '에버월릿 (EVER Wallet)',
+
+    ERROR_PAGE_NOT_FOUND: 'Page not found',
+    ERROR_PAGE_NOT_FOUND_TEXT: 'Ooops! This page does not exist or is unavailable at the moment. Please go back or refresh the page.',
+    ERROR_BACK: 'Back',
+    ERROR_RELOAD: 'Reload',
+    BUILDER_MANAGE_TOKEN_MESSAGE_ENTER_VALID_AMOUNT: 'Enter valid amount',
 }

@@ -16,6 +16,28 @@
             margin-bottom: 0;
         }
     }
+
+    &_system {
+        font-size: 14px;
+        height: auto;
+        letter-spacing: 0.5px;
+        line-height: 20px;
+        min-height: 176px;
+
+        p {
+            margin: 0 0 24px;
+
+            + p {
+                color: rgb(255 255 255 / 64%);
+                font-size: 12px;
+                margin-top: -16px;
+
+                a {
+                    font-weight: bold;
+                }
+            }
+        }
+    }
 }
 
 .message_faded {

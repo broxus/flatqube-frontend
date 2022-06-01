@@ -1,11 +1,11 @@
 .farming-config {
     &.popup__wrap {
-        box-shadow: 0 8px 16px rgba(43, 51, 56, 0.08);
+        box-shadow: 0 8px 16px rgb(43 51 56 / 8%);
         max-width: 360px;
 
         @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
             backdrop-filter: blur(120px);
-            background: rgba(255, 255, 255, 0.08);
+            background: rgb(255 255 255 / 8%);
         }
     }
 
@@ -19,7 +19,7 @@
 
     &__tabs {
         align-items: center;
-        color: rgba(255, 255, 255, 0.56);
+        color: rgb(255 255 255 / 56%);
         display: flex;
         font-size: 14px;
         letter-spacing: 0.6px;
@@ -32,8 +32,8 @@
             padding: 8px 12px;
 
             &.active {
-                border-bottom-color: #ffffff;
-                color: #ffffff;
+                border-bottom-color: #fff;
+                color: #fff;
             }
         }
     }

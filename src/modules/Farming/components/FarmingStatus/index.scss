@@ -8,16 +8,16 @@
 }
 
 .farming-status_active {
-    background: rgba(74, 180, 74, 0.16);
+    background: rgb(74 180 74 / 16%);
     color: #4ab44a;
 }
 
 .farming-status_ended {
-    background: rgba(235, 67, 97, 0.16);
+    background: rgb(235 67 97 / 16%);
     color: #eb4361;
 }
 
 .farming-status_waiting {
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
+    background: rgb(255 255 255 / 16%);
+    color: #fff;
 }

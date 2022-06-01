@@ -34,23 +34,6 @@ const WITHDRAW_FAIL_METHOD = 'dexPairOperationCancelled'
 
 export class Pool {
 
-    static async pools(
-        poolAddresses: Address[],
-        walletAddress: Address,
-    ): Promise<PoolData[]> {
-        const pools = await Promise.all(
-            poolAddresses.map(poolAddress => (
-                Pool.pool(poolAddress, walletAddress)
-                    .catch(e => {
-                        console.error(e)
-                        return undefined
-                    })
-            )),
-        )
-
-        return pools.filter(item => item !== undefined) as PoolData[]
-    }
-
     static async pool(
         poolAddress: Address,
         walletAddress: Address,

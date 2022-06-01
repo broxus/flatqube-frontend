@@ -48,10 +48,7 @@ export class FarmingListStore {
 
     protected state: State = defaultState
 
-    protected lastOfFetchData: () => Promise<Promise<[
-        FarmingPoolsItemResponse[],
-        number,
-    ]> | undefined>
+    protected lastOfFetchData = lastOfCalls(this.fetchData.bind(this))
 
     constructor(
         protected api: FarmingApi,

@@ -5,39 +5,29 @@ import { observer } from 'mobx-react-lite'
 
 import { FarmingAction } from '@/modules/Farming/components/FarmingAction'
 import { formattedAmount } from '@/utils'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { useFarmingDepositStore } from '@/modules/Farming/stores/FarmingDepositStore'
 
-type Props = {
-    walletAmount?: string;
-    depositAmount?: string;
-    depositDisabled?: boolean;
-    tokenSymbol: string;
-    tokenDecimals: number;
-    loading?: boolean;
-    onChangeDeposit: (value: string) => void;
-    onDeposit: (amount: string) => void;
-}
-
-export function FarmingDepositInner({
-    walletAmount = '0',
-    depositAmount,
-    depositDisabled,
-    tokenSymbol,
-    tokenDecimals,
-    loading,
-    onChangeDeposit,
-    onDeposit,
-}: Props): JSX.Element {
+export function FarmingDepositInner(): JSX.Element {
     const intl = useIntl()
+    const farmingData = useFarmingDataStore()
+    const farmingDepositStore = useFarmingDepositStore()
 
     const maxValue = React.useMemo(
-        () => new BigNumber(walletAmount).shiftedBy(-tokenDecimals).toFixed(),
-        [walletAmount, tokenDecimals],
+        () => (farmingData.userLpWalletAmount !== undefined && farmingData.lpTokenDecimals !== undefined
+            ? new BigNumber(farmingData.userLpWalletAmount).shiftedBy(-farmingData.lpTokenDecimals).toFixed()
+            : '0'),
+        [farmingData.userLpWalletAmount, farmingData.lpTokenDecimals],
     )
 
     const balance = React.useMemo(
-        () => formattedAmount(walletAmount, tokenDecimals, { preserve: true }),
-        [walletAmount, tokenDecimals],
+        () => formattedAmount(farmingData.userLpWalletAmount, farmingData.lpTokenDecimals, { preserve: true }),
+        [farmingData.userLpWalletAmount, farmingData.lpTokenDecimals],
     )
+
+    React.useEffect(() => () => {
+        farmingDepositStore.dispose()
+    }, [])
 
     return (
         <div className="farming-balance-panel farming-balance-panel_deposit">
@@ -54,11 +44,11 @@ export function FarmingDepositInner({
             </div>
 
             <FarmingAction
-                loading={loading}
-                decimals={tokenDecimals}
-                value={depositAmount || ''}
+                loading={farmingDepositStore.loading}
+                decimals={farmingData.lpTokenDecimals}
+                value={farmingDepositStore.amount || ''}
                 maxValue={maxValue}
-                submitDisabled={depositDisabled}
+                submitDisabled={!farmingDepositStore.amountIsValid}
                 action={intl.formatMessage({
                     id: 'FARMING_BALANCE_DEPOSIT_ACTION',
                 })}
@@ -66,10 +56,10 @@ export function FarmingDepositInner({
                     id: 'FARMING_BALANCE_DEPOSIT_BALANCE',
                 }, {
                     value: balance,
-                    symbol: tokenSymbol,
+                    symbol: farmingData.lpTokenSymbol,
                 })}
-                onChange={onChangeDeposit}
-                onSubmit={onDeposit}
+                onChange={farmingDepositStore.setAmount}
+                onSubmit={farmingDepositStore.deposit}
             />
         </div>
     )

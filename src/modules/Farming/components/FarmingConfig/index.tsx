@@ -9,33 +9,14 @@ import { Icon } from '@/components/common/Icon'
 import { Warning } from '@/components/common/Warning'
 import { TextInput } from '@/components/common/TextInput'
 import { useTokensCache } from '@/stores/TokensCacheService'
+import { useFarmingEndDateConfigStore } from '@/modules/Farming/stores/FarmingEndDateConfigStore'
+import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
+import { useFarmingRoundConfigStore } from '@/modules/Farming/stores/FarmingRoundConfigStore'
 
 import './index.scss'
 
 type Props = {
     onClose: () => void;
-    endDateFrom: {
-        onSubmit: () => void;
-        onChangeEndDate: (value: string) => void;
-        onChangeEndTime: (value: string) => void;
-        actualEndTime: number;
-        endDate: string;
-        endTime: string;
-        loading: boolean;
-        disabled: boolean;
-    },
-    rewardFrom: {
-        onChangeAmount: (index: number, value: string) => void;
-        onChangeStartDate: (value: string) => void;
-        onChangeStartTime: (value: string) => void;
-        onSubmit: () => void;
-        startDate: string;
-        startTime: string;
-        rewardTokensRoots: string[];
-        rewardTokensAmounts: string[];
-        blocked: boolean;
-        disabled: boolean;
-    },
 }
 
 enum Tab {
@@ -45,23 +26,24 @@ enum Tab {
 
 function FarmingConfigInner({
     onClose,
-    rewardFrom,
-    endDateFrom,
 }: Props): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
+    const farmingData = useFarmingDataStore()
+    const farmingEndDateConfig = useFarmingEndDateConfigStore()
+    const farmingRoundConfig = useFarmingRoundConfigStore()
     const [currentTab, setCurrentTab] = React.useState(Tab.Speed)
     const [confirmationVisible, setConfirmationVisible] = React.useState(false)
-    const rewardTokens = rewardFrom.rewardTokensRoots.map(root => tokensCache.get(root))
-    const actualEndDateTime = DateTime.fromMillis(endDateFrom.actualEndTime)
+    const rewardTokens = farmingData.rewardTokensAddress?.map(root => tokensCache.get(root))
+    const actualEndDateTime = DateTime.fromMillis(farmingData.endTime)
 
     const submitReward = async () => {
-        await rewardFrom.onSubmit()
+        await farmingRoundConfig.submit()
         onClose()
     }
 
     const submitEndDate = async () => {
-        await endDateFrom.onSubmit()
+        await farmingEndDateConfig.submit()
         onClose()
     }
 
@@ -103,7 +85,7 @@ function FarmingConfigInner({
 
                         <div className="farming-config__action">
                             <Button
-                                disabled={endDateFrom.loading}
+                                disabled={farmingEndDateConfig.loading}
                                 onClick={hideConfirmation}
                                 type="tertiary"
                             >
@@ -112,7 +94,8 @@ function FarmingConfigInner({
                                 })}
                             </Button>
                             <Button
-                                disabled={endDateFrom.disabled || endDateFrom.loading}
+                                disabled={!farmingEndDateConfig.endDateIsValid
+                                    || farmingEndDateConfig.loading}
                                 onClick={submitEndDate}
                                 type="danger"
                             >
@@ -145,7 +128,7 @@ function FarmingConfigInner({
 
                         {currentTab === Tab.Speed && (
                             <>
-                                {rewardTokens.map((token, index) => (
+                                {rewardTokens?.map((token, index) => (
                                     token && (
                                         <div className="farming-config__filed" key={token.root}>
                                             <div className="farming-config__label">
@@ -159,9 +142,10 @@ function FarmingConfigInner({
                                                 placeholder={intl.formatMessage({
                                                     id: 'FARMING_CONFIG_REWARD_AMOUNT_PLACEHOLDER',
                                                 })}
-                                                value={rewardFrom.rewardTokensAmounts[index] || ''}
-                                                onChange={value => rewardFrom.onChangeAmount(index, value)}
-                                                disabled={rewardFrom.blocked}
+                                                value={farmingRoundConfig.amounts[index] || ''}
+                                                onChange={value => farmingRoundConfig.setAmount(index, value)}
+                                                disabled={farmingRoundConfig.loading
+                                                    || farmingRoundConfig.blocked}
                                             />
                                         </div>
                                     )
@@ -178,24 +162,28 @@ function FarmingConfigInner({
                                             placeholder={intl.formatMessage({
                                                 id: 'FARMING_CONFIG_DATE_PLACEHOLDER',
                                             })}
-                                            value={rewardFrom.startDate}
-                                            onChange={rewardFrom.onChangeStartDate}
-                                            disabled={rewardFrom.blocked}
+                                            value={farmingRoundConfig.startDate}
+                                            onChange={farmingRoundConfig.setStartDate}
+                                            disabled={farmingRoundConfig.loading
+                                                || farmingRoundConfig.blocked}
                                         />
                                         <TextInput
                                             placeholder={intl.formatMessage({
                                                 id: 'FARMING_CONFIG_TIME_PLACEHOLDER',
                                             })}
-                                            value={rewardFrom.startTime}
-                                            onChange={rewardFrom.onChangeStartTime}
-                                            disabled={rewardFrom.blocked}
+                                            value={farmingRoundConfig.startTime}
+                                            onChange={farmingRoundConfig.setStartTime}
+                                            disabled={farmingRoundConfig.loading
+                                                || farmingRoundConfig.blocked}
                                         />
                                     </div>
                                 </div>
 
                                 <div className="farming-config__action">
                                     <Button
-                                        disabled={rewardFrom.blocked || rewardFrom.disabled || rewardFrom.blocked}
+                                        disabled={farmingRoundConfig.loading
+                                            || farmingRoundConfig.blocked
+                                            || !farmingRoundConfig.rewardIsValid}
                                         type="primary"
                                         onClick={submitReward}
                                     >
@@ -209,7 +197,7 @@ function FarmingConfigInner({
 
                         {currentTab === Tab.EndTime && (
                             <>
-                                {endDateFrom.actualEndTime === 0 && (
+                                {farmingData.endTime === 0 && (
                                     <div className="farming-config__warning">
                                         <Warning
                                             theme="warning"
@@ -231,21 +219,21 @@ function FarmingConfigInner({
                                             placeholder={intl.formatMessage({
                                                 id: 'FARMING_CONFIG_DATE_PLACEHOLDER',
                                             })}
-                                            value={endDateFrom.actualEndTime > 0
+                                            value={farmingData.endTime > 0
                                                 ? actualEndDateTime.toFormat('yyyy.MM.dd')
-                                                : endDateFrom.endDate}
-                                            onChange={endDateFrom.onChangeEndDate}
-                                            disabled={endDateFrom.loading || endDateFrom.actualEndTime > 0}
+                                                : farmingEndDateConfig.endDate}
+                                            onChange={farmingEndDateConfig.setEndDate}
+                                            disabled={farmingEndDateConfig.loading || farmingData.endTime > 0}
                                         />
                                         <TextInput
                                             placeholder={intl.formatMessage({
                                                 id: 'FARMING_CONFIG_TIME_PLACEHOLDER',
                                             })}
-                                            value={endDateFrom.actualEndTime > 0
+                                            value={farmingData.endTime > 0
                                                 ? actualEndDateTime.toFormat('hh:mm')
-                                                : endDateFrom.endTime}
-                                            onChange={endDateFrom.onChangeEndTime}
-                                            disabled={endDateFrom.loading || endDateFrom.actualEndTime > 0}
+                                                : farmingEndDateConfig.endTime}
+                                            onChange={farmingEndDateConfig.setEndTime}
+                                            disabled={farmingEndDateConfig.loading || farmingData.endTime > 0}
                                         />
                                     </div>
                                 </div>
@@ -253,9 +241,9 @@ function FarmingConfigInner({
                                 <div className="farming-config__action">
                                     <Button
                                         disabled={
-                                            endDateFrom.loading
-                                            || endDateFrom.disabled
-                                            || endDateFrom.actualEndTime > 0
+                                            farmingEndDateConfig.loading
+                                            || !farmingEndDateConfig.endDateIsValid
+                                            || farmingData.endTime > 0
                                         }
                                         type="danger"
                                         onClick={showConfirmation}

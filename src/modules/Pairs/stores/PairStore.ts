@@ -137,22 +137,28 @@ export class PairStore {
     /**
      *
      */
-    public get formattedTvl(): string {
-        return parseCurrencyBillions(this.pair?.tvl)
+    public get formattedTvl(): string | undefined {
+        return this.pair?.tvl
+            ? parseCurrencyBillions(this.pair?.tvl)
+            : undefined
     }
 
     /**
      *
      */
-    public get formattedVolume24h(): string {
-        return parseCurrencyBillions(this.pair?.volume24h)
+    public get formattedVolume24h(): string | undefined {
+        return this.pair?.volume24h
+            ? parseCurrencyBillions(this.pair?.volume24h)
+            : undefined
     }
 
     /**
      *
      */
-    public get formattedFees24h(): string {
-        return parseCurrencyBillions(this.pair?.fee24h)
+    public get formattedFees24h(): string | undefined {
+        return this.pair?.fee24h
+            ? parseCurrencyBillions(this.pair?.fee24h)
+            : undefined
     }
 
     /**

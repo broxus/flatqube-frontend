@@ -7,6 +7,7 @@ import { RateChange } from '@/components/common/RateChange'
 import { Chart } from '@/modules/Chart'
 import { useCurrencyStore } from '@/modules/Currencies/providers/CurrencyStoreProvider'
 import { CurrencyStoreState } from '@/modules/Currencies/types'
+import { Placeholder } from '@/components/common/Placeholder'
 
 import './index.scss'
 
@@ -34,10 +35,16 @@ export function Stats(): JSX.Element {
                         })}
                     </div>
                     <div className="currency-stats__stat-value">
-                        <strong>{store.formattedTvl}</strong>
+                        {store.formattedTvl ? (
+                            <strong>{store.formattedTvl}</strong>
+                        ) : (
+                            <Placeholder width={100} />
+                        )}
                     </div>
-                    {store.currency?.tvlChange !== undefined && (
+                    {store.currency?.tvlChange !== undefined ? (
                         <RateChange value={store.currency.tvlChange} />
+                    ) : (
+                        <Placeholder height={20} width={50} />
                     )}
                 </div>
                 <div className="currency-stats__sidebar-item">
@@ -47,10 +54,16 @@ export function Stats(): JSX.Element {
                         })}
                     </div>
                     <div className="currency-stats__stat-value">
-                        <strong>{store.formattedVolume24h}</strong>
+                        {store.formattedVolume24h ? (
+                            <strong>{store.formattedVolume24h}</strong>
+                        ) : (
+                            <Placeholder width={100} />
+                        )}
                     </div>
-                    {store.currency?.volumeChange24h !== undefined && (
+                    {store.currency?.volumeChange24h !== undefined ? (
                         <RateChange value={store.currency.volumeChange24h} />
+                    ) : (
+                        <Placeholder height={20} width={50} />
                     )}
                 </div>
                 <div className="currency-stats__sidebar-item">
@@ -60,7 +73,11 @@ export function Stats(): JSX.Element {
                         })}
                     </div>
                     <div className="currency-stats__stat-value">
-                        <strong>{store.formattedVolume7d}</strong>
+                        {store.formattedVolume7d ? (
+                            <strong>{store.formattedVolume7d}</strong>
+                        ) : (
+                            <Placeholder width={100} />
+                        )}
                     </div>
                 </div>
                 <div className="currency-stats__sidebar-item">
@@ -70,9 +87,13 @@ export function Stats(): JSX.Element {
                         })}
                     </div>
                     <div className="currency-stats__stat-value">
-                        <strong>
-                            {store.currency?.transactionsCount24h}
-                        </strong>
+                        {store.currency ? (
+                            <strong>
+                                {store.currency?.transactionsCount24h}
+                            </strong>
+                        ) : (
+                            <Placeholder width={50} />
+                        )}
                     </div>
                 </div>
             </div>

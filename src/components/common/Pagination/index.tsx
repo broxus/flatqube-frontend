@@ -25,29 +25,30 @@ export const Pagination = React.memo(({
 }: PaginationProps): JSX.Element => {
     const intl = useIntl()
 
-    const [value, setValue] = React.useState(currentPage)
+    const [value, setValue] = React.useState<string>(currentPage.toString())
 
     const onChange: React.ChangeEventHandler<HTMLInputElement> = event => {
-        const page = parseInt(event.target.value, 10)
-        setValue(Number.isNaN(page) ? 1 : page)
+        setValue(event.target.value)
     }
 
     const onKeyUp: React.KeyboardEventHandler<HTMLInputElement> = event => {
         if (event.keyCode === 13) {
-            let newPage = value
-            if (value > totalPages) {
+            let newPage = parseInt(value, 10)
+
+            if (newPage > totalPages) {
                 newPage = totalPages
+                setValue(totalPages.toString())
             }
-            else if (value <= 0) {
+            else if (newPage <= 0) {
                 newPage = 1
-                setValue(1)
+                setValue('1')
             }
             onSubmit?.(newPage)
         }
     }
 
     React.useEffect(() => {
-        setValue(currentPage)
+        setValue(currentPage.toString())
     }, [currentPage])
 
     return (

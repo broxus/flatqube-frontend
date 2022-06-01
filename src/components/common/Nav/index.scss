@@ -150,7 +150,7 @@
     }
 
     &-arrow {
-        color: rgba(255, 255, 255, 0.48);
+        color: rgb(255 255 255 / 48%);
         position: absolute;
         right: 0;
         top: 50%;
@@ -302,7 +302,7 @@ ul.nav-sub {
  */
 
 .nav-default > li > a {
-    color: rgba(255, 255, 255, 0.48);
+    color: rgb(255 255 255 / 48%);
 }
 
 /* Hover + Focus */
@@ -329,7 +329,7 @@ ul.nav-sub {
  */
 
 .nav-default .nav-divider {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgb(255 255 255 / 8%);
 }
 
 /*
@@ -337,7 +337,7 @@ ul.nav-sub {
  */
 
 .nav-default .nav-sub a {
-    color: rgba(255, 255, 255, 0.48);
+    color: rgb(255 255 255 / 48%);
 }
 
 .nav-default .nav-sub a:hover,
@@ -362,7 +362,7 @@ ul.nav-sub {
  */
 
 .nav-primary > li > a {
-    color: rgba(197, 228, 243, 0.7);
+    color: rgb(197 228 243 / 70%);
     font-size: 16px;
     line-height: normal;
 }
@@ -391,7 +391,7 @@ ul.nav-sub {
  */
 
 .nav-primary .nav-divider {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgb(255 255 255 / 8%);
 }
 
 /*
@@ -399,7 +399,7 @@ ul.nav-sub {
  */
 
 .nav-primary .nav-sub a {
-    color: rgba(197, 228, 243, 0.7);
+    color: rgb(197 228 243 / 70%);
 }
 
 .nav-primary .nav-sub a:hover,
@@ -441,7 +441,7 @@ ul.nav-sub {
  ========================================================================== */
 
 .nav.nav-divider > :not(.nav-divider) + :not(.nav-header, .nav-divider) {
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgb(255 255 255 / 8%);
     margin-top: 5px;
     padding-top: 5px;
 }

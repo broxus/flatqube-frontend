@@ -1,0 +1,35 @@
+.placeholder {
+    display: inline-block;
+    position: relative;
+    z-index: 0;
+
+    &::after {
+        animation: 1s linear 0s infinite alternate placeholder;
+        background: rgb(255 255 255 / 7%);
+        border-radius: 3px;
+        bottom: 4px;
+        content: '';
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 4px;
+    }
+
+    &_circle {
+        &::after {
+            border-radius: 50%;
+            bottom: 0;
+            top: 0;
+        }
+    }
+}
+
+@keyframes placeholder {
+    from {
+        background: rgb(255 255 255 / 7%);
+    }
+
+    to {
+        background: rgb(255 255 255 / 2%);
+    }
+}
