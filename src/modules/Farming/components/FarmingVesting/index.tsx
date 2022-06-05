@@ -113,29 +113,28 @@ export function FarmingVestingInner(): JSX.Element {
                     </div>
 
                     <div className="farming-map__value">
+                        {/* eslint-disable-next-line no-nested-ternary */}
                         {farmingData.hasBaseData ? (
-                            <>
-                                {farmingData.vestingTime ? (
-                                    <div>
-                                        {[...new Set(farmingData.vestingTime)].length > 1 ? (
-                                            rewardTokens.map((token, index) => (
-                                                token && farmingData.vestingTime && (
-                                                    <div key={token.root}>
-                                                        {intl.formatMessage({
-                                                            id: 'FARMING_VESTING_VESTING_TOKEN_DATE',
-                                                        }, {
-                                                            token: token.symbol,
-                                                            date: formatDateUTC(farmingData.vestingTime[index]),
-                                                        })}
-                                                    </div>
-                                                )
-                                            ))
-                                        ) : (
-                                            formatDateUTC(farmingData.vestingTime[0])
-                                        )}
-                                    </div>
-                                ) : nullMessage}
-                            </>
+                            farmingData.vestingTime ? (
+                                <div>
+                                    {[...new Set(farmingData.vestingTime)].length > 1 ? (
+                                        rewardTokens.map((token, index) => (
+                                            token && farmingData.vestingTime && (
+                                                <div key={token.root}>
+                                                    {intl.formatMessage({
+                                                        id: 'FARMING_VESTING_VESTING_TOKEN_DATE',
+                                                    }, {
+                                                        token: token.symbol,
+                                                        date: formatDateUTC(farmingData.vestingTime[index]),
+                                                    })}
+                                                </div>
+                                            )
+                                        ))
+                                    ) : (
+                                        formatDateUTC(farmingData.vestingTime[0])
+                                    )}
+                                </div>
+                            ) : nullMessage
                         ) : (
                             <Placeholder width={120} />
                         )}
