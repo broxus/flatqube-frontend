@@ -1,7 +1,14 @@
 {
-    "name": "ton-swap-v3",
-    "version": "0.0.1",
-    "private": true,
+    "name": "flatqube-frontend",
+    "version": "1.0.0",
+    "description": "FlatQube DEX frontend source code",
+    "keywords": [
+        "everscale",
+        "ever",
+        "blockchain",
+        "dex"
+    ],
+    "license": "AGPL-3.0",
     "engines": {
         "node": ">=16",
         "npm": ">=8"
