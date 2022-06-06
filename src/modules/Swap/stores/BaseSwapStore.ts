@@ -730,18 +730,18 @@ export class BaseSwapStore<
 
         const [
             { left, right },
-            { denominator, numerator },
+            { denominator, pool_numerator: numerator },
         ] = await Promise.all([
             this.pair.contract.methods.getTokenRoots({
                 answerId: 0,
             }).call({
                 cachedState: toJS(this.pair.state),
             }),
-            this.pair.contract.methods.getFeeParams({
+            (await this.pair.contract.methods.getFeeParams({
                 answerId: 0,
             }).call({
                 cachedState: toJS(this.pair.state),
-            }),
+            })).value0,
         ])
 
         this.setData('pair', {
@@ -762,17 +762,12 @@ export class BaseSwapStore<
         }
 
         try {
-            const [
-                { left_balance: left },
-                { right_balance: right },
-            ] = await Promise.all([
-                this.pair.contract.methods.left_balance({}).call({
-                    cachedState: toJS(this.pair.state),
-                }),
-                this.pair.contract.methods.right_balance({}).call({
-                    cachedState: toJS(this.pair.state),
-                }),
-            ])
+            const {
+                left_balance: left,
+                right_balance: right,
+            } = (await this.pair.contract.methods.getBalances({ answerId: 0 }).call({
+                cachedState: toJS(this.pair.state),
+            })).value0
 
             this.setData('pair', {
                 ...this.pair,

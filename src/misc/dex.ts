@@ -146,11 +146,7 @@ export class Dex {
         pair: Address,
         state?: FullContractState,
     ): Promise<Address> {
-        const pairContract = new rpc.Contract(DexAbi.Pair, pair)
-        const { lp_root } = await pairContract.methods.lp_root({}).call({
-            cachedState: state,
-        })
-        return lp_root
+        return (await Dex.pairTokenRoots(pair, state)).lp
     }
 
     public static async pairTokenRoots(
