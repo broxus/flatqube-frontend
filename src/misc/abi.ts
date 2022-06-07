@@ -328,15 +328,10 @@ export class DexAbi {
         functions: [
             {
                 name: 'constructor',
-                inputs: [],
-                outputs: [],
-            },
-            {
-                name: 'resetGas',
                 inputs: [
-                    { name: 'receiver', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'getRoot',
@@ -379,6 +374,15 @@ export class DexAbi {
                 ],
             },
             {
+                name: 'getPoolType',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'uint8' },
+                ],
+            },
+            {
                 name: 'getVault',
                 inputs: [
                     { name: 'answerId', type: 'uint32' },
@@ -400,10 +404,11 @@ export class DexAbi {
             {
                 name: 'setFeeParams',
                 inputs: [
-                    { name: 'numerator', type: 'uint16' },
-                    { name: 'denominator', type: 'uint16' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
+                    { name: 'send_gas_to', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'getFeeParams',
@@ -411,8 +416,24 @@ export class DexAbi {
                     { name: 'answerId', type: 'uint32' },
                 ],
                 outputs: [
-                    { name: 'numerator', type: 'uint16' },
-                    { name: 'denominator', type: 'uint16' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'value0', type: 'tuple' },
+                ],
+            },
+            {
+                name: 'getAccumulatedFees',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                ],
+                outputs: [
+                    { name: 'accumulatedFees', type: 'uint128[]' },
+                ],
+            },
+            {
+                name: 'withdrawBeneficiaryFee',
+                inputs: [
+                    { name: 'send_gas_to', type: 'address' },
+                ],
+                outputs: [
                 ],
             },
             {
@@ -430,14 +451,7 @@ export class DexAbi {
                     { name: 'answerId', type: 'uint32' },
                 ],
                 outputs: [
-                    {
-                        components: [{ name: 'lp_supply', type: 'uint128' }, {
-                            name: 'left_balance',
-                            type: 'uint128',
-                        }, { name: 'right_balance', type: 'uint128' }],
-                        name: 'value0',
-                        type: 'tuple',
-                    },
+                    { components: [{ name: 'lp_supply', type: 'uint128' }, { name: 'left_balance', type: 'uint128' }, { name: 'right_balance', type: 'uint128' }], name: 'value0', type: 'tuple' },
                 ],
             },
             {
@@ -477,11 +491,7 @@ export class DexAbi {
                     { name: 'id', type: 'uint64' },
                     { name: 'deploy_wallet_grams', type: 'uint128' },
                     { name: 'expected_amount', type: 'uint128' },
-                    {
-                        components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }],
-                        name: 'steps',
-                        type: 'tuple[]',
-                    },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -497,7 +507,8 @@ export class DexAbi {
                     { name: 'original_gas_to', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'expectedDepositLiquidity',
@@ -508,26 +519,7 @@ export class DexAbi {
                     { name: 'auto_change', type: 'bool' },
                 ],
                 outputs: [
-                    {
-                        components: [{ name: 'step_1_left_deposit', type: 'uint128' }, {
-                            name: 'step_1_right_deposit',
-                            type: 'uint128',
-                        }, { name: 'step_1_lp_reward', type: 'uint128' }, {
-                            name: 'step_2_left_to_right',
-                            type: 'bool',
-                        }, { name: 'step_2_right_to_left', type: 'bool' }, {
-                            name: 'step_2_spent',
-                            type: 'uint128',
-                        }, { name: 'step_2_fee', type: 'uint128' }, {
-                            name: 'step_2_received',
-                            type: 'uint128',
-                        }, { name: 'step_3_left_deposit', type: 'uint128' }, {
-                            name: 'step_3_right_deposit',
-                            type: 'uint128',
-                        }, { name: 'step_3_lp_reward', type: 'uint128' }],
-                        name: 'value0',
-                        type: 'tuple',
-                    },
+                    { components: [{ name: 'step_1_left_deposit', type: 'uint128' }, { name: 'step_1_right_deposit', type: 'uint128' }, { name: 'step_1_lp_reward', type: 'uint128' }, { name: 'step_2_left_to_right', type: 'bool' }, { name: 'step_2_right_to_left', type: 'bool' }, { name: 'step_2_spent', type: 'uint128' }, { name: 'step_2_fee', type: 'uint128' }, { name: 'step_2_received', type: 'uint128' }, { name: 'step_3_left_deposit', type: 'uint128' }, { name: 'step_3_right_deposit', type: 'uint128' }, { name: 'step_3_lp_reward', type: 'uint128' }], name: 'value0', type: 'tuple' },
                 ],
             },
             {
@@ -542,7 +534,8 @@ export class DexAbi {
                     { name: 'value6', type: 'uint32' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'expectedWithdrawLiquidity',
@@ -565,7 +558,8 @@ export class DexAbi {
                     { name: 'value4', type: 'uint32' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'expectedExchange',
@@ -603,7 +597,8 @@ export class DexAbi {
                     { name: 'value6', type: 'uint32' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'crossPairExchange',
@@ -619,7 +614,8 @@ export class DexAbi {
                     { name: 'deploy_wallet_grams', type: 'uint128' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'checkPair',
@@ -627,30 +623,35 @@ export class DexAbi {
                     { name: 'account_owner', type: 'address' },
                     { name: 'value1', type: 'uint32' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'upgrade',
                 inputs: [
                     { name: 'code', type: 'cell' },
                     { name: 'new_version', type: 'uint32' },
+                    { name: 'new_type', type: 'uint8' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'onTokenWallet',
                 inputs: [
                     { name: 'wallet', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'onVaultTokenWallet',
                 inputs: [
                     { name: 'wallet', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'liquidityTokenRootDeployed',
@@ -658,7 +659,8 @@ export class DexAbi {
                     { name: 'lp_root_', type: 'address' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'liquidityTokenRootNotDeployed',
@@ -666,144 +668,95 @@ export class DexAbi {
                     { name: 'value0', type: 'address' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'platform_code',
-                inputs: [],
+                inputs: [
+                ],
                 outputs: [
                     { name: 'platform_code', type: 'cell' },
                 ],
             },
-            {
-                name: 'lp_wallet',
-                inputs: [],
-                outputs: [
-                    { name: 'lp_wallet', type: 'address' },
-                ],
-            },
-            {
-                name: 'left_wallet',
-                inputs: [],
-                outputs: [
-                    { name: 'left_wallet', type: 'address' },
-                ],
-            },
-            {
-                name: 'right_wallet',
-                inputs: [],
-                outputs: [
-                    { name: 'right_wallet', type: 'address' },
-                ],
-            },
-            {
-                name: 'vault_left_wallet',
-                inputs: [],
-                outputs: [
-                    { name: 'vault_left_wallet', type: 'address' },
-                ],
-            },
-            {
-                name: 'vault_right_wallet',
-                inputs: [],
-                outputs: [
-                    { name: 'vault_right_wallet', type: 'address' },
-                ],
-            },
-            {
-                name: 'lp_root',
-                inputs: [],
-                outputs: [
-                    { name: 'lp_root', type: 'address' },
-                ],
-            },
-            {
-                name: 'lp_supply',
-                inputs: [],
-                outputs: [
-                    { name: 'lp_supply', type: 'uint128' },
-                ],
-            },
-            {
-                name: 'left_balance',
-                inputs: [],
-                outputs: [
-                    { name: 'left_balance', type: 'uint128' },
-                ],
-            },
-            {
-                name: 'right_balance',
-                inputs: [],
-                outputs: [
-                    { name: 'right_balance', type: 'uint128' },
-                ],
-            },
         ],
-        data: [],
+        data: [
+        ],
         events: [
             {
                 name: 'PairCodeUpgraded',
                 inputs: [
                     { name: 'version', type: 'uint32' },
+                    { name: 'pool_type', type: 'uint8' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'FeesParamsUpdated',
                 inputs: [
-                    { name: 'numerator', type: 'uint16' },
-                    { name: 'denominator', type: 'uint16' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'DepositLiquidity',
                 inputs: [
-                    { name: 'left', type: 'uint128' },
-                    { name: 'right', type: 'uint128' },
+                    { name: 'sender', type: 'address' },
+                    { name: 'owner', type: 'address' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'tokens', type: 'tuple[]' },
                     { name: 'lp', type: 'uint128' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
                 name: 'WithdrawLiquidity',
                 inputs: [
+                    { name: 'sender', type: 'address' },
+                    { name: 'owner', type: 'address' },
                     { name: 'lp', type: 'uint128' },
-                    { name: 'left', type: 'uint128' },
-                    { name: 'right', type: 'uint128' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'tokens', type: 'tuple[]' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
-                name: 'ExchangeLeftToRight',
+                name: 'Exchange',
                 inputs: [
-                    { name: 'left', type: 'uint128' },
-                    { name: 'fee', type: 'uint128' },
-                    { name: 'right', type: 'uint128' },
+                    { name: 'sender', type: 'address' },
+                    { name: 'recipient', type: 'address' },
+                    { name: 'spentTokenRoot', type: 'address' },
+                    { name: 'spentAmount', type: 'uint128' },
+                    { name: 'receiveTokenRoot', type: 'address' },
+                    { name: 'receiveAmount', type: 'uint128' },
+                    { components: [{ name: 'feeTokenRoot', type: 'address' }, { name: 'pool_fee', type: 'uint128' }, { name: 'beneficiary_fee', type: 'uint128' }, { name: 'beneficiary', type: 'address' }], name: 'fees', type: 'tuple[]' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
             {
-                name: 'ExchangeRightToLeft',
+                name: 'Sync',
                 inputs: [
-                    { name: 'right', type: 'uint128' },
-                    { name: 'fee', type: 'uint128' },
-                    { name: 'left', type: 'uint128' },
+                    { name: 'reserves', type: 'uint128[]' },
+                    { name: 'lp_supply', type: 'uint128' },
                 ],
-                outputs: [],
+                outputs: [
+                ],
             },
         ],
         fields: [
             { name: '_pubkey', type: 'uint256' },
             { name: '_timestamp', type: 'uint64' },
             { name: '_constructorFlag', type: 'bool' },
+            { name: 'platform_code', type: 'cell' },
             { name: 'root', type: 'address' },
             { name: 'vault', type: 'address' },
+            { name: 'active', type: 'bool' },
             { name: 'current_version', type: 'uint32' },
-            { name: 'platform_code', type: 'cell' },
             { name: 'left_root', type: 'address' },
             { name: 'right_root', type: 'address' },
-            { name: 'active', type: 'bool' },
             { name: 'lp_wallet', type: 'address' },
             { name: 'left_wallet', type: 'address' },
             { name: 'right_wallet', type: 'address' },
@@ -813,8 +766,9 @@ export class DexAbi {
             { name: 'lp_supply', type: 'uint128' },
             { name: 'left_balance', type: 'uint128' },
             { name: 'right_balance', type: 'uint128' },
-            { name: 'fee_numerator', type: 'uint16' },
-            { name: 'fee_denominator', type: 'uint16' },
+            { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'fee', type: 'tuple' },
+            { name: 'accumulated_left_fee', type: 'uint128' },
+            { name: 'accumulated_right_fee', type: 'uint128' },
         ],
     } as const
 
