@@ -7,11 +7,11 @@ export const EVERMultipleSwapFee = '10000000000' // <= 10 EVER
 
 export const DexRootAddress = new AddressLiteral('0:5eb5713ea9b4a0f3a13bc91b282cde809636eb1e68d2fcb6427b9ad78a5a9008')
 
-export const EverToTip3Address = new AddressLiteral('0:b59144e1333e7f8a564e35adeaa93653ab4cebeb2c41651601de1c40a4040350')
+export const EverToTip3Address = new AddressLiteral('0:8ebe12dd57e0bec16d84135f82743ea4b5bf65c0fd9e526cbfa1d10d2f0f1402')
 
-export const Tip3ToEverAddress = new AddressLiteral('0:4d7dbf7a62cf329bf74260c66028e2381b58cce96b13acc8524dda2358ee88c5')
+export const Tip3ToEverAddress = new AddressLiteral('0:959c96f962cfba25e0d5117492a2b0e2f6a349d1a7b094494a9fe5c258fc4755')
 
-export const EverWeverToTip3Address = new AddressLiteral('0:51600c4c30911f92fee1f9acde1765d6ed1eb0cc2ac3db1758ff222b11f27401')
+export const EverWeverToTip3Address = new AddressLiteral('0:5f01f0d04a77db53f4f266cf5148e01e42ae74c6425b4e961cb91bd63a8b561b')
 
 export const WeverVaultAddress = new AddressLiteral('0:557957cba74ab1dc544b4081be81f1208ad73997d74ab3b72d95864a41b779a4')
 

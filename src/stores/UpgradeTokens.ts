@@ -11,7 +11,7 @@ import {
 import { useRpc } from '@/hooks/useRpc'
 import { MigrationTokenAbi, TokenWallet, TokenWalletV4 } from '@/misc'
 import { useWallet, WalletService } from '@/stores/WalletService'
-import { error } from '@/utils'
+import { debug, error } from '@/utils'
 
 
 export type OutdatedTokenRaw = {
@@ -156,7 +156,7 @@ export class UpgradeTokens {
                     })
                 }
                 catch (e) {
-                    error('Token check error', token, e)
+                    debug('Token check error', token, e)
                 }
             }
 

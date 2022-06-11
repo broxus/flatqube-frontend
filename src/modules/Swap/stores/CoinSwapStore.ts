@@ -82,6 +82,36 @@ export class CoinSwapStore extends DirectSwapStore {
         )
     }
 
+    /**
+     * Returns `true` if all data and bill is valid, otherwise `false`.
+     * @returns {boolean}
+     */
+    public get isValidCoinToTip3(): boolean {
+        return (
+            this.isEnoughCoinBalance
+            && this.wallet.account?.address !== undefined
+            && new BigNumber(this.amount || 0).gt(0)
+            && new BigNumber(this.expectedAmount || 0).gt(0)
+            && new BigNumber(this.minExpectedAmount || 0).gt(0)
+        )
+    }
+
+    /**
+     * Returns `true` if all data and bill is valid, otherwise `false`.
+     * @returns {boolean}
+     */
+    public get isValidTip3ToCoin(): boolean {
+        return (
+            this.wallet.account?.address !== undefined
+            && this.leftToken?.wallet !== undefined
+            && this.leftTokenAddress !== undefined
+            && new BigNumber(this.amount || 0).gt(0)
+            && new BigNumber(this.expectedAmount || 0).gt(0)
+            && new BigNumber(this.minExpectedAmount || 0).gt(0)
+            && new BigNumber(this.leftToken?.balance || 0).gte(this.amount || 0)
+        )
+    }
+
 
     /*
      * Internal and external utilities methods
@@ -134,7 +164,6 @@ export class CoinSwapStore extends DirectSwapStore {
         const coinToTip3Contract = new rpc.Contract(EverAbi.EverToTip3, EverToTip3Address)
 
         const payload = (await coinToTip3Contract.methods.buildExchangePayload({
-            amount: this.leftAmountNumber.toFixed(),
             deployWalletValue: deployGrams,
             expectedAmount: this.minExpectedAmount!,
             id: processingId,
@@ -319,36 +348,6 @@ export class CoinSwapStore extends DirectSwapStore {
             error('decodeTransaction error: ', e)
             this.setState('isSwapping', false)
         }
-    }
-
-    /**
-     * Returns `true` if all data and bill is valid, otherwise `false`.
-     * @returns {boolean}
-     */
-    public get isValidCoinToTip3(): boolean {
-        return (
-            this.isEnoughCoinBalance
-            && this.wallet.account?.address !== undefined
-            && new BigNumber(this.amount || 0).gt(0)
-            && new BigNumber(this.expectedAmount || 0).gt(0)
-            && new BigNumber(this.minExpectedAmount || 0).gt(0)
-        )
-    }
-
-    /**
-     * Returns `true` if all data and bill is valid, otherwise `false`.
-     * @returns {boolean}
-     */
-    public get isValidTip3ToCoin(): boolean {
-        return (
-            this.wallet.account?.address !== undefined
-            && this.leftToken?.wallet !== undefined
-            && this.leftTokenAddress !== undefined
-            && new BigNumber(this.amount || 0).gt(0)
-            && new BigNumber(this.expectedAmount || 0).gt(0)
-            && new BigNumber(this.minExpectedAmount || 0).gt(0)
-            && new BigNumber(this.leftToken?.balance || 0).gte(this.amount || 0)
-        )
     }
 
     /**

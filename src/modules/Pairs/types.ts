@@ -4,7 +4,11 @@ import {
     TvlGraphModel,
     VolumeGraphModel,
 } from '@/modules/Chart/types'
-import { EventType, TransactionsInfoResponse, TransactionsOrdering } from '@/modules/Transactions/types'
+import {
+    EventType,
+    TransactionsInfoResponse,
+    TransactionsOrdering,
+} from '@/modules/Transactions/types'
 
 export type PairsOrdering =
     | 'tvlascending'
@@ -60,11 +64,6 @@ export type PairsRequest = {
     whiteListUri?: string;
 }
 
-export type CrossPairsRequest = {
-    fromCurrencyAddress: string;
-    toCurrencyAddresses: string[];
-}
-
 export type CrossChainKind = 'expectedexchange' | 'expectedspendamount'
 
 export type NewCrossPairsRequest = {
@@ -85,7 +84,7 @@ export type CrossChainPairInfoResponse = {
 }
 
 export type NewCrossPairsResponse = {
-    amount: number;
+    currencies: { [currencyAddress: string]: string }[];
     pairs: CrossChainPairInfoResponse[];
 }
 

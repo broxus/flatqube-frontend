@@ -1253,22 +1253,45 @@ export class DexAbi {
             },
             {
                 name: 'onSwapEverToTip3Success',
-                inputs: [{ name: 'id', type: 'uint64' }, { name: 'amount', type: 'uint128' }],
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
+                ],
+                outputs: [],
+            },
+            {
+                name: 'onSwapEverToTip3Partial',
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
+                ],
                 outputs: [],
             },
             {
                 name: 'onSwapEverToTip3Cancel',
-                inputs: [{ name: 'id', type: 'uint64' }],
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                ],
                 outputs: [],
             },
             {
                 name: 'onSwapTip3ToEverSuccess',
-                inputs: [{ name: 'id', type: 'uint64' }, { name: 'amount', type: 'uint128' }],
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                ],
                 outputs: [],
             },
             {
                 name: 'onSwapTip3ToEverCancel',
-                inputs: [{ name: 'id', type: 'uint64' }],
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
+                ],
                 outputs: [],
             },
         ],
@@ -1303,23 +1326,26 @@ export class EverAbi {
             {
                 name: 'buildExchangePayload',
                 inputs: [
-                    { name: 'id', type: 'uint64' },
-                    { name: 'amount', type: 'uint128' },
                     { name: 'pair', type: 'address' },
-                    { name: 'expectedAmount', type: 'uint128' },
+                    { name: 'id', type: 'uint64' },
                     { name: 'deployWalletValue', type: 'uint128' },
+                    { name: 'expectedAmount', type: 'uint128' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
                 ],
             },
             {
-                name: 'swapEvers',
+                name: 'buildCrossPairExchangePayload',
                 inputs: [
-                    { name: 'user', type: 'address' },
-                    { name: 'payload', type: 'cell' },
+                    { name: 'pair', type: 'address' },
+                    { name: 'id', type: 'uint64' },
+                    { name: 'deployWalletValue', type: 'uint128' },
+                    { name: 'expectedAmount', type: 'uint128' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
                 ],
                 outputs: [
+                    { name: 'value0', type: 'cell' },
                 ],
             },
             {
@@ -1336,9 +1362,9 @@ export class EverAbi {
             {
                 name: 'onAcceptTokensTransfer',
                 inputs: [
-                    { name: 'value0', type: 'address' },
+                    { name: 'tokenRoot', type: 'address' },
                     { name: 'amount', type: 'uint128' },
-                    { name: 'sender', type: 'address' },
+                    { name: 'value2', type: 'address' },
                     { name: 'value3', type: 'address' },
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
@@ -1349,7 +1375,7 @@ export class EverAbi {
             {
                 name: 'onAcceptTokensBurn',
                 inputs: [
-                    { name: 'value0', type: 'uint128' },
+                    { name: 'amount', type: 'uint128' },
                     { name: 'value1', type: 'address' },
                     { name: 'value2', type: 'address' },
                     { name: 'user', type: 'address' },
@@ -1390,31 +1416,44 @@ export class EverAbi {
         ],
         events: [
             {
-                name: 'SwapEverToTip3WeverMint',
+                name: 'SwapEverToTip3Start',
                 inputs: [
+                    { name: 'pair', type: 'address' },
+                    { name: 'operationType', type: 'uint8' },
+                    { name: 'id', type: 'uint64' },
+                    { name: 'user', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'SwapEverToTip3Success',
+                inputs: [
+                    { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
                     { name: 'amount', type: 'uint128' },
-                    { name: 'pair', type: 'address' },
-                    { name: 'expectedAmount', type: 'uint128' },
-                    { name: 'deployWalletValue', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
                 ],
                 outputs: [
                 ],
             },
             {
-                name: 'SwapEverToTip3SuccessTransfer',
+                name: 'SwapEverToTip3Partial',
                 inputs: [
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
                 ],
                 outputs: [
                 ],
             },
             {
-                name: 'SwapEverToTip3CancelTransfer',
+                name: 'SwapEverToTip3Cancel',
                 inputs: [
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
                 ],
                 outputs: [
                 ],
@@ -1424,6 +1463,7 @@ export class EverAbi {
                 inputs: [
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
                 ],
                 outputs: [
                 ],
@@ -1433,6 +1473,8 @@ export class EverAbi {
                 inputs: [
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
                 ],
                 outputs: [
                 ],
@@ -1481,9 +1523,22 @@ export class EverAbi {
             {
                 name: 'buildExchangePayload',
                 inputs: [
-                    { name: 'id', type: 'uint64' },
                     { name: 'pair', type: 'address' },
+                    { name: 'id', type: 'uint64' },
                     { name: 'expectedAmount', type: 'uint128' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildCrossPairExchangePayload',
+                inputs: [
+                    { name: 'pair', type: 'address' },
+                    { name: 'id', type: 'uint64' },
+                    { name: 'deployWalletValue', type: 'uint128' },
+                    { name: 'expectedAmount', type: 'uint128' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -1492,9 +1547,9 @@ export class EverAbi {
             {
                 name: 'onAcceptTokensTransfer',
                 inputs: [
-                    { name: 'value0', type: 'address' },
+                    { name: 'tokenRoot', type: 'address' },
                     { name: 'amount', type: 'uint128' },
-                    { name: 'sender', type: 'address' },
+                    { name: 'value2', type: 'address' },
                     { name: 'value3', type: 'address' },
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
@@ -1505,7 +1560,7 @@ export class EverAbi {
             {
                 name: 'onAcceptTokensBurn',
                 inputs: [
-                    { name: 'value0', type: 'uint128' },
+                    { name: 'amount', type: 'uint128' },
                     { name: 'value1', type: 'address' },
                     { name: 'value2', type: 'address' },
                     { name: 'user', type: 'address' },
@@ -1546,31 +1601,44 @@ export class EverAbi {
         ],
         events: [
             {
-                name: 'SwapEverToTip3WeverMint',
+                name: 'SwapEverToTip3Start',
                 inputs: [
+                    { name: 'pair', type: 'address' },
+                    { name: 'operationType', type: 'uint8' },
+                    { name: 'id', type: 'uint64' },
+                    { name: 'user', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'SwapEverToTip3Success',
+                inputs: [
+                    { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
                     { name: 'amount', type: 'uint128' },
-                    { name: 'pair', type: 'address' },
-                    { name: 'expectedAmount', type: 'uint128' },
-                    { name: 'deployWalletValue', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
                 ],
                 outputs: [
                 ],
             },
             {
-                name: 'SwapEverToTip3SuccessTransfer',
+                name: 'SwapEverToTip3Partial',
                 inputs: [
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
                 ],
                 outputs: [
                 ],
             },
             {
-                name: 'SwapEverToTip3CancelTransfer',
+                name: 'SwapEverToTip3Cancel',
                 inputs: [
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
                 ],
                 outputs: [
                 ],
@@ -1580,6 +1648,7 @@ export class EverAbi {
                 inputs: [
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
                 ],
                 outputs: [
                 ],
@@ -1589,6 +1658,8 @@ export class EverAbi {
                 inputs: [
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
+                    { name: 'amount', type: 'uint128' },
+                    { name: 'tokenRoot', type: 'address' },
                 ],
                 outputs: [
                 ],
@@ -1637,11 +1708,25 @@ export class EverAbi {
             {
                 name: 'buildExchangePayload',
                 inputs: [
-                    { name: 'id', type: 'uint64' },
-                    { name: 'amount', type: 'uint128' },
                     { name: 'pair', type: 'address' },
-                    { name: 'expectedAmount', type: 'uint128' },
+                    { name: 'id', type: 'uint64' },
                     { name: 'deployWalletValue', type: 'uint128' },
+                    { name: 'expectedAmount', type: 'uint128' },
+                    { name: 'amount', type: 'uint128' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildCrossPairExchangePayload',
+                inputs: [
+                    { name: 'pair', type: 'address' },
+                    { name: 'id', type: 'uint64' },
+                    { name: 'deployWalletValue', type: 'uint128' },
+                    { name: 'expectedAmount', type: 'uint128' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
+                    { name: 'amount', type: 'uint128' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -1652,7 +1737,7 @@ export class EverAbi {
                 inputs: [
                     { name: 'value0', type: 'address' },
                     { name: 'amount', type: 'uint128' },
-                    { name: 'value2', type: 'address' },
+                    { name: 'sender', type: 'address' },
                     { name: 'value3', type: 'address' },
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
