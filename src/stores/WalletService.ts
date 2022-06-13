@@ -478,7 +478,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
 
             this.#contractSubscriber.on('data', event => {
                 debug(
-                    '%RPC%c The wallet\'s `contractStateChanged` event was captured',
+                    '%cRPC%c The wallet\'s `contractStateChanged` event was captured',
                     'font-weight: bold; background: #4a5772; color: #fff; border-radius: 2px; padding: 3px 6.5px',
                     'color: #c5e4f3',
                     event,

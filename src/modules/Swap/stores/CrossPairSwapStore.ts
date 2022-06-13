@@ -1,14 +1,24 @@
 import {
-    computed, makeObservable, override, toJS,
+    computed,
+    makeObservable,
+    override,
+    toJS,
 } from 'mobx'
 import BigNumber from 'bignumber.js'
 import { Address, Subscriber } from 'everscale-inpage-provider'
 import * as E from 'fp-ts/Either'
 import type { DecodedAbiFunctionInputs, DecodedAbiFunctionOutputs } from 'everscale-inpage-provider'
 
-import { TokenListURI } from '@/config'
+import {
+    EverToTip3Address, EverWeverToTip3Address, Tip3ToEverAddress, TokenListURI, WeverVaultAddress,
+} from '@/config'
 import { useRpc } from '@/hooks/useRpc'
-import { DexAbi, TokenWallet } from '@/misc'
+import {
+    DexAbi,
+    EverAbi,
+    TokenAbi,
+    TokenWallet,
+} from '@/misc'
 import {
     DEFAULT_DECIMALS,
     DEFAULT_SLIPPAGE_VALUE,
@@ -30,9 +40,9 @@ import { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
 import { WalletService } from '@/stores/WalletService'
 import { debug, error, isGoodBignumber } from '@/utils'
 import type {
-    BaseSwapStoreInitialData,
     CrossPairSwapFailureResult,
     CrossPairSwapStoreData,
+    CrossPairSwapStoreInitialData,
     CrossPairSwapStoreState,
     CrossPairSwapTransactionCallbacks,
     DirectTransactionSuccessResult,
@@ -41,6 +51,7 @@ import type {
     SwapRouteResult,
 } from '@/modules/Swap/types'
 import { CrossChainKind, NewCrossPairsRequest, NewCrossPairsResponse } from '@/modules/Pairs/types'
+import { CoinSwapFailureResult, CoinSwapSuccessResult, DirectSwapStoreData } from '@/modules/Swap/types'
 
 
 const rpc = useRpc()
@@ -51,12 +62,13 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
     constructor(
         protected readonly wallet: WalletService,
         protected readonly tokensCache: TokensCacheService,
-        protected readonly initialData?: BaseSwapStoreInitialData,
+        protected readonly initialData?: CrossPairSwapStoreInitialData,
         protected readonly callbacks?: CrossPairSwapTransactionCallbacks,
     ) {
         super(tokensCache, initialData)
 
         this.setData({
+            coin: initialData?.coin,
             crossPairs: [],
             routes: [],
         })
@@ -68,7 +80,15 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
         makeObservable(this, {
             amount: override,
             expectedAmount: override,
+            coin: computed,
+            combinedBalanceNumber: computed,
             fee: override,
+            isEnoughCombinedBalance: computed,
+            isEnoughTokenBalance: computed,
+            isPreparing: computed,
+            isValidCoinToTip3: computed,
+            isValidTip3ToCoin: computed,
+            isValidCombined: computed,
             minExpectedAmount: override,
             priceImpact: override,
             priceLeftToRight: override,
@@ -217,9 +237,33 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
     /**
      * Manually start cross-exchange swap process.
      */
-    public async submit(): Promise<void> {
+    public async submit(way?: 'fromCoinToTip3' | 'fromTip3ToCoin' | 'multiSwap'): Promise<void> {
+        switch (way) {
+            case 'fromCoinToTip3':
+                await this.swapCoinToTip3()
+                break
+
+            case 'fromTip3ToCoin':
+                await this.swapTip3ToCoin()
+                break
+
+            case 'multiSwap':
+                await this.multiSwap()
+                break
+
+            default:
+                await this.swapTip3ToTip3()
+        }
+
+    }
+
+    /**
+     *
+     * @protected
+     */
+    protected async swapTip3ToTip3(): Promise<void> {
         if (
-            this.wallet.account === undefined
+            this.wallet.account?.address === undefined
             || !this.isValid
             || this.route === undefined
             || this.leftToken?.wallet === undefined
@@ -230,9 +274,7 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
 
         const firstPair = this.route.pairs.slice().shift()
 
-        if (firstPair?.address === undefined
-            || firstPair.contract === undefined
-        ) {
+        if (firstPair?.address === undefined || firstPair.contract === undefined) {
             this.setState('isSwapping', false)
             return
         }
@@ -288,82 +330,80 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
 
         const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
             const result = await this.wallet.walletContractCallbacks?.decodeTransaction({
-                transaction,
                 methods: ['dexPairExchangeSuccess', 'dexPairOperationCancelled'],
+                transaction,
             })
 
-            if (result !== undefined) {
-                if (result.method === 'dexPairOperationCancelled' && result.input.id.toString() === processingId) {
-                    results = results.map(
-                        res => fillStepResult(
-                            res,
-                            transaction,
-                            transaction.inMessage.src,
-                            undefined,
-                            'cancel',
-                        ),
-                    )
+            if (result?.method === 'dexPairOperationCancelled' && result.input.id.toString() === processingId) {
+                results = results.map(
+                    res => fillStepResult(
+                        res,
+                        transaction,
+                        transaction.inMessage.src,
+                        undefined,
+                        'cancel',
+                    ),
+                )
 
-                    const cancelStepIndex = results.findIndex(
-                        ({ status }) => status === 'cancel',
-                    )
+                const cancelStepIndex = results.findIndex(
+                    ({ status }) => status === 'cancel',
+                )
 
-                    if (cancelStepIndex === 0) {
-                        return E.left({})
-                    }
+                if (cancelStepIndex === 0) {
+                    return E.left({})
+                }
 
-                    results = results.slice(0, cancelStepIndex + 1)
+                results = results.slice(0, cancelStepIndex + 1)
 
-                    if (results.some(({ status }) => status === undefined)) {
-                        return undefined
-                    }
+                if (results.some(({ status }) => status === undefined)) {
+                    return undefined
+                }
 
+                return E.left({
+                    cancelStep: results[cancelStepIndex],
+                    index: cancelStepIndex,
+                    step: results[cancelStepIndex - 1],
+                })
+            }
+
+            if (result?.method === 'dexPairExchangeSuccess' && result.input.id.toString() === processingId) {
+                results = results.map(
+                    res => fillStepResult(
+                        res,
+                        transaction,
+                        transaction.inMessage.src,
+                        result.input.result.received.toString(),
+                        'success',
+                        result.input,
+                    ),
+                )
+
+                if (results.some(({ status }) => status === undefined) || results.length === 0) {
+                    return undefined
+                }
+
+                if (results.length > 0 && results.every(({ status }) => status === 'success')) {
+                    const stepResult = results.slice().pop() as SwapRouteResult
+                    return E.right({
+                        input: stepResult.input!,
+                        transaction: stepResult.transaction!,
+                    })
+                }
+
+                const cancelStepIndex = results.findIndex(
+                    ({ status }) => status === 'cancel',
+                )
+
+                if (cancelStepIndex === 0) {
+                    return E.left({})
+                }
+
+                if (cancelStepIndex > 0) {
                     return E.left({
                         cancelStep: results[cancelStepIndex],
                         index: cancelStepIndex,
                         step: results[cancelStepIndex - 1],
                     })
-                }
-
-                if (result.method === 'dexPairExchangeSuccess' && result.input.id.toString() === processingId) {
-                    results = results.map(
-                        res => fillStepResult(
-                            res,
-                            transaction,
-                            transaction.inMessage.src,
-                            result.input.result.received.toString(),
-                            'success',
-                            result.input,
-                        ),
-                    )
-
-                    if (results.some(({ status }) => status === undefined) || results.length === 0) {
-                        return undefined
-                    }
-
-                    if (results.length > 0 && results.every(({ status }) => status === 'success')) {
-                        const stepResult = results.slice().pop() as SwapRouteResult
-                        return E.right({
-                            input: stepResult.input!,
-                            transaction: stepResult.transaction!,
-                        })
-                    }
-
-                    const cancelStepIndex = results.findIndex(
-                        ({ status }) => status === 'cancel',
-                    )
-
-                    if (cancelStepIndex === 0) {
-                        return E.left({})
-                    }
-
-                    if (cancelStepIndex > 0) {
-                        return E.left({
-                            cancelStep: results[cancelStepIndex],
-                            index: cancelStepIndex,
-                            step: results[cancelStepIndex - 1],
-                        })
-                    }
                 }
             }
 
@@ -393,6 +433,464 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
                     (r: DirectTransactionSuccessResult) => {
                         this.setState('isSwapping', false)
                         this.callbacks?.onTransactionSuccess?.(r)
+                    },
+                )(await resultHandler)
+            }
+        }
+        catch (e) {
+            error('decodeTransaction error: ', e)
+            this.setState('isSwapping', false)
+        }
+    }
+
+    /**
+     *
+     * @protected
+     */
+    protected async swapCoinToTip3(): Promise<void> {
+        if (
+            this.wallet.account?.address === undefined
+            || !this.isValidCoinToTip3
+            || this.route === undefined
+            || this.rightToken === undefined
+        ) {
+            this.setState('isSwapping', false)
+            return
+        }
+
+        this.setState('isSwapping', true)
+
+        const firstPair = this.route.pairs.slice().shift()
+
+        if (firstPair?.address === undefined || firstPair.contract === undefined) {
+            this.setState('isSwapping', false)
+            return
+        }
+
+        const tokens = this.route.tokens.slice().concat(this.rightToken)
+
+        let hasWallet = true
+
+        try {
+            // eslint-disable-next-line no-restricted-syntax
+            for (const token of tokens) {
+                const tokenRoot = new rpc.Contract(TokenAbi.Root, new Address(token.root))
+                const walletAddress = (await tokenRoot.methods.walletOf({
+                    answerId: 0,
+                    walletOwner: EverToTip3Address,
+                }).call()).value0
+                const coinToTip3WalletContract = new rpc.Contract(TokenAbi.Wallet, walletAddress)
+                hasWallet = (await coinToTip3WalletContract
+                    .methods.balance({ answerId: 0 })
+                    .call()).value0 !== undefined
+
+                if (!hasWallet) {
+                    break
+                }
+            }
+        }
+        catch (e) {
+            debug('Check coinToTip3 wallets error', e)
+            hasWallet = false
+        }
+
+        const deployGrams = tokens.some(token => token.balance === undefined) || !hasWallet ? '100000000' : '0'
+
+        const processingId = new BigNumber(
+            Math.floor(
+                Math.random() * (Number.MAX_SAFE_INTEGER - 1),
+            ) + 1,
+        ).toFixed()
+
+        const coinToTip3Contract = new rpc.Contract(EverAbi.EverToTip3, EverToTip3Address)
+
+        const steps = this.route!.steps.slice()
+        const minExpectedAmount = steps.slice().shift()?.minExpectedAmount as string
+
+        const payload = (await coinToTip3Contract.methods.buildCrossPairExchangePayload({
+            deployWalletValue: deployGrams,
+            expectedAmount: minExpectedAmount,
+            id: processingId,
+            pair: firstPair.address,
+            steps: steps.slice(1, steps.length).map(
+                ({ minExpectedAmount: amount, receiveAddress }) => ({ amount, root: receiveAddress }),
+            ),
+        }).call()).value0
+
+        let stream = this.#transactionSubscriber?.transactions(this.wallet.account.address)
+
+        const oldStream = this.#transactionSubscriber?.oldTransactions(this.wallet.account.address, {
+            fromLt: this.wallet.contract?.lastTransactionId?.lt,
+        })
+
+        if (stream !== undefined && oldStream !== undefined) {
+            stream = stream.merge(oldStream)
+        }
+
+        const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
+            const result = await this.wallet.walletContractCallbacks?.decodeTransaction({
+                methods: ['onSwapEverToTip3Success', 'onSwapEverToTip3Cancel', 'onSwapEverToTip3Partial'],
+                transaction,
+            })
+
+            if (result?.method === 'onSwapEverToTip3Partial' && result.input.id.toString() === processingId) {
+                const cancelStepIndex = steps.findIndex(
+                    step => step.receiveAddress.toString() === result.input.tokenRoot.toString(),
+                )
+
+                this.setState('isSwapping', false)
+
+                return E.left<CoinSwapFailureResult>({
+                    cancelStep: {
+                        amount: result.input.amount,
+                        step: steps[cancelStepIndex + 1],
+                    },
+                    index: cancelStepIndex,
+                    type: 'partial',
+                })
+            }
+
+            if (result?.method === 'onSwapEverToTip3Cancel' && result.input.id.toString() === processingId) {
+                this.setState('isSwapping', false)
+                return E.left<CoinSwapFailureResult>({ input: result.input, type: 'cancel' })
+            }
+
+            if (result?.method === 'onSwapEverToTip3Success' && result.input.id.toString() === processingId) {
+                this.setState('isSwapping', false)
+                return E.right<never, CoinSwapSuccessResult>({ input: result.input, transaction })
+            }
+
+            return undefined
+        }).first()
+
+        const weverVault = new rpc.Contract(EverAbi.WeverVault, WeverVaultAddress)
+
+        try {
+            await weverVault.methods.wrap({
+                gas_back_address: this.wallet.account.address,
+                owner_address: EverToTip3Address,
+                payload,
+                tokens: this.leftAmountNumber.toFixed(),
+            }).send({
+                amount: new BigNumber(steps.length - 1)
+                    .times(500000000)
+                    .plus(5000000000)
+                    .plus(this.leftAmountNumber.toFixed())
+                    .plus(deployGrams)
+                    .toFixed(),
+                bounce: true,
+                from: this.wallet.account.address,
+            })
+
+            if (resultHandler !== undefined) {
+                E.match<CoinSwapFailureResult, CoinSwapSuccessResult, void>(
+                    reason => {
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onCoinSwapTransactionFailure?.(reason)
+                    },
+                    result => {
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onCoinSwapTransactionSuccess?.(result)
+                    },
+                )(await resultHandler)
+            }
+        }
+        catch (e) {
+            error('decodeTransaction error: ', e)
+            this.setState('isSwapping', false)
+        }
+    }
+
+    /**
+     *
+     * @protected
+     */
+    protected async swapTip3ToCoin(): Promise<void> {
+        if (
+            this.wallet.account?.address === undefined
+            || !this.isValidTip3ToCoin
+            || this.route === undefined
+            || this.leftToken?.wallet === undefined
+        ) {
+            this.setState('isSwapping', false)
+            return
+        }
+
+        this.setState('isSwapping', true)
+
+        const firstPair = this.route.pairs.slice().shift()
+
+        if (firstPair?.address === undefined || firstPair.contract === undefined) {
+            this.setState('isSwapping', false)
+            return
+        }
+
+        const tokens = [this.leftToken].concat(this.route.tokens.slice())
+
+        let hasWallet = true
+
+        try {
+            // eslint-disable-next-line no-restricted-syntax
+            for (const token of tokens) {
+                const tokenRoot = new rpc.Contract(TokenAbi.Root, new Address(token.root))
+                const walletAddress = (await tokenRoot.methods.walletOf({
+                    answerId: 0,
+                    walletOwner: Tip3ToEverAddress,
+                }).call()).value0
+                const tip3ToCoinWalletContract = new rpc.Contract(TokenAbi.Wallet, walletAddress)
+                hasWallet = (await tip3ToCoinWalletContract
+                    .methods.balance({ answerId: 0 })
+                    .call()).value0 !== undefined
+
+                if (!hasWallet) {
+                    break
+                }
+            }
+        }
+        catch (e) {
+            debug('Check tip3ToCoin wallets error', e)
+            hasWallet = false
+        }
+
+        const deployGrams = tokens.some(token => token.balance === undefined) || !hasWallet ? '100000000' : '0'
+
+        const processingId = new BigNumber(
+            Math.floor(
+                Math.random() * (Number.MAX_SAFE_INTEGER - 1),
+            ) + 1,
+        ).toFixed()
+
+        const tip3ToCoinContract = new rpc.Contract(EverAbi.Tip3ToEver, Tip3ToEverAddress)
+
+        const steps = this.route.steps.slice()
+        const minExpectedAmount = steps.slice().shift()?.minExpectedAmount as string
+
+        const payload = (await tip3ToCoinContract.methods.buildCrossPairExchangePayload({
+            deployWalletValue: deployGrams,
+            expectedAmount: minExpectedAmount,
+            id: processingId,
+            pair: firstPair.address,
+            steps: steps.slice(1, steps.length).map(
+                ({ minExpectedAmount: amount, receiveAddress }) => ({ amount, root: receiveAddress }),
+            ),
+        }).call()).value0
+
+        let stream = this.#transactionSubscriber?.transactions(this.wallet.account.address)
+
+        const oldStream = this.#transactionSubscriber?.oldTransactions(this.wallet.account.address, {
+            fromLt: this.wallet.contract?.lastTransactionId?.lt,
+        })
+
+        if (stream !== undefined && oldStream !== undefined) {
+            stream = stream.merge(oldStream)
+        }
+
+        const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
+            const result = await this.wallet.walletContractCallbacks?.decodeTransaction({
+                methods: ['onSwapTip3ToEverSuccess', 'onSwapTip3ToEverCancel'],
+                transaction,
+            })
+
+            if (result?.method === 'onSwapTip3ToEverCancel' && result.input.id.toString() === processingId) {
+                const cancelStepIndex = steps.findIndex(
+                    step => step.spentAddress.toString() === result.input.tokenRoot.toString(),
+                )
+
+                this.setState('isSwapping', false)
+
+                if (cancelStepIndex === 0) {
+                    return E.left<CoinSwapFailureResult>({
+                        input: result.input,
+                        type: 'cancel',
+                    })
+                }
+
+                return E.left<CoinSwapFailureResult>({
+                    cancelStep: {
+                        amount: result.input.amount,
+                        step: steps[cancelStepIndex],
+                    },
+                    index: cancelStepIndex,
+                    isLastStep: cancelStepIndex === steps.length - 1,
+                    type: 'partial',
+                })
+            }
+
+            if (result?.method === 'onSwapTip3ToEverSuccess' && result.input.id.toString() === processingId) {
+                this.setState('isSwapping', false)
+                return E.right<never, CoinSwapSuccessResult>({ input: result.input, transaction })
+            }
+
+            return undefined
+        }).first()
+
+        const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, new Address(this.leftToken.wallet))
+
+        try {
+            await tokenWalletContract.methods.transfer({
+                amount: this.amount!,
+                deployWalletValue: deployGrams,
+                notify: true,
+                payload,
+                recipient: Tip3ToEverAddress,
+                remainingGasTo: this.wallet.account.address,
+            }).send({
+                amount: new BigNumber(steps.length)
+                    .times(500000000)
+                    .plus(3100000000)
+                    .plus(deployGrams)
+                    .toFixed(),
+                bounce: true,
+                from: this.wallet.account.address,
+            })
+
+            if (resultHandler !== undefined) {
+                E.match<CoinSwapFailureResult, CoinSwapSuccessResult, void>(
+                    reason => {
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onCoinSwapTransactionFailure?.(reason)
+                    },
+                    result => {
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onCoinSwapTransactionSuccess?.(result)
+                    },
+                )(await resultHandler)
+            }
+        }
+        catch (e) {
+            error('decodeTransaction error: ', e)
+            this.setState('isSwapping', false)
+        }
+    }
+
+    protected async multiSwap(): Promise<void> {
+        if (
+            this.wallet.account?.address === undefined
+            || this.route === undefined
+            || this.leftToken?.balance === undefined
+            || this.leftToken.wallet === undefined
+        ) {
+            this.setState('isSwapping', false)
+            return
+        }
+
+        this.setState('isSwapping', true)
+
+        const firstPair = this.route.pairs.slice().shift()
+
+        if (firstPair?.address === undefined || firstPair.contract === undefined) {
+            this.setState('isSwapping', false)
+            return
+        }
+
+        const tokens = this.route.tokens.slice()
+
+        let hasWallet = true
+
+        try {
+            // eslint-disable-next-line no-restricted-syntax
+            for (const token of tokens) {
+                const tokenRoot = new rpc.Contract(TokenAbi.Root, new Address(token.root))
+                const walletAddress = (await tokenRoot.methods.walletOf({
+                    answerId: 0,
+                    walletOwner: EverWeverToTip3Address,
+                }).call()).value0
+                const everWeverToTip3WalletContract = new rpc.Contract(TokenAbi.Wallet, walletAddress)
+                hasWallet = (await everWeverToTip3WalletContract
+                    .methods.balance({ answerId: 0 })
+                    .call()).value0 !== undefined
+
+                if (!hasWallet) {
+                    break
+                }
+            }
+        }
+        catch (e) {
+            debug('Check everWeverToTip3 wallets error', e)
+            hasWallet = false
+        }
+
+        const deployGrams = tokens.some(token => token.balance === undefined) || !hasWallet ? '100000000' : '0'
+
+        const processingId = new BigNumber(
+            Math.floor(
+                Math.random() * (Number.MAX_SAFE_INTEGER - 1),
+            ) + 1,
+        ).toFixed()
+
+        const everWeverToTip3Contract = new rpc.Contract(EverAbi.EverWeverToTipP3, EverWeverToTip3Address)
+
+        const steps = this.route!.steps.slice()
+        const minExpectedAmount = steps.slice().shift()?.minExpectedAmount as string
+
+        const payload = (await everWeverToTip3Contract.methods.buildCrossPairExchangePayload({
+            amount: this.leftAmountNumber.toFixed(),
+            deployWalletValue: deployGrams,
+            expectedAmount: minExpectedAmount,
+            id: processingId,
+            pair: firstPair.address,
+            steps: steps.slice(1, steps.length).map(
+                ({ minExpectedAmount: amount, receiveAddress }) => ({ amount, root: receiveAddress }),
+            ),
+        }).call()).value0
+
+        let stream = this.#transactionSubscriber?.transactions(this.wallet.account.address)
+
+        const oldStream = this.#transactionSubscriber?.oldTransactions(this.wallet.account.address, {
+            fromLt: this.wallet.contract?.lastTransactionId?.lt,
+        })
+
+        if (stream !== undefined && oldStream !== undefined) {
+            stream = stream.merge(oldStream)
+        }
+
+        const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
+            const result = await this.wallet.walletContractCallbacks?.decodeTransaction({
+                methods: ['onSwapEverToTip3Success', 'onSwapEverToTip3Cancel'],
+                transaction,
+            })
+
+            if (result?.method === 'onSwapEverToTip3Cancel' && result.input.id.toString() === processingId) {
+                this.setState('isSwapping', false)
+                return E.left({ input: result.input })
+            }
+
+            if (result?.method === 'onSwapEverToTip3Success' && result.input.id.toString() === processingId) {
+                this.setState('isSwapping', false)
+                return E.right({ input: result.input, transaction })
+            }
+
+            return undefined
+        }).first()
+
+        const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, new Address(this.leftToken.wallet))
+
+        try {
+            await tokenWalletContract.methods.transfer({
+                amount: this.leftToken.balance,
+                payload,
+                recipient: EverWeverToTip3Address,
+                deployWalletValue: '0',
+                notify: true,
+                remainingGasTo: this.wallet.account.address,
+            }).send({
+                amount: this.leftAmountNumber.minus(this.leftToken.balance)
+                    .plus(5000000000)
+                    .plus(new BigNumber(steps.length - 1).times(500000000))
+                    .toFixed(),
+                from: this.wallet.account.address,
+                bounce: true,
+            })
+
+            if (resultHandler !== undefined) {
+                E.match<CoinSwapFailureResult, CoinSwapSuccessResult, void>(
+                    reason => {
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onCoinSwapTransactionFailure?.(reason)
+                    },
+                    result => {
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onCoinSwapTransactionSuccess?.(result)
                     },
                 )(await resultHandler)
             }
@@ -884,6 +1382,14 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
     }
 
     /**
+     * Returns native wallet coin
+     * @returns {DirectSwapStoreData['coin']}
+     */
+    public get coin(): DirectSwapStoreData['coin'] {
+        return this.data.coin
+    }
+
+    /**
      * Returns route bill expected amount value
      * @returns {Required<CrossPairSwapStoreData>['route']['bill']['expectedAmount']}
      */
@@ -983,6 +1489,79 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
      * Computed values
      * ----------------------------------------------------------------------------------
      */
+
+    public get combinedBalanceNumber(): BigNumber {
+        const tokenBalance = new BigNumber(this.leftToken?.balance ?? 0).shiftedBy(-this.leftTokenDecimals)
+        const coinBalance = new BigNumber(this.coin.balance ?? 0).shiftedBy(-this.coin.decimals)
+        return tokenBalance.plus(coinBalance).dp(Math.min(this.leftTokenDecimals, this.coin.decimals))
+    }
+
+    /**
+     *
+     */
+    public get isEnoughCoinBalance(): boolean {
+        const balance = new BigNumber(this.coin.balance ?? 0).shiftedBy(-this.coin.decimals)
+        const fee = new BigNumber(this.initialData?.swapFee ?? 0).shiftedBy(-this.coin.decimals)
+        return (
+            isGoodBignumber(this.leftAmountNumber)
+            && this.leftAmountNumber.shiftedBy(-this.leftTokenDecimals).lte(balance.minus(fee))
+        )
+    }
+
+    public get isEnoughTokenBalance(): boolean {
+        const balance = new BigNumber(this.leftToken?.balance ?? 0).shiftedBy(-this.leftTokenDecimals)
+        return (
+            isGoodBignumber(this.leftAmountNumber)
+            && this.leftAmountNumber.shiftedBy(-this.leftTokenDecimals).lte(balance)
+        )
+    }
+
+    public get isEnoughCombinedBalance(): boolean {
+        const fee = new BigNumber(this.initialData?.swapFee ?? 0).shiftedBy(-this.coin.decimals)
+        return this.leftAmountNumber.shiftedBy(-this.leftTokenDecimals).lte(this.combinedBalanceNumber.minus(fee))
+    }
+
+    public get isValidCombined(): boolean {
+        return (
+            (this.isEnoughTokenBalance || this.isEnoughCoinBalance || this.isEnoughCombinedBalance)
+            && this.wallet.account?.address !== undefined
+            && this.leftToken?.wallet !== undefined
+            && this.leftTokenAddress !== undefined
+            && isGoodBignumber(this.amount || 0)
+            && isGoodBignumber(this.expectedAmount || 0)
+            && isGoodBignumber(this.minExpectedAmount || 0)
+        )
+    }
+
+    /**
+     * Returns `true` if all data and bill is valid, otherwise `false`.
+     * @returns {boolean}
+     */
+    public get isValidCoinToTip3(): boolean {
+        return (
+            this.isEnoughCoinBalance
+            && this.wallet.account?.address !== undefined
+            && new BigNumber(this.amount || 0).gt(0)
+            && new BigNumber(this.expectedAmount || 0).gt(0)
+            && new BigNumber(this.minExpectedAmount || 0).gt(0)
+        )
+    }
+
+    /**
+     * Returns `true` if all data and bill is valid, otherwise `false`.
+     * @returns {boolean}
+     */
+    public get isValidTip3ToCoin(): boolean {
+        return (
+            this.wallet.account?.address !== undefined
+            && this.leftToken?.wallet !== undefined
+            && this.leftTokenAddress !== undefined
+            && new BigNumber(this.amount || 0).gt(0)
+            && new BigNumber(this.expectedAmount || 0).gt(0)
+            && new BigNumber(this.minExpectedAmount || 0).gt(0)
+            && new BigNumber(this.leftToken?.balance || 0).gte(this.amount || 0)
+        )
+    }
 
     /**
      * Returns `true` if all data and bill is valid, otherwise `false`.

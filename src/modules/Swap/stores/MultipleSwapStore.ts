@@ -84,10 +84,10 @@ export class MultipleSwapStore extends CoinSwapStore {
         ).toFixed()
 
         const payload = (await everWeverToTip3Contract.methods.buildExchangePayload({
-            id: processingId,
-            deployWalletValue: deployGrams,
             amount: this.leftAmountNumber.toFixed(),
             expectedAmount: this.minExpectedAmount!,
+            deployWalletValue: deployGrams,
+            id: processingId,
             pair: this.pair!.address!,
         }).call()).value0
 
