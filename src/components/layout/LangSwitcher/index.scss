@@ -8,6 +8,21 @@
     &:focus {
         color: #fff;
     }
+
+    .arrow {
+        transition: 300ms;
+
+        svg {
+            fill: #fff;
+            fill-opacity: 0.48;
+        }
+    }
+
+    &.open {
+        .arrow {
+            transform: rotate(180deg);
+        }
+    }
 }
 
 .languages-drop {

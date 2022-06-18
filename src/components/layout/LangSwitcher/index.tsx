@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { Button } from '@/components/common/Button'
 import { Drop } from '@/components/common/Drop'
 import { Icon } from '@/components/common/Icon'
-import { LocalizationContext } from '@/context/Localization'
+import { LANGUAGES, Locale, LocalizationContext } from '@/context/Localization'
 import { storage } from '@/utils'
 
 import './index.scss'
@@ -12,51 +12,46 @@ import './index.scss'
 export function LangSwitcher(): JSX.Element {
     const language = React.useContext(LocalizationContext)
 
-    const setEnglish = () => {
-        storage.set('lang', 'en')
-        language.setLocale('en')
-    }
+    const label = React.useMemo(
+        () => LANGUAGES.find(lang => lang.code === language.locale)?.nativeLabel,
+        [language.locale],
+    )
 
-    const setKorean = () => {
-        storage.set('lang', 'ko')
-        language.setLocale('ko')
+    const setLocale = (locale: Locale) => () => {
+        storage.set('lang', locale)
+        language.setLocale(locale)
     }
 
     return (
         <Drop
             overlay={(
                 <ul className="languages-list">
-                    <li>
-                        <Button
-                            className={classNames({
-                                active: language.locale === 'en',
-                            })}
-                            type="link"
-                            onClick={setEnglish}
-                        >
-                            English
-                        </Button>
-                    </li>
-                    <li>
-                        <Button
-                            className={classNames({
-                                active: language.locale === 'ko',
-                            })}
-                            type="link"
-                            onClick={setKorean}
-                        >
-                            한국어
-                        </Button>
-                    </li>
+                    {LANGUAGES.map(lang => (
+                        <li key={lang.code}>
+                            <Button
+                                className={classNames({
+                                    active: language.locale === lang.code,
+                                })}
+                                type="link"
+                                onClick={setLocale(lang.code)}
+                            >
+                                {lang.nativeLabel}
+                            </Button>
+                        </li>
+                    ))}
                 </ul>
             )}
             overlayClassName="languages-drop"
             placement="bottom-right"
             trigger="click"
         >
-            <Button className="language-switcher" type="link">
+            <Button
+                className="language-switcher"
+                type="link"
+            >
                 <Icon icon="world" />
-                {language.locale.toUpperCase()}
+                {label}
+                <Icon className="arrow" icon="arrowDown" />
             </Button>
         </Drop>
     )
