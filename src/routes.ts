@@ -110,6 +110,9 @@ export const appRoutes = {
     farmingItem: new Route<{ address: string }>(
         '/farming/:address',
     ),
+    farmingItemUser: new Route<{ address: string, user: string }>(
+        '/farming/:address/:user([0][:][0-9a-f]{64})?',
+    ),
     farmingCreate: new Route(
         '/farming/create',
     ),

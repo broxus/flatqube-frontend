@@ -3,13 +3,13 @@ import { NavLink } from 'react-router-dom'
 
 import './style.scss'
 
-type Item = {
+export type BreadcrumbItem = {
     link?: string
     title: React.ReactNode
 }
 
 type Props = {
-    items: Item[]
+    items: BreadcrumbItem[]
 }
 
 export function Breadcrumb({

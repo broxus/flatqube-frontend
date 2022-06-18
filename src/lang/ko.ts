@@ -650,4 +650,7 @@ export default {
     ERROR_BACK: 'Back',
     ERROR_RELOAD: 'Reload',
     BUILDER_MANAGE_TOKEN_MESSAGE_ENTER_VALID_AMOUNT: 'Enter valid amount',
+
+    FARMING_ITEM_USER_INFO_ADDRESS_TITLE: 'User {address} farming performance',
+    FARMING_ITEM_BREADCRUMB_USER_ITEM: 'User {address}',
 }

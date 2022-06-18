@@ -18,10 +18,12 @@ import { concatSymbols, error } from '@/utils'
 import { SECONDS_IN_DAY } from '@/constants'
 
 type State = {
+    poolAddress?: string;
     apiResponse?: FarmingPoolResponse;
     poolDetails?: PoolDetails;
     pairBalances?: PairBalances;
     rewardCurrencies?: (CurrencyInfo | undefined)[];
+    userAddress?: string;
     userPoolDataAddress?: Address;
     userLpWalletAddress?: Address;
     userRewardTokensBalance?: string[];
@@ -49,12 +51,16 @@ export class FarmingDataStore {
         this.state = {}
     }
 
-    protected async syncApiData(poolAddress: string): Promise<void> {
+    protected async syncApiData(): Promise<void> {
         try {
+            if (!this.state.poolAddress) {
+                throw new Error('Pool address must be defined')
+            }
+
             const result = await this.api.farmingPool({
-                address: poolAddress,
+                address: this.state.poolAddress,
             }, {}, {
-                userAddress: this.wallet.address,
+                userAddress: this.state.userAddress,
                 afterZeroBalance: true,
             })
 
@@ -67,14 +73,17 @@ export class FarmingDataStore {
         }
     }
 
-    protected async syncPoolDetails(poolAddress: string): Promise<void> {
+    protected async syncPoolDetails(): Promise<void> {
         try {
+            if (!this.state.poolAddress) {
+                throw new Error('Pool address must be defined')
+            }
             if (!this.state.apiResponse) {
                 throw new Error('Api Response must be defined')
             }
 
             const result = this.wallet.isConnected
-                ? await Farm.poolGetDetails(new Address(poolAddress))
+                ? await Farm.poolGetDetails(new Address(this.state.poolAddress))
                 : undefined
 
             // FIXME: Hotfix. Need to refactoring using objects instead arrays
@@ -155,15 +164,21 @@ export class FarmingDataStore {
         }
     }
 
-    protected async syncUserPoolDataAddress(poolAddress: string): Promise<void> {
+    protected async syncUserPoolDataAddress(): Promise<void> {
         try {
-            if (!this.wallet.address) {
+            if (!this.state.poolAddress) {
+                throw new Error('Pool address must be defined')
+            }
+            if (!this.state.userAddress) {
+                throw new Error('User address must be defined')
+            }
+            if (!this.wallet.isConnected) {
                 throw new Error('Wallet must be connected')
             }
 
             const userPoolDataAddress = await Farm.userDataAddress(
-                new Address(poolAddress),
-                new Address(this.wallet.address),
+                new Address(this.state.poolAddress),
+                new Address(this.state.userAddress),
             )
 
             runInAction(() => {
@@ -177,16 +192,18 @@ export class FarmingDataStore {
 
     protected async syncUserLpWalletAddress(): Promise<void> {
         try {
-            if (!this.wallet.address) {
+            if (!this.state.userAddress) {
+                throw new Error('User address must be defined')
+            }
+            if (!this.wallet.isConnected) {
                 throw new Error('Wallet must be connected')
             }
-
             if (!this.state.poolDetails) {
                 throw new Error('poolDetails must be defined')
             }
 
             const userLpWalletAddress = await TokenWallet.walletAddress({
-                owner: new Address(this.wallet.address),
+                owner: new Address(this.state.userAddress),
                 root: this.state.poolDetails.tokenRoot,
             })
 
@@ -201,15 +218,14 @@ export class FarmingDataStore {
 
     protected async syncUserRewardTokensBalance(): Promise<void> {
         try {
-            if (!this.wallet.address) {
-                throw new Error('Wallet must be connected')
+            if (!this.state.userAddress) {
+                throw new Error('User address must be defined')
             }
-
             if (!this.state.poolDetails) {
                 throw new Error('poolDetails must be defined')
             }
 
-            const ownerAddress = new Address(this.wallet.address)
+            const ownerAddress = new Address(this.state.userAddress)
 
             const userRewardTokensBalance = await Promise.all(
                 this.state.poolDetails.rewardTokenRoot.map(tokenAddress => (
@@ -231,7 +247,7 @@ export class FarmingDataStore {
 
     protected async syncUserLpWalletAmount(): Promise<void> {
         try {
-            if (!this.wallet.address) {
+            if (!this.wallet.isConnected) {
                 throw new Error('Wallet must be connected')
             }
 
@@ -254,7 +270,7 @@ export class FarmingDataStore {
 
     protected async syncUserLpFarmingAmount(): Promise<void> {
         try {
-            if (!this.wallet.address) {
+            if (!this.wallet.isConnected) {
                 throw new Error('Wallet must be connected')
             }
 
@@ -275,22 +291,23 @@ export class FarmingDataStore {
         }
     }
 
-    protected async syncUserPendingReward(poolAddress: string): Promise<void> {
+    protected async syncUserPendingReward(): Promise<void> {
         try {
-            if (!this.wallet.address) {
+            if (!this.state.poolAddress) {
+                throw new Error('Pool address must be defined')
+            }
+            if (!this.wallet.isConnected) {
                 throw new Error('Wallet must be connected')
             }
-
             if (!this.state.userPoolDataAddress) {
                 throw new Error('userPoolDataAddress must be defined')
             }
-
             if (!this.state.poolDetails) {
                 throw new Error('poolDetails must be defined')
             }
 
             const userPendingReward = await getUserPendingReward(
-                new Address(poolAddress),
+                new Address(this.state.poolAddress),
                 this.state.userPoolDataAddress,
                 this.state.poolDetails.farmEndTime,
             )
@@ -304,17 +321,20 @@ export class FarmingDataStore {
         }
     }
 
-    protected async syncUserLastTransactions(poolAddress: string): Promise<void> {
+    protected async syncUserLastTransactions(): Promise<void> {
         try {
-            if (!this.wallet.address) {
-                throw new Error('Wallet must be connected')
+            if (!this.state.poolAddress) {
+                throw new Error('Pool address must be defined')
+            }
+            if (!this.state.userAddress) {
+                throw new Error('User address must be defined')
             }
 
             const defaultParams = {
                 limit: 1,
                 offset: 0,
-                poolAddress: poolAddress.toString(),
-                userAddress: this.wallet.address.toString(),
+                poolAddress: this.state.poolAddress,
+                userAddress: this.state.userAddress,
                 ordering: 'blocktimedescending',
             } as TransactionsRequest
 
@@ -362,30 +382,46 @@ export class FarmingDataStore {
         }
     }
 
-    public async getData(poolAddress: string): Promise<void> {
+    public async syncData(): Promise<void> {
         try {
-            await this.syncApiData(poolAddress)
+            await this.syncApiData()
             await Promise.allSettled([
-                this.syncPoolDetails(poolAddress),
+                this.syncPoolDetails(),
                 this.syncPairBalances(),
             ])
             await this.syncRewardCurrencies()
 
-            if (this.wallet.address) {
+            if (this.state.userAddress) {
                 await Promise.allSettled([
-                    this.syncUserPoolDataAddress(poolAddress),
+                    this.syncUserPoolDataAddress(),
                     this.syncUserLpWalletAddress(),
                     this.syncUserRewardTokensBalance(),
                 ])
                 await Promise.allSettled([
                     this.syncUserLpWalletAmount(),
                     this.syncUserLpFarmingAmount(),
-                    this.syncUserPendingReward(poolAddress),
-                    this.syncUserLastTransactions(poolAddress),
+                    this.syncUserPendingReward(),
+                    this.syncUserLastTransactions(),
                 ])
             }
 
-            this.syncTokens()
+            await this.syncTokens()
+        }
+        catch (e) {
+            error(e)
+        }
+    }
+
+    public async fetchData(poolAddress: string, userAddress?: string): Promise<void> {
+        try {
+            const _userAddress = userAddress || this.wallet.address
+
+            runInAction(() => {
+                this.state.poolAddress = poolAddress
+                this.state.userAddress = _userAddress
+            })
+
+            await this.syncData()
         }
         catch (e) {
             error(e)
@@ -394,19 +430,6 @@ export class FarmingDataStore {
             runInAction(() => {
                 this.state.loaded = true
             })
-        }
-    }
-
-    public async syncData(): Promise<void> {
-        try {
-            if (!this.poolAddress) {
-                throw new Error('Pool address must be exist in state')
-            }
-
-            await this.getData(this.poolAddress)
-        }
-        catch (e) {
-            error(e)
         }
     }
 
@@ -562,7 +585,11 @@ export class FarmingDataStore {
     }
 
     public get poolAddress(): string | undefined {
-        return this.state.apiResponse?.pool_address
+        return this.state.poolAddress
+    }
+
+    public get userAddress(): string | undefined {
+        return this.state.userAddress
     }
 
     public get poolOwnerAddress(): string | undefined {

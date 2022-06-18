@@ -107,6 +107,9 @@ export function App(): JSX.Element {
                                 <Route exact path={appRoutes.farmingItem.path}>
                                     <FarmingItem />
                                 </Route>
+                                <Route exact path={appRoutes.farmingItemUser.path}>
+                                    <FarmingItem />
+                                </Route>
 
                                 <Route exact path={appRoutes.builder.path}>
                                     <Builder />

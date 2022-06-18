@@ -38,7 +38,7 @@ import './index.scss'
 
 export function FarmingInner(): JSX.Element {
     const intl = useIntl()
-    const params = useParams<{address: string}>()
+    const params = useParams<any>()
     const [configVisible, setConfigVisible] = React.useState(false)
     const farmingData = useFarmingDataStore()
     const farmingRoundConfigStore = useFarmingRoundConfigStore()
@@ -56,15 +56,17 @@ export function FarmingInner(): JSX.Element {
 
     React.useEffect(() => {
         if (!wallet.isConnecting && !wallet.isInitializing) {
-            farmingData.getData(params.address)
+            farmingData.fetchData(params.address, params.user)
+
+            return () => {
+                farmingData.dispose()
+                farmingRoundConfigStore.dispose()
+                farmingEndDateConfigStore.dispose()
+                farmingAdminWithdrawStore.dispose()
+            }
         }
 
-        return () => {
-            farmingData.dispose()
-            farmingRoundConfigStore.dispose()
-            farmingEndDateConfigStore.dispose()
-            farmingAdminWithdrawStore.dispose()
-        }
+        return undefined
     }, [
         wallet.isConnecting,
         wallet.isInitializing,
@@ -77,10 +79,6 @@ export function FarmingInner(): JSX.Element {
         }
     }, [configVisible])
 
-    React.useEffect(() => {
-        farmingData.dispose()
-    }, [])
-
     return (
         <div className="container container--large">
             <section className="section">
@@ -90,27 +88,22 @@ export function FarmingInner(): JSX.Element {
                     <>
                         <FarmingBreadcrumb />
                         <FarmingHead />
-                        <FarmingMessageGetLp />
                         <FarmingMessageFarmEnded />
                         <FarmingMessageLowBalance />
-                        <FarmingMessageAdminLowBalance />
-                        <FarmingMessageAdminZeroBalance />
 
-                        {farmingData.userInFarming && (
+                        {(!params.user || params.user === wallet.address) && (
                             <>
-                                <div className="farming-title">
-                                    <SectionTitle size="small">
-                                        {intl.formatMessage({
-                                            id: 'FARMING_ITEM_USER_INFO_TITLE',
-                                        })}
-                                    </SectionTitle>
-                                </div>
-
-                                <FarmingUserInfo />
+                                <FarmingMessageGetLp />
+                                <FarmingMessageAdminLowBalance />
+                                <FarmingMessageAdminZeroBalance />
                             </>
                         )}
 
-                        {farmingData.isAdmin && (
+                        {(farmingData.userInFarming || params.user) && (
+                            <FarmingUserInfo />
+                        )}
+
+                        {farmingData.isAdmin && (!params.user || params.user === wallet.address) && (
                             <>
                                 <div className="farming-title" id="pool-management">
                                     <SectionTitle size="small">
@@ -142,7 +135,7 @@ export function FarmingInner(): JSX.Element {
                             </>
                         )}
 
-                        {wallet.isConnected && (
+                        {wallet.isConnected && (!params.user || params.user === wallet.address) && (
                             <>
                                 <div className="farming-title">
                                     <SectionTitle size="small">
@@ -178,7 +171,7 @@ export function FarmingInner(): JSX.Element {
                                 })}
                             </SectionTitle>
 
-                            {farmingData.isAdmin && (
+                            {farmingData.isAdmin && (!params.user || params.user === wallet.address) && (
                                 <Button
                                     size="md"
                                     type="icon"
