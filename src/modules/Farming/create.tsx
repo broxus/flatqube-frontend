@@ -10,6 +10,7 @@ import { Icon } from '@/components/common/Icon'
 import { PoolCreatingParams } from '@/modules/Farming/components/PoolCreatingParams'
 import { PoolField } from '@/modules/Farming/components/PoolField'
 import { useCreateFarmPoolStore } from '@/modules/Farming/stores/CreateFarmPoolStore'
+import { useFavoriteFarmings } from '@/stores/FavoritePairs'
 import { useWallet } from '@/stores/WalletService'
 
 import './index.scss'
@@ -19,6 +20,7 @@ export function Create(): JSX.Element {
     const history = useHistory()
     const wallet = useWallet()
     const creatingPool = useCreateFarmPoolStore()
+    const favoriteFarmings = useFavoriteFarmings()
 
     const onChangeFarmToken = (address: string | undefined) => {
         creatingPool.changeData('farmToken', { root: address })
@@ -56,9 +58,15 @@ export function Create(): JSX.Element {
     const create = async () => {
         try {
             await creatingPool.create()
-            setTimeout(() => {
-                history.push('/farming')
-            }, 60 * 1000)
+            if (creatingPool.createdFarmPoolAddress !== undefined) {
+                favoriteFarmings.toggle(creatingPool.createdFarmPoolAddress.toString())
+                history.push(`/farming/${creatingPool.createdFarmPoolAddress.toString()}`)
+            }
+            else {
+                setTimeout(() => {
+                    history.push('/farming')
+                }, 60 * 1000)
+            }
         }
         catch (e) {}
     }

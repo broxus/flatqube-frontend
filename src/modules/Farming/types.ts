@@ -1,4 +1,4 @@
-import { FullContractState, TransactionId } from 'everscale-inpage-provider'
+import { Address, FullContractState, TransactionId } from 'everscale-inpage-provider'
 
 import { UserPendingReward } from '@/misc'
 
@@ -84,6 +84,7 @@ export type FarmVesting = {
 }
 
 export type CreateFarmPoolStoreData = {
+    createdFarmPoolAddress?: Address;
     farmStart: FarmDate;
     farmToken: FarmToken;
     rewardTokens: FarmRewardToken[];

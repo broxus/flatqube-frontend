@@ -7,8 +7,11 @@ import {
     reaction,
 } from 'mobx'
 import { Address } from 'everscale-inpage-provider'
+import * as E from 'fp-ts/Either'
 
-import { Farm } from '@/misc'
+import { FarmFabricAddress } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
+import { Farm, FarmAbi } from '@/misc'
 import {
     DEFAULT_CREATE_FARM_POOL_STORE_DATA,
     DEFAULT_CREATE_FARM_POOL_STORE_STATE,
@@ -124,6 +127,34 @@ export class CreateFarmPoolStore {
 
         this.changeState('isCreating', true)
 
+        const rpc = useRpc()
+        const subscriber = new rpc.Subscriber()
+
+        let stream = subscriber.transactions(FarmFabricAddress)
+
+        const oldStream = subscriber.oldTransactions(this.wallet.account!.address, {
+            fromLt: this.wallet.contract?.lastTransactionId?.lt,
+        })
+
+        stream = stream.merge(oldStream)
+
+        const fabricContract = new rpc.Contract(FarmAbi.Fabric, FarmFabricAddress)
+
+        const resultHandler = stream.flatMap(a => a.transactions).filterMap(async transaction => {
+            const result = await fabricContract.decodeTransaction({
+                transaction,
+                methods: ['onPoolDeploy'],
+            })
+
+            if (result?.method === 'onPoolDeploy' && result.input.pool_owner.toString() === this.wallet.address) {
+                return E.right<never, { createdFarmPoolAddress?: Address }>({
+                    createdFarmPoolAddress: transaction.inMessage.src,
+                })
+            }
+
+            return undefined
+        }).first()
+
         const rps = this.rewardTokens
             .map(token => new BigNumber(token.farmSpeed || 0).shiftedBy(token.decimals as number)
                 .decimalPlaces(0, BigNumber.ROUND_DOWN)
@@ -142,8 +173,16 @@ export class CreateFarmPoolStore {
                     .dp(0, BigNumber.ROUND_DOWN)
                     .toFixed(),
             )
-            // never return to normal state, waiting for redirect here
-            // this.changeState('isCreating', false)
+
+            E.match(
+                _ => {
+                    //
+                },
+                ({ createdFarmPoolAddress }: { createdFarmPoolAddress?: Address }) => {
+                    this.changeData('createdFarmPoolAddress', createdFarmPoolAddress)
+                    this.changeState('isCreating', false)
+                },
+            )(await resultHandler)
         }
         catch (e) {
             this.changeState('isCreating', false)
@@ -294,6 +333,13 @@ export class CreateFarmPoolStore {
      * Memoized store data values
      * ----------------------------------------------------------------------------------
      */
+
+    /**
+     *
+     */
+    public get createdFarmPoolAddress(): CreateFarmPoolStoreData['createdFarmPoolAddress'] {
+        return this.data.createdFarmPoolAddress
+    }
 
     /**
      *
