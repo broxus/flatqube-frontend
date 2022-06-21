@@ -653,4 +653,5 @@ export default {
 
     FARMING_ITEM_USER_INFO_ADDRESS_TITLE: 'User {address} farming performance',
     FARMING_ITEM_BREADCRUMB_USER_ITEM: 'User {address}',
+    FARMING_TRANSACTIONS_FILTER_ONLY_USER_ADDRESS_TRANSACTIONS: 'Only user {address}',
 }

@@ -209,6 +209,7 @@ export function FarmingInner(): JSX.Element {
 
                         <FarmingTransactions
                             poolAddress={params.address}
+                            userAddress={params.user}
                         />
                     </>
                 )}

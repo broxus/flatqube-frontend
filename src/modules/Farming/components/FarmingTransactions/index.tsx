@@ -15,7 +15,7 @@ import { FarmingTransactionsItem } from '@/modules/Farming/components/FarmingTra
 import { usePagination } from '@/hooks/usePagination'
 import { useWallet } from '@/stores/WalletService'
 import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
-import { error } from '@/utils'
+import { error, sliceAddress } from '@/utils'
 
 import './index.scss'
 
@@ -23,10 +23,12 @@ const LIMIT = 10
 
 type Props = {
     poolAddress: string;
+    userAddress?: string;
 }
 
 export function FarmingTransactionsInner({
     poolAddress,
+    ...props
 }: Props): JSX.Element {
     const api = useApi()
     const intl = useIntl()
@@ -42,6 +44,7 @@ export function FarmingTransactionsInner({
     const [isActionTable, setIsActionTable] = React.useState(false)
     const totalPages = Math.ceil(totalCount / LIMIT)
     const wallet = useWallet()
+    const userAddress = props.userAddress || wallet.address
 
     const getData = async (event: EventType | null) => {
         setLoading(true)
@@ -52,7 +55,7 @@ export function FarmingTransactionsInner({
                 limit: LIMIT,
                 offset: currentPage > 0 ? (currentPage - 1) * LIMIT : 0,
                 eventTypes: event ? [event] : ['claim', 'deposit', 'withdraw', 'rewarddeposit'],
-                userAddress: onlyUser ? wallet.address : undefined,
+                userAddress: onlyUser ? userAddress : undefined,
             })
             setTransactions(data.transactions)
             setTotalCount(data.totalCount)
@@ -70,7 +73,7 @@ export function FarmingTransactionsInner({
 
     React.useEffect(() => {
         pagination.onSubmit(1)
-    }, [eventType, onlyUser, wallet.address])
+    }, [eventType, onlyUser, userAddress])
 
     React.useEffect(() => {
         getData(eventType)
@@ -113,10 +116,14 @@ export function FarmingTransactionsInner({
                     }]}
                 />
 
-                {wallet.address && (
+                {userAddress && (
                     <Checkbox
                         label={intl.formatMessage({
-                            id: 'FARMING_TRANSACTIONS_FILTER_ONLY_USER_TRANSACTIONS',
+                            id: userAddress === wallet.address
+                                ? 'FARMING_TRANSACTIONS_FILTER_ONLY_USER_TRANSACTIONS'
+                                : 'FARMING_TRANSACTIONS_FILTER_ONLY_USER_ADDRESS_TRANSACTIONS',
+                        }, {
+                            address: sliceAddress(userAddress),
                         })}
                         onChange={setOnlyUser}
                         checked={onlyUser}
