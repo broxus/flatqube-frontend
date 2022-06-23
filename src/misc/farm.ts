@@ -74,7 +74,7 @@ export class Farm {
         poolAddress: Address,
         owner: Address,
     ): Promise<TransactionId> {
-        const poolContract = new staticRpc.Contract(FarmAbi.Pool, poolAddress)
+        const poolContract = new rpc.Contract(FarmAbi.Pool, poolAddress)
         const { id } = await poolContract.methods.claimReward({
             nonce: 0,
             send_gas_to: owner,
