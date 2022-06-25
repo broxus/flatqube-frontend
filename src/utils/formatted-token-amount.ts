@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 
 import { formatDigits } from './format-digits'
 import { splitAmount } from './split-amount'
-import { FormattedAmountOptions } from './formatted-amount'
+import type { FormattedAmountOptions } from './formatted-amount'
 
 export function formattedTokenAmount(
     value?: string | number,
@@ -10,7 +10,7 @@ export function formattedTokenAmount(
     options: FormattedAmountOptions = { roundOn: true },
 ): string {
     const parts = splitAmount(value, decimals)
-    const digits = [formatDigits(parts[0])]
+    const digits = [formatDigits(parts[0], options.digitsSeparator)]
     const integerNumber = new BigNumber(parts[0] || 0)
 
     let fractionalPartNumber = new BigNumber(`0.${parts[1] || 0}`)
@@ -18,7 +18,7 @@ export function formattedTokenAmount(
 
     if (options?.preserve) {
         if (roundOn && integerNumber.gte(roundOn)) {
-            return formatDigits(integerNumber.toFixed()) ?? ''
+            return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
         }
         digits.push(fractionalPartNumber.toFixed().split('.')[1])
         return digits.filter(Boolean).join('.')
@@ -26,7 +26,7 @@ export function formattedTokenAmount(
 
     if (options?.truncate !== undefined && options.truncate >= 0) {
         if (roundOn && integerNumber.gte(roundOn)) {
-            return formatDigits(integerNumber.toFixed()) ?? ''
+            return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
         }
         fractionalPartNumber = fractionalPartNumber.dp(options?.truncate, BigNumber.ROUND_DOWN)
         digits.push(fractionalPartNumber.toFixed().split('.')[1])
@@ -34,7 +34,7 @@ export function formattedTokenAmount(
     }
 
     if (roundOn && integerNumber.gte(roundOn)) {
-        return formatDigits(integerNumber.toFixed()) ?? ''
+        return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
     }
 
     switch (true) {

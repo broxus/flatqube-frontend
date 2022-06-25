@@ -1,14 +1,13 @@
-import {
-    Address,
-    hasEverscaleProvider,
-} from 'everscale-inpage-provider'
+import { Address, hasEverscaleProvider } from 'everscale-inpage-provider'
 
 import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { Dex } from '@/misc/dex'
 import { debug, sliceAddress } from '@/utils'
 
 
 const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export async function connectToWallet(): Promise<void> {
@@ -24,7 +23,7 @@ export async function connectToWallet(): Promise<void> {
 
 export async function checkPair(leftRoot: string, rightRoot: string): Promise<Address | undefined> {
     const pairAddress = await Dex.pairAddress(new Address(leftRoot), new Address(rightRoot))
-    const pairState = await rpc.getFullContractState({
+    const pairState = await staticRpc.getFullContractState({
         address: pairAddress,
     })
 
@@ -66,7 +65,7 @@ export async function getDexAccount(wallet: string): Promise<string | undefined>
         return undefined
     }
 
-    const { state } = await rpc.getFullContractState({ address })
+    const { state } = await staticRpc.getFullContractState({ address })
 
     if (!state?.isDeployed) {
         return undefined

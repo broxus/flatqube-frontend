@@ -13,6 +13,8 @@ import {
 import { DEFAULT_BUILDER_STORE_DATA, DEFAULT_BUILDER_STORE_STATE } from '@/modules/Builder/constants'
 import { getTokenFromLocalStorage, saveTokenToLocalStorage } from '@/modules/Builder/utils'
 import { useWallet, WalletService } from '@/stores/WalletService'
+import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 
 
 export class BuilderStore {
@@ -55,11 +57,23 @@ export class BuilderStore {
         this.state[key] = value
     }
 
-    public init(): void {
+    public async init(): Promise<void> {
+        try {
+            const rpc = useRpc()
+            const staticRpc = useStaticRpc()
+            await Promise.all([
+                rpc.ensureInitialized(),
+                staticRpc.ensureInitialized(),
+            ])
+        }
+        catch (e) {
+
+        }
+
         this.#walletAccountDisposer = reaction(() => this.wallet.address, this.handleWalletAddressChange)
 
         if (this.wallet.address != null) {
-            this.handleWalletAddressChange()
+            await this.handleWalletAddressChange()
         }
     }
 

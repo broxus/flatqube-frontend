@@ -9,6 +9,8 @@ import {
 } from 'mobx'
 
 import { EVERMultipleSwapFee, EVERWrapGas, WEVERRootAddress } from '@/config'
+import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import {
     DEFAULT_LEFT_TOKEN_ROOT,
     DEFAULT_RIGHT_TOKEN_ROOT,
@@ -38,11 +40,14 @@ import { useWallet, WalletService } from '@/stores/WalletService'
 import { TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
 import {
     debounce,
-    debug,
+    debug, error,
     formattedBalance,
     isGoodBignumber,
     storage,
 } from '@/utils'
+
+const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStoreState> {
@@ -184,6 +189,17 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * Run all necessary subscribers.
      */
     public async init(): Promise<void> {
+        try {
+            await Promise.all([
+                rpc.ensureInitialized(),
+                staticRpc.ensureInitialized(),
+            ])
+        }
+        catch (e) {
+            error('RPC initializing error', e)
+            return
+        }
+
         this.#walletAccountDisposer?.()
         this.#walletAccountDisposer = reaction(
             () => this.wallet.address,
@@ -647,23 +663,23 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         this.setState('isCalculating', true)
 
         if (this.direction === SwapDirection.LTR && isGoodBignumber(this.leftAmountNumber)) {
-            if (this.pair?.address !== undefined && !this.isCrossExchangeOnly) {
-                await this.calculateLeftToRight(force)
-            }
+            await Promise.allSettled([
+                (this.pair?.address !== undefined && !this.isCrossExchangeOnly) && this.calculateLeftToRight(force),
+                this.#crossPairSwap.checkSuggestions(this.leftAmountNumber.toFixed(), 'expectedexchange'),
+            ])
 
-            await this.#crossPairSwap.checkSuggestions(this.leftAmountNumber.toFixed(), 'expectedexchange')
             await this.#crossPairSwap.calculateLeftToRight(force)
         }
         else if (this.direction === SwapDirection.RTL && isGoodBignumber(this.rightAmountNumber)) {
-            if (this.pair?.address !== undefined && !this.isCrossExchangeOnly) {
-                await this.calculateRightToLeft(force)
-            }
+            await Promise.allSettled([
+                (this.pair?.address !== undefined && !this.isCrossExchangeOnly) && this.calculateRightToLeft(force),
+                this.#crossPairSwap.checkSuggestions(this.rightAmountNumber.toFixed(), 'expectedspendamount'),
+            ])
 
-            await this.#crossPairSwap.checkSuggestions(this.rightAmountNumber.toFixed(), 'expectedspendamount')
             await this.#crossPairSwap.calculateRightToLeft(force, this.isEnoughLiquidity)
         }
         else {
-            this.finalizeCalculation()
+            await this.finalizeCalculation(this.direction)
         }
 
         this.setState('isCalculating', false)
@@ -1094,9 +1110,9 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      */
     public forceInvalidate(): void {
         this.setData('bill', DEFAULT_SWAP_BILL)
-        this.#crossPairSwap.forceInvalidate()
-        this.#directSwap.forceInvalidate()
-        this.#multipleSwap.forceInvalidate()
+        this.#crossPairSwap.forceInvalidate(this.direction)
+        this.#directSwap.forceInvalidate(this.direction)
+        this.#multipleSwap.forceInvalidate(this.direction)
     }
 
     /**
@@ -1211,7 +1227,9 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         this.checkExchangeMode()
         this.forceInvalidate()
 
-        await this.currentSwap.syncPairState()
+        await this.syncPairState()
+
+        await this.finalizeCalculation(this.direction)
 
         if (!this.isMultipleSwapMode) {
             await this.#crossPairSwap.syncCrossExchangePairsStates()

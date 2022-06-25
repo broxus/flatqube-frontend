@@ -21,6 +21,7 @@ export const DEFAULT_POOL_STORE_STATE: PoolStoreState = {
     isPreparing: false,
     isSyncPairBalances: false,
     isSyncPairRoots: false,
+    isSyncPairType: false,
     isWithdrawingLeft: false,
     isWithdrawingLiquidity: false,
     isWithdrawingRight: false,

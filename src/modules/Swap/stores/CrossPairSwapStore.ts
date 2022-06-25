@@ -10,12 +10,16 @@ import * as E from 'fp-ts/Either'
 import type { DecodedAbiFunctionInputs, DecodedAbiFunctionOutputs } from 'everscale-inpage-provider'
 
 import {
-    EverToTip3Address, EverWeverToTip3Address, Tip3ToEverAddress, TokenListURI, WeverVaultAddress,
+    EverToTip3Address,
+    EverWeverToTip3Address,
+    Tip3ToEverAddress,
+    TokenListURI,
+    WeverVaultAddress,
 } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
 import {
     DexAbi,
-    EverAbi,
+    EverAbi, PairType,
     TokenAbi,
     TokenWallet,
 } from '@/misc'
@@ -28,8 +32,8 @@ import { BaseSwapStore } from '@/modules/Swap/stores/BaseSwapStore'
 import { useSwapApi } from '@/modules/Swap/hooks/useApi'
 import {
     fillStepResult,
-    getCrossExchangePriceImpact,
     getCrossExchangeSlippage,
+    getCrossExchangeStablePriceImpact,
     getExchangePerPrice,
     getExpectedExchange,
     getExpectedSpendAmount,
@@ -51,7 +55,12 @@ import type {
     SwapRouteResult,
 } from '@/modules/Swap/types'
 import { CrossChainKind, NewCrossPairsRequest, NewCrossPairsResponse } from '@/modules/Pairs/types'
-import { CoinSwapFailureResult, CoinSwapSuccessResult, DirectSwapStoreData } from '@/modules/Swap/types'
+import {
+    CoinSwapFailureResult,
+    CoinSwapSuccessResult,
+    DirectSwapStoreData,
+    SwapDirection,
+} from '@/modules/Swap/types'
 
 
 const rpc = useRpc()
@@ -904,9 +913,9 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
     /**
      * Invalidate bills data and recalculate
      */
-    public forceInvalidate(): void {
+    public forceInvalidate(direction?: SwapDirection): void {
         this.setData('route', undefined)
-        this.finalizeCalculation()
+        this.finalizeCalculation(direction).catch(reason => error(reason))
     }
 
     /**
@@ -1079,7 +1088,10 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
                         ...route.bill,
                         expectedAmount: expectedAmountNumber.toFixed(),
                         fee: getReducedCrossExchangeFee(route.steps).toFixed(),
-                        priceImpact: getCrossExchangePriceImpact(route.steps, this.leftToken.root).toFixed(),
+                        priceImpact: (await getCrossExchangeStablePriceImpact(
+                            route.steps,
+                            this.leftToken.root,
+                        )).toFixed(),
                     },
                     leftAmount: this.leftAmountNumber.shiftedBy(-this.leftTokenDecimals).toFixed(),
                     rightAmount: expectedAmountNumber.shiftedBy(-this.rightTokenDecimals).toFixed(),
@@ -1196,10 +1208,10 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
                         }
                     }
 
-                    route.bill.priceImpact = getCrossExchangePriceImpact(
+                    route.bill.priceImpact = (await getCrossExchangeStablePriceImpact(
                         route.steps,
                         this.leftToken!.root,
-                    ).toFixed()
+                    )).toFixed()
 
                     _routes.push(route)
                 }
@@ -1651,17 +1663,30 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
                             pair.contract = new rpc.Contract(DexAbi.Pair, pair.address)
                         }
 
-                        const {
-                            denominator,
-                            pool_numerator: numerator,
-                        } = (await pair.contract.methods.getFeeParams({
-                            answerId: 0,
-                        }).call({
-                            cachedState: toJS(pair.state),
-                        })).value0
+                        const [
+                            {
+                                denominator,
+                                pool_numerator: numerator,
+                                beneficiary_numerator: beneficiaryNumerator,
+                            },
+                            type,
+                        ] = await Promise.all([
+                            (await pair.contract.methods.getFeeParams({
+                                answerId: 0,
+                            }).call({
+                                cachedState: toJS(pair.state),
+                            })).value0,
+                            (await pair.contract.methods.getPoolType({ answerId: 0 }).call({
+                                cachedState: toJS(pair.state),
+                            })).value0,
+                        ])
 
-                        pair.denominator = denominator
-                        pair.numerator = numerator
+                        pair.feeParams = {
+                            beneficiaryNumerator,
+                            denominator,
+                            numerator,
+                        }
+                        pair.type = type as PairType
                     }
                 }
             )()

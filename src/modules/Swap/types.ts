@@ -5,7 +5,7 @@ import type {
     Transaction,
 } from 'everscale-inpage-provider'
 
-import { DexAbi } from '@/misc'
+import { DexAbi, PairType } from '@/misc'
 import type { TokenSide } from '@/modules/TokensList'
 import type { TokenCache } from '@/stores/TokensCacheService'
 import { WalletNativeCoin } from '@/stores/WalletService'
@@ -40,8 +40,11 @@ export type SwapPair = {
         left: number;
         right: number;
     };
-    denominator?: string;
-    numerator?: string;
+    feeParams?: {
+        beneficiaryNumerator?: string;
+        denominator?: string;
+        numerator?: string;
+    },
     roots?: {
         left: Address;
         right: Address;
@@ -51,6 +54,7 @@ export type SwapPair = {
         left: string;
         right: string;
     };
+    type?: PairType;
 }
 
 export type SwapRouteStep = {

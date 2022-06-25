@@ -56,6 +56,7 @@ export function PoolData(): JSX.Element {
                             )}
                         </div>
                     </div>
+                    {/*
                     <div className="form-row">
                         <div>
                             {intl.formatMessage({
@@ -90,6 +91,7 @@ export function PoolData(): JSX.Element {
                         </div>
                         <div>0.3%</div>
                     </div>
+                    */}
                 </div>
             )}
         </Observer>

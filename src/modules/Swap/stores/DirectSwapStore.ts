@@ -18,6 +18,7 @@ import type {
     DirectTransactionFailureResult,
     DirectTransactionSuccessResult,
 } from '@/modules/Swap/types'
+import { SwapDirection } from '@/modules/Swap/types'
 
 
 const rpc = useRpc()
@@ -54,9 +55,9 @@ export class DirectSwapStore extends BaseSwapStore<DirectSwapStoreData, BaseSwap
     /**
      * Invalidate bills data and recalculate
      */
-    public forceInvalidate(): void {
+    public forceInvalidate(direction?: SwapDirection): void {
         this.setData('bill', DEFAULT_SWAP_BILL)
-        this.finalizeCalculation()
+        this.finalizeCalculation(direction).catch(reason => error(reason))
     }
 
     /**

@@ -1,8 +1,6 @@
 import * as React from 'react'
 import classNames from 'classnames'
-import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
-import BigNumber from 'bignumber.js'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
@@ -20,6 +18,7 @@ type Props = {
     id?: string;
     isValid?: boolean;
     isCaution?: boolean;
+    maxValue?: string;
     readOnly?: boolean;
     token?: TokenCache;
     value?: string;
@@ -30,9 +29,10 @@ type Props = {
 }
 
 
-function Field({
+export function PoolField({
     balance = '0',
     isValid = true,
+    maxValue = '0',
     token,
     ...props
 }: Props): JSX.Element {
@@ -49,20 +49,8 @@ function Field({
         subscriberPrefix: 'liquidity-filed',
     })
 
-    const deFormattedBalance = balance?.replace(/\s/g, '') ?? 0
-
-    const isInsufficientBalance = React.useMemo(
-        () => (
-            new BigNumber(props.value ?? 0).gt(deFormattedBalance)
-            && !formStore.isDepositingLiquidity
-            && !formStore.isDepositingLeft
-            && !formStore.isDepositingRight
-        ),
-        [props.value, balance],
-    )
-
     const onMax = () => {
-        props.onChange?.(deFormattedBalance)
+        props.onChange?.(maxValue ?? '0')
     }
 
     return (
@@ -77,13 +65,11 @@ function Field({
                 <div className="form-fieldset__header">
                     <div
                         className={classNames({
-                            'text-muted': !isInsufficientBalance,
-                            'text-danger': isInsufficientBalance,
+                            'text-muted': isValid,
+                            'text-danger': !isValid,
                         })}
                     >
-                        {isInsufficientBalance ? intl.formatMessage({
-                            id: 'POOL_INSUFFICIENT_TOKEN_BALANCE',
-                        }) : props.label}
+                        {props.label}
                     </div>
                     <div className="form-fieldset__header-inner">
                         {token !== undefined && (
@@ -168,6 +154,3 @@ function Field({
         </label>
     )
 }
-
-
-export const PoolField = observer(Field)

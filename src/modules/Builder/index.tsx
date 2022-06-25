@@ -14,7 +14,9 @@ export function Builder(): JSX.Element {
     const builder = useBuilderStore()
 
     React.useEffect(() => {
-        builder.init()
+        (async () => {
+            await builder.init()
+        })()
 
         return () => {
             builder.dispose()

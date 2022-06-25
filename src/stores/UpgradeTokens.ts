@@ -8,7 +8,7 @@ import {
     runInAction,
 } from 'mobx'
 
-import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { MigrationTokenAbi, TokenWallet, TokenWalletV4 } from '@/misc'
 import { useWallet, WalletService } from '@/stores/WalletService'
 import { debug, error } from '@/utils'
@@ -44,7 +44,7 @@ export type UpgradeTokensState = {
 }
 
 
-const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class UpgradeTokens {
@@ -72,6 +72,7 @@ export class UpgradeTokens {
 
         reaction(() => this.wallet.address, async address => {
             if (address !== undefined) {
+                await staticRpc.ensureInitialized()
                 await this.checkForUpdates()
             }
         }, { fireImmediately: true })
@@ -116,7 +117,7 @@ export class UpgradeTokens {
                     }
 
                     const rootV4Address = new Address(token.rootV4)
-                    const { state } = await rpc.getFullContractState({ address: rootV4Address })
+                    const { state } = await staticRpc.getFullContractState({ address: rootV4Address })
 
                     if (state === undefined || !state.isDeployed) {
                         continue
@@ -127,7 +128,7 @@ export class UpgradeTokens {
                         root: rootV4Address,
                     })
 
-                    const { state: walletState } = await rpc.getFullContractState({
+                    const { state: walletState } = await staticRpc.getFullContractState({
                         address: wallet,
                     })
 
@@ -183,7 +184,7 @@ export class UpgradeTokens {
         this.state.upgradingTokens.set(token.rootV4, true)
 
         const walletAddress = new Address(token.wallet)
-        const walletContract = new rpc.Contract(MigrationTokenAbi.WalletV4, walletAddress)
+        const walletContract = new staticRpc.Contract(MigrationTokenAbi.WalletV4, walletAddress)
 
         try {
             await walletContract.methods.burnByOwner({

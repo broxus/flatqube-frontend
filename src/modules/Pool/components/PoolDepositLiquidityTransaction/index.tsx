@@ -67,91 +67,93 @@ export function PoolDepositLiquidityTransaction({ onDismiss }: Props): JSX.Eleme
                                             }}
                                         />
                                     </div>
-                                    <div className="form-rows">
-                                        <div className="form-row">
-                                            <div>
-                                                {intl.formatMessage({
-                                                    id: 'POOL_SUPPLY_RECEIPT_SUBTITLE_RESULT',
-                                                })}
+                                    {pool.transaction.type === 'common' && (
+                                        <div className="form-rows">
+                                            <div className="form-row">
+                                                <div>
+                                                    {intl.formatMessage({
+                                                        id: 'POOL_SUPPLY_RECEIPT_SUBTITLE_RESULT',
+                                                    })}
+                                                </div>
+                                            </div>
+                                            <div className="form-row">
+                                                <div>
+                                                    {intl.formatMessage({
+                                                        id: 'POOL_SUPPLY_RECEIPT_DATA_LABEL_SHARE_PERCENT',
+                                                    })}
+                                                </div>
+                                                <div>
+                                                    {intl.formatMessage({
+                                                        id: 'POOL_SUPPLY_RECEIPT_DATA_RESULT_SHARE_PERCENT',
+                                                    }, {
+                                                        value: pool.transaction.successData.sharePercent,
+                                                    })}
+                                                </div>
+                                            </div>
+                                            <div className="form-row">
+                                                <div>
+                                                    {intl.formatMessage({
+                                                        id: 'POOL_SUPPLY_RECEIPT_DATA_LABEL_SHARE_CHANGE_PERCENT',
+                                                    })}
+                                                </div>
+                                                <div>
+                                                    {intl.formatMessage({
+                                                        id: 'POOL_SUPPLY_RECEIPT_DATA_RESULT_SHARE_CHANGE_PERCENT',
+                                                    }, {
+                                                        value: pool.transaction.successData.shareChangePercent,
+                                                    })}
+                                                </div>
+                                            </div>
+                                            <div className="form-row">
+                                                <div>
+                                                    {pool.transaction.successData.leftSymbol}
+                                                </div>
+                                                <div>
+                                                    {formattedTokenAmount(
+                                                        pool.transaction.successData.newLeft,
+                                                        pool.transaction.successData.leftDecimals,
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="form-row">
+                                                <div>
+                                                    {pool.transaction.successData.rightSymbol}
+                                                </div>
+                                                <div>
+                                                    {formattedTokenAmount(
+                                                        pool.transaction.successData.newRight,
+                                                        pool.transaction.successData.rightDecimals,
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="form-row">
+                                                <div>
+                                                    {intl.formatMessage({
+                                                        id: 'POOL_SUPPLY_RECEIPT_DATA_LABEL_NEW_LEFT_PRICE',
+                                                    }, {
+                                                        leftSymbol: pool.transaction.successData.leftSymbol,
+                                                        rightSymbol: pool.transaction.successData.rightSymbol,
+                                                    })}
+                                                </div>
+                                                <div>
+                                                    {pool.transaction.successData.newLeftPrice}
+                                                </div>
+                                            </div>
+                                            <div className="form-row">
+                                                <div>
+                                                    {intl.formatMessage({
+                                                        id: 'POOL_SUPPLY_RECEIPT_DATA_LABEL_NEW_RIGHT_PRICE',
+                                                    }, {
+                                                        leftSymbol: pool.transaction.successData.leftSymbol,
+                                                        rightSymbol: pool.transaction.successData.rightSymbol,
+                                                    })}
+                                                </div>
+                                                <div>
+                                                    {pool.transaction.successData.newRightPrice}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="form-row">
-                                            <div>
-                                                {intl.formatMessage({
-                                                    id: 'POOL_SUPPLY_RECEIPT_DATA_LABEL_SHARE_PERCENT',
-                                                })}
-                                            </div>
-                                            <div>
-                                                {intl.formatMessage({
-                                                    id: 'POOL_SUPPLY_RECEIPT_DATA_RESULT_SHARE_PERCENT',
-                                                }, {
-                                                    value: pool.transaction.successData.sharePercent,
-                                                })}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div>
-                                                {intl.formatMessage({
-                                                    id: 'POOL_SUPPLY_RECEIPT_DATA_LABEL_SHARE_CHANGE_PERCENT',
-                                                })}
-                                            </div>
-                                            <div>
-                                                {intl.formatMessage({
-                                                    id: 'POOL_SUPPLY_RECEIPT_DATA_RESULT_SHARE_CHANGE_PERCENT',
-                                                }, {
-                                                    value: pool.transaction.successData.shareChangePercent,
-                                                })}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div>
-                                                {pool.transaction.successData.leftSymbol}
-                                            </div>
-                                            <div>
-                                                {formattedTokenAmount(
-                                                    pool.transaction.successData.newLeft,
-                                                    pool.transaction.successData.leftDecimals,
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div>
-                                                {pool.transaction.successData.rightSymbol}
-                                            </div>
-                                            <div>
-                                                {formattedTokenAmount(
-                                                    pool.transaction.successData.newRight,
-                                                    pool.transaction.successData.rightDecimals,
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div>
-                                                {intl.formatMessage({
-                                                    id: 'POOL_SUPPLY_RECEIPT_DATA_LABEL_NEW_LEFT_PRICE',
-                                                }, {
-                                                    leftSymbol: pool.transaction.successData.leftSymbol,
-                                                    rightSymbol: pool.transaction.successData.rightSymbol,
-                                                })}
-                                            </div>
-                                            <div>
-                                                {pool.transaction.successData.newLeftPrice}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div>
-                                                {intl.formatMessage({
-                                                    id: 'POOL_SUPPLY_RECEIPT_DATA_LABEL_NEW_RIGHT_PRICE',
-                                                }, {
-                                                    leftSymbol: pool.transaction.successData.leftSymbol,
-                                                    rightSymbol: pool.transaction.successData.rightSymbol,
-                                                })}
-                                            </div>
-                                            <div>
-                                                {pool.transaction.successData.newRightPrice}
-                                            </div>
-                                        </div>
-                                    </div>
+                                    )}
                                     <hr className="divider" />
                                     <div
                                         className="popup-txt"
