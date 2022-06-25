@@ -5,6 +5,7 @@ import {
 } from 'everscale-inpage-provider'
 
 import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { TokenAbi } from '@/misc/abi'
 import { debug, sliceAddress } from '@/utils'
 import { SupportedInterfaceDetection } from '@/misc/supported-interface-detection'
@@ -50,12 +51,13 @@ function params<T>(o?: T): Partial<T> | (<TOptional>(o: TOptional) => Partial<TO
 
 
 const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class TokenWallet {
 
     public static async walletAddress(args: WalletAddressRequest, state?: FullContractState): Promise<Address> {
-        const rootContract = new rpc.Contract(TokenAbi.Root, args.root)
+        const rootContract = new staticRpc.Contract(TokenAbi.Root, args.root)
         const tokenWallet = (await rootContract.methods.walletOf({
             answerId: 0,
             walletOwner: args.owner,
@@ -85,7 +87,8 @@ export class TokenWallet {
             wallet = await this.walletAddress(args as WalletAddressRequest)
         }
 
-        const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, wallet)
+
+        const tokenWalletContract = new staticRpc.Contract(TokenAbi.Wallet, wallet)
         const balance = (await tokenWalletContract.methods.balance({
             answerId: 0,
         }).call({ cachedState: state })).value0
@@ -147,7 +150,8 @@ export class TokenWallet {
 
         const address = new Address(root)
 
-        const { state } = await rpc.getFullContractState({ address })
+
+        const { state } = await staticRpc.getFullContractState({ address })
 
         if (!state) {
             return undefined
@@ -174,7 +178,7 @@ export class TokenWallet {
     }
 
     public static async getDecimals(root: Address, state?: FullContractState): Promise<number> {
-        const rootContract = new rpc.Contract(TokenAbi.Root, root)
+        const rootContract = new staticRpc.Contract(TokenAbi.Root, root)
         const response = (await rootContract.methods.decimals({ answerId: 0 }).call({
             cachedState: state,
             responsible: true,
@@ -183,7 +187,7 @@ export class TokenWallet {
     }
 
     public static async getSymbol(root: Address, state?: FullContractState): Promise<string> {
-        const rootContract = new rpc.Contract(TokenAbi.Root, root)
+        const rootContract = new staticRpc.Contract(TokenAbi.Root, root)
         return (await rootContract.methods.symbol({ answerId: 0 }).call({
             cachedState: state,
             responsible: true,
@@ -191,7 +195,7 @@ export class TokenWallet {
     }
 
     public static async getName(root: Address, state?: FullContractState): Promise<string> {
-        const rootContract = new rpc.Contract(TokenAbi.Root, root)
+        const rootContract = new staticRpc.Contract(TokenAbi.Root, root)
         return (await rootContract.methods.name({ answerId: 0 }).call({
             cachedState: state,
             responsible: true,
@@ -199,7 +203,7 @@ export class TokenWallet {
     }
 
     public static async rootOwnerAddress(root: Address, state?: FullContractState): Promise<Address> {
-        const rootContract = new rpc.Contract(TokenAbi.Root, root)
+        const rootContract = new staticRpc.Contract(TokenAbi.Root, root)
         return (await rootContract.methods.rootOwner({ answerId: 0 }).call({
             cachedState: state,
             responsible: true,
@@ -207,7 +211,7 @@ export class TokenWallet {
     }
 
     public static async totalSupply(root: Address, state?: FullContractState): Promise<string> {
-        const rootContract = new rpc.Contract(TokenAbi.Root, root)
+        const rootContract = new staticRpc.Contract(TokenAbi.Root, root)
         return (await rootContract.methods.totalSupply({ answerId: 0 }).call({
             cachedState: state,
             responsible: true,
@@ -217,7 +221,7 @@ export class TokenWallet {
     public static async isNewTip3(root: string): Promise<boolean> {
         const address = new Address(root)
 
-        const { state } = await rpc.getFullContractState({ address })
+        const { state } = await staticRpc.getFullContractState({ address })
         if (!state || !state.isDeployed) {
             return false
         }

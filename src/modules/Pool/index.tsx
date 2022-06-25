@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
+import BigNumber from 'bignumber.js'
 
 import { Icon } from '@/components/common/Icon'
 import { useBalanceValidation } from '@/hooks/useBalanceValidation'
@@ -12,17 +13,16 @@ import {
     PoolField,
     PoolPairIcons,
     PoolRootsInfo,
-    PoolShareData,
     PoolStepsAnnotations,
     PoolSubmitButton,
 } from '@/modules/Pool/components'
 import { usePoolForm } from '@/modules/Pool/hooks/usePoolForm'
 import { usePoolStore } from '@/modules/Pool/stores/PoolStore'
-import { AddLiquidityStep } from '@/modules/Pool/types'
 import { TokensList } from '@/modules/TokensList'
 import { TokenImportPopup } from '@/modules/TokensList/components'
 import { useTokensCache } from '@/stores/TokensCacheService'
 import { useWallet } from '@/stores/WalletService'
+import { formattedBalance } from '@/utils'
 
 import './index.scss'
 
@@ -57,36 +57,53 @@ export function Pool(): JSX.Element {
 
                     <div className="form">
                         <Observer>
-                            {() => (
-                                <PoolField
-                                    key="leftField"
-                                    balance={pool.formattedLeftBalance}
-                                    label={intl.formatMessage({
-                                        id: 'POOL_FIELD_LABEL_LEFT',
-                                    })}
-                                    id="leftField"
-                                    isCaution={pool.isAutoExchangeEnabled}
-                                    isValid={(
-                                        pool.isDepositingLeft
-                                        || pool.isDepositingLiquidity
-                                        || useBalanceValidation(
-                                            pool.leftToken,
-                                            pool.leftAmount,
-                                            pool.dexLeftBalance,
-                                        )
-                                    )}
-                                    token={pool.leftToken}
-                                    value={pool.leftAmount}
-                                    readOnly={
-                                        pool.isDepositingLiquidity
-                                        || pool.isDepositingLeft
-                                        || pool.isDepositingRight
-                                    }
-                                    onChange={form.onChangeData('leftAmount')}
-                                    onKeyPress={form.debouncedSyncPoolShare}
-                                    onToggleTokensList={form.showTokensList('leftToken')}
-                                />
-                            )}
+                            {() => {
+                                const maxValue = pool.leftToken?.decimals === undefined ? '0' : formattedBalance(
+                                    pool.leftToken?.balance,
+                                    pool.leftToken.decimals,
+                                    pool.dexLeftBalance,
+                                    { digitsSeparator: '', preserve: true, roundOn: false },
+                                )
+                                const isInsufficientBalance = wallet.isConnected
+                                    && !pool.isDepositingLiquidity
+                                    && !pool.isDepositingLeft
+                                    && !pool.isDepositingRight
+                                    && new BigNumber(pool.leftAmount || 0).gt(maxValue)
+
+                                return (
+                                    <PoolField
+                                        key="leftField"
+                                        balance={pool.formattedLeftBalance}
+                                        label={intl.formatMessage({
+                                            id: isInsufficientBalance
+                                                ? 'POOL_INSUFFICIENT_TOKEN_BALANCE'
+                                                : 'POOL_FIELD_LABEL_LEFT',
+                                        })}
+                                        id="leftField"
+                                        isCaution={pool.isAutoExchangeEnabled && !pool.isStablePair}
+                                        isValid={wallet.isConnected ? (
+                                            pool.isDepositingLeft
+                                            || pool.isDepositingLiquidity
+                                            || useBalanceValidation(
+                                                pool.leftToken,
+                                                pool.leftAmount,
+                                                pool.dexLeftBalance,
+                                            )
+                                        ) : true}
+                                        maxValue={maxValue}
+                                        token={pool.leftToken}
+                                        value={pool.leftAmount}
+                                        readOnly={
+                                            pool.isDepositingLiquidity
+                                            || pool.isDepositingLeft
+                                            || pool.isDepositingRight
+                                        }
+                                        onChange={form.onChangeData('leftAmount')}
+                                        onKeyPress={form.debouncedSyncPoolShare}
+                                        onToggleTokensList={form.showTokensList('leftToken')}
+                                    />
+                                )
+                            }}
                         </Observer>
 
                         <div className="pool-linkage">
@@ -94,40 +111,57 @@ export function Pool(): JSX.Element {
                         </div>
 
                         <Observer>
-                            {() => (
-                                <PoolField
-                                    key="rightField"
-                                    balance={pool.formattedRightBalance}
-                                    label={intl.formatMessage({
-                                        id: 'POOL_FIELD_LABEL_RIGHT',
-                                    })}
-                                    id="rightField"
-                                    isCaution={pool.isAutoExchangeEnabled}
-                                    isValid={(
-                                        pool.isDepositingRight
-                                        || pool.isDepositingLiquidity
-                                        || useBalanceValidation(
-                                            pool.rightToken,
-                                            pool.rightAmount,
-                                            pool.dexRightBalance,
-                                        )
-                                    )}
-                                    token={pool.rightToken}
-                                    value={pool.rightAmount}
-                                    readOnly={
-                                        pool.isDepositingLiquidity
-                                        || pool.isDepositingLeft
-                                        || pool.isDepositingRight
-                                    }
-                                    onChange={form.onChangeData('rightAmount')}
-                                    onKeyPress={form.debouncedSyncPoolShare}
-                                    onToggleTokensList={form.showTokensList('rightToken')}
-                                />
-                            )}
+                            {() => {
+                                const maxValue = pool.rightToken?.decimals === undefined ? '0' : formattedBalance(
+                                    pool.rightToken?.balance,
+                                    pool.rightToken.decimals,
+                                    pool.dexRightBalance,
+                                    { digitsSeparator: '', preserve: true, roundOn: false },
+                                )
+                                const isInsufficientBalance = wallet.isConnected
+                                    && !pool.isDepositingLiquidity
+                                    && !pool.isDepositingLeft
+                                    && !pool.isDepositingRight
+                                    && new BigNumber(pool.rightAmount || 0).gt(maxValue)
+
+                                return (
+                                    <PoolField
+                                        key="rightField"
+                                        balance={pool.formattedRightBalance}
+                                        label={intl.formatMessage({
+                                            id: isInsufficientBalance
+                                                ? 'POOL_INSUFFICIENT_TOKEN_BALANCE'
+                                                : 'POOL_FIELD_LABEL_RIGHT',
+                                        })}
+                                        id="rightField"
+                                        isCaution={pool.isAutoExchangeEnabled && !pool.isStablePair}
+                                        isValid={wallet.isConnected ? (
+                                            pool.isDepositingRight
+                                            || pool.isDepositingLiquidity
+                                            || useBalanceValidation(
+                                                pool.rightToken,
+                                                pool.rightAmount,
+                                                pool.dexRightBalance,
+                                            )
+                                        ) : true}
+                                        maxValue={maxValue}
+                                        token={pool.rightToken}
+                                        value={pool.rightAmount}
+                                        readOnly={
+                                            pool.isDepositingLiquidity
+                                            || pool.isDepositingLeft
+                                            || pool.isDepositingRight
+                                        }
+                                        onChange={form.onChangeData('rightAmount')}
+                                        onKeyPress={form.debouncedSyncPoolShare}
+                                        onToggleTokensList={form.showTokensList('rightToken')}
+                                    />
+                                )
+                            }}
                         </Observer>
 
                         <Observer>
-                            {() => (pool.isAutoExchangeAvailable
+                            {() => ((pool.isAutoExchangeAvailable && !pool.isStablePair)
                                 ? <PoolAutoExchange key="autoExchange" />
                                 : null
                             )}
@@ -139,13 +173,14 @@ export function Pool(): JSX.Element {
                                 : null
                             )}
                         </Observer>
-
+                        {/*
                         <Observer>
                             {() => ((pool.isPoolShareDataAvailable && pool.step === AddLiquidityStep.DEPOSIT_LIQUIDITY)
                                 ? <PoolShareData key="poolShareData" />
                                 : null
                             )}
                         </Observer>
+                         */}
 
                         <Observer>
                             {() => (wallet.account != null ? (

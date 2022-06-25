@@ -7,9 +7,13 @@ import {
     FullContractState,
     Transaction,
 } from 'everscale-inpage-provider'
+import { toJS } from 'mobx'
 
-import { DexAbi } from '@/misc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
+import { DexAbi, PairType } from '@/misc'
 import { SwapRouteResult, SwapRouteStep } from '@/modules/Swap/types'
+
+const staticRpc = useStaticRpc()
 
 
 export function fillStepResult(
@@ -132,9 +136,7 @@ export function getCrossExchangePriceImpact(steps: SwapRouteStep[], initialLeftR
     const reduced = steps.reduce<{
         leftRoot: string | undefined,
         value: BigNumber,
-        start: BigNumber,
-        end: BigNumber,
-    }>((acc, step, idx) => {
+    }>((acc, step) => {
         const isInverted = step.pair.roots?.left.toString() !== acc.leftRoot
 
         const leftDecimals = isInverted
@@ -154,7 +156,14 @@ export function getCrossExchangePriceImpact(steps: SwapRouteStep[], initialLeftR
             : new BigNumber(step.pair.balances?.right || 0).shiftedBy(-(step.pair.decimals?.right ?? 0))
 
         const expectedLeftPairBalanceNumber = pairLeftBalanceNumber.plus(
-            new BigNumber(step.amount).shiftedBy(leftDecimals),
+            new BigNumber(step.amount).minus(
+                new BigNumber(step.fee)
+                    .times(step.pair.feeParams?.beneficiaryNumerator ?? 0)
+                    .div(
+                        new BigNumber(step.pair.feeParams?.numerator ?? 0)
+                            .plus(step.pair.feeParams?.beneficiaryNumerator ?? 0),
+                    ),
+            ).shiftedBy(leftDecimals),
         )
         const expectedRightPairBalanceNumber = pairRightBalanceNumber.minus(
             new BigNumber(step.expectedAmount).shiftedBy(rightDecimals),
@@ -165,23 +174,98 @@ export function getCrossExchangePriceImpact(steps: SwapRouteStep[], initialLeftR
 
         return {
             leftRoot: isInverted ? step.pair.roots?.left.toString() : step.pair.roots?.right.toString(),
-            value: end.minus(start)
-                .div(end)
-                .abs()
-                .times(idx === 0 ? 1 : acc.value),
-            start: start.times(idx === 0 ? 1 : acc.start),
-            end: end.times(idx === 0 ? 1 : acc.end),
+            value: acc.value.times(
+                new BigNumber(1).minus(end.minus(start).div(start).abs()),
+            ),
         }
     }, {
         leftRoot: initialLeftRoot,
-        value: new BigNumber(0),
-        start: new BigNumber(0),
-        end: new BigNumber(0),
+        value: new BigNumber(1),
     })
 
-    return reduced.end.minus(reduced.start)
-        .div(reduced.start)
-        .abs()
-        .times(100)
-        .dp(2, BigNumber.ROUND_DOWN)
+    return new BigNumber(1).minus(reduced.value).times(100).dp(2, BigNumber.ROUND_DOWN)
+}
+
+export async function getCrossExchangeStablePriceImpact(
+    steps: SwapRouteStep[],
+    initialLeftRoot: string,
+): Promise<BigNumber> {
+    let value = new BigNumber(1),
+        leftRoot = initialLeftRoot
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const step of steps) {
+        if (step.pair.address === undefined) {
+            break
+        }
+        const isInverted = step.pair.roots?.left.toString() !== leftRoot
+
+        let { type } = step.pair
+
+        if (type === undefined) {
+            type = (await step.pair.contract?.methods.getPoolType({
+                answerId: 0,
+            }).call({
+                cachedState: toJS(step.pair.state),
+            }))?.value0 as PairType
+        }
+
+        if (type === PairType.CONSTANT_PRODUCT) {
+            const leftDecimals = isInverted
+                ? -(step.pair.decimals?.right ?? 0)
+                : -(step.pair.decimals?.left ?? 0)
+
+            const rightDecimals = isInverted
+                ? -(step.pair.decimals?.left ?? 0)
+                : -(step.pair.decimals?.right ?? 0)
+
+            const pairLeftBalanceNumber = isInverted
+                ? new BigNumber(step.pair.balances?.right || 0).shiftedBy(-(step.pair.decimals?.right ?? 0))
+                : new BigNumber(step.pair.balances?.left || 0).shiftedBy(-(step.pair.decimals?.left ?? 0))
+
+            const pairRightBalanceNumber = isInverted
+                ? new BigNumber(step.pair.balances?.left || 0).shiftedBy(-(step.pair.decimals?.left ?? 0))
+                : new BigNumber(step.pair.balances?.right || 0).shiftedBy(-(step.pair.decimals?.right ?? 0))
+
+            const expectedLeftPairBalanceNumber = pairLeftBalanceNumber.plus(
+                new BigNumber(step.amount).minus(
+                    new BigNumber(step.fee)
+                        .times(step.pair.feeParams?.beneficiaryNumerator ?? 0)
+                        .div(
+                            new BigNumber(step.pair.feeParams?.numerator ?? 0)
+                                .plus(step.pair.feeParams?.beneficiaryNumerator ?? 0),
+                        ),
+                ).shiftedBy(leftDecimals),
+            )
+            const expectedRightPairBalanceNumber = pairRightBalanceNumber.minus(
+                new BigNumber(step.expectedAmount).shiftedBy(rightDecimals),
+            )
+
+            const start = pairRightBalanceNumber.div(pairLeftBalanceNumber)
+            const end = expectedRightPairBalanceNumber.div(expectedLeftPairBalanceNumber)
+
+            leftRoot = (isInverted ? step.pair.roots?.left.toString() : step.pair.roots?.right.toString()) as string
+            value = value.times(new BigNumber(1).minus(end.minus(start).div(start).abs()))
+        }
+
+        if (type === PairType.STABLESWAP) {
+            const contract = new staticRpc.Contract(DexAbi.StablePair, step.pair.address)
+            const currentValue = (await contract.methods.getPriceImpact({
+                amount: step.amount,
+                // todo do something with this => root is key
+                price_amount: new BigNumber(1).shiftedBy(
+                    (isInverted
+                        ? step.pair.decimals?.right
+                        : step.pair.decimals?.left) ?? 0,
+                ).toFixed(),
+                spent_token_root: new Address(leftRoot),
+            }).call()).value0
+            const currentValueNumber = new BigNumber(currentValue ?? 0).abs()
+
+            value = value.times(new BigNumber(1).minus(currentValueNumber.shiftedBy(-20)))
+            leftRoot = (isInverted ? step.pair.roots?.left.toString() : step.pair.roots?.right.toString()) as string
+        }
+    }
+
+    return new BigNumber(1).minus(value).times(100).dp(2, BigNumber.ROUND_DOWN)
 }

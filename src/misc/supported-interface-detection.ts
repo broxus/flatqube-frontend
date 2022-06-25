@@ -1,10 +1,10 @@
 import { Address, FullContractState } from 'everscale-inpage-provider'
 
-import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { error, sliceAddress } from '@/utils'
 
 
-const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class SupportedInterfaceDetection {
@@ -39,8 +39,7 @@ export class SupportedInterfaceDetection {
         { address, interfaces }: { address: Address, interfaces: number[] },
         state?: FullContractState,
     ): Promise<boolean> {
-        const contract = new rpc.Contract(SupportedInterfaceDetection.ABI, address)
-
+        const contract = new staticRpc.Contract(SupportedInterfaceDetection.ABI, address)
         // eslint-disable-next-line no-restricted-syntax
         for (const id of interfaces) {
             try {
@@ -58,7 +57,6 @@ export class SupportedInterfaceDetection {
                 return false
             }
         }
-
         return true
     }
 

@@ -4,6 +4,7 @@ import { formatDigits } from './format-digits'
 import { splitAmount } from './split-amount'
 
 export type FormattedAmountOptions = {
+    /** Truncate fractional part to this value */
     truncate?: number;
     /** Preserve all decimals after dot */
     preserve?: boolean;
@@ -19,6 +20,10 @@ export type FormattedAmountOptions = {
      * Default: true
      */
     roundOn?: number | boolean;
+    /**
+     * Which symbol should be placed between digits. By default, is space.
+     */
+    digitsSeparator?: string;
 }
 
 export function formattedAmount(
@@ -27,7 +32,7 @@ export function formattedAmount(
     options: FormattedAmountOptions = { roundOn: true },
 ): string {
     const parts = splitAmount(value, decimals)
-    const digits = [formatDigits(parts[0])]
+    const digits = [formatDigits(parts[0], options.digitsSeparator)]
     const integerNumber = new BigNumber(parts[0] || 0)
 
     let fractionalPartNumber = new BigNumber(`0.${parts[1] || 0}`)
@@ -35,7 +40,7 @@ export function formattedAmount(
 
     if (options?.preserve) {
         if (roundOn && integerNumber.gte(roundOn)) {
-            return formatDigits(integerNumber.toFixed()) ?? ''
+            return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
         }
         digits.push(fractionalPartNumber.toFixed().split('.')[1])
         return digits.filter(Boolean).join('.')
@@ -43,7 +48,7 @@ export function formattedAmount(
 
     if (options?.truncate !== undefined) {
         if (roundOn && integerNumber.gte(roundOn)) {
-            return formatDigits(integerNumber.toFixed()) ?? ''
+            return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
         }
         fractionalPartNumber = fractionalPartNumber.dp(options?.truncate, BigNumber.ROUND_DOWN)
         digits.push(fractionalPartNumber.toFixed().split('.')[1])
@@ -51,7 +56,7 @@ export function formattedAmount(
     }
 
     if (roundOn && integerNumber.gte(roundOn)) {
-        return formatDigits(integerNumber.toFixed()) ?? ''
+        return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
     }
 
     switch (true) {

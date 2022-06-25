@@ -13,6 +13,8 @@ import {
     TokenWallet,
 } from '@/misc'
 import { error, shareAmount } from '@/utils'
+import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 
 type Data = {
     lpToken?: Token;
@@ -50,6 +52,21 @@ export class RemoveLiquidityStore {
         makeAutoObservable(this, {}, {
             autoBind: true,
         })
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    public async init(): Promise<void> {
+        const rpc = useRpc()
+        const staticRpc = useStaticRpc()
+        try {
+            await Promise.all([
+                rpc.ensureInitialized(),
+                staticRpc.ensureInitialized(),
+            ])
+        }
+        catch (e) {
+
+        }
     }
 
     public dispose(): void {
@@ -385,7 +402,7 @@ export class RemoveLiquidityStore {
         }
 
         return new BigNumber(this.userLpTotalAmount)
-            .multipliedBy(100)
+            .times(100)
             .div(this.pairAmountLp)
             .decimalPlaces(8, BigNumber.ROUND_DOWN)
             .toFixed()

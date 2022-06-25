@@ -23,7 +23,9 @@ export function useFilterForm(): FilterFormShape {
     }, 500)
 
     React.useEffect(() => {
-        builder.init()
+        (async () => {
+            await builder.init()
+        })()
 
         return () => {
             builder.dispose()

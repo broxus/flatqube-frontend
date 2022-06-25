@@ -6,16 +6,10 @@ import { DEFAULT_DECIMALS, DEFAULT_SLIPPAGE_VALUE, DEFAULT_SWAP_BILL } from '@/m
 import { BaseStore } from '@/stores/BaseStore'
 import { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
 import {
-    debug,
-    error,
-    formattedBalance,
-    isGoodBignumber,
+    debug, error, formattedBalance, isGoodBignumber,
 } from '@/utils'
-import type {
-    BaseSwapStoreData,
-    BaseSwapStoreInitialData,
-    BaseSwapStoreState,
-} from '@/modules/Swap/types'
+import type { BaseSwapStoreData, BaseSwapStoreInitialData, BaseSwapStoreState } from '@/modules/Swap/types'
+import { SwapDirection } from '@/modules/Swap/types'
 import {
     getDefaultPerPrice,
     getDirectExchangePriceImpact,
@@ -24,12 +18,14 @@ import {
     getExpectedSpendAmount,
     getSlippageMinExpectedAmount,
 } from '@/modules/Swap/utils'
-import { checkPair, DexAbi } from '@/misc'
+import { checkPair, DexAbi, PairType } from '@/misc'
 import { useSwapApi } from '@/modules/Swap/hooks/useApi'
 import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 
 
 const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class BaseSwapStore<
@@ -457,7 +453,7 @@ export class BaseSwapStore<
                     this.syncPairData(),
                 ])
 
-                this.finalizeCalculation()
+                await this.finalizeCalculation(SwapDirection.LTR)
             }
             catch (e) {
                 error('Sync pair data error', e)
@@ -532,7 +528,7 @@ export class BaseSwapStore<
             }
         }
 
-        this.finalizeCalculation()
+        await this.finalizeCalculation(SwapDirection.LTR)
 
         this.setState('isCalculating', false)
 
@@ -619,7 +615,7 @@ export class BaseSwapStore<
             }
         }
 
-        this.finalizeCalculation()
+        await this.finalizeCalculation(SwapDirection.RTL)
 
         this.setState('isCalculating', false)
 
@@ -635,7 +631,7 @@ export class BaseSwapStore<
      * Calculate prices by sides and price impact.
      * @protected
      */
-    protected finalizeCalculation(): void {
+    protected async finalizeCalculation(direction?: SwapDirection): Promise<void> {
         if (!this.isEnoughLiquidity) {
             this.setData({
                 priceLeftToRight: undefined,
@@ -645,7 +641,9 @@ export class BaseSwapStore<
         }
 
         const pairLeftBalanceNumber = this.isPairInverted ? this.pairRightBalanceNumber : this.pairLeftBalanceNumber
-        const pairRightBalanceNumber = this.isPairInverted ? this.pairLeftBalanceNumber : this.pairRightBalanceNumber
+        const pairRightBalanceNumber = this.isPairInverted
+            ? this.pairLeftBalanceNumber
+            : this.pairRightBalanceNumber
 
         let priceLeftToRight = getDefaultPerPrice(
                 pairLeftBalanceNumber.shiftedBy(-this.leftTokenDecimals),
@@ -659,13 +657,64 @@ export class BaseSwapStore<
             )
 
         if (
+            (
+                (direction === SwapDirection.LTR && !isGoodBignumber(this.leftAmount))
+                || (direction === SwapDirection.RTL && !isGoodBignumber(this.rightAmount))
+            )
+            && this.pair?.type === PairType.STABLESWAP
+            && this.pair?.address !== undefined
+        ) {
+            const contract = new staticRpc.Contract(DexAbi.StablePair, this.pair.address)
+            try {
+                const [
+                    ltrPrice,
+                    rtlPrice,
+                ] = await Promise.all([
+                    (await contract.methods.expectedExchange({
+                        amount: new BigNumber(1).shiftedBy(
+                            this.leftTokenDecimals,
+                        )
+                            .toFixed(),
+                        answerId: 0,
+                        spent_token_root: this.leftTokenAddress as Address,
+                    }).call()).expected_amount,
+                    (await contract.methods.expectedExchange({
+                        amount: new BigNumber(1).shiftedBy(
+                            this.rightTokenDecimals,
+                        )
+                            .toFixed(),
+                        answerId: 0,
+                        spent_token_root: this.rightTokenAddress as Address,
+                    }).call()).expected_amount,
+                ])
+
+                priceRightToLeft = new BigNumber(ltrPrice).shiftedBy(-this.rightTokenDecimals)
+                priceLeftToRight = new BigNumber(rtlPrice).shiftedBy(-this.leftTokenDecimals)
+
+                this.setData({
+                    priceLeftToRight: isGoodBignumber(priceLeftToRight)
+                        ? priceLeftToRight.toFixed()
+                        : undefined,
+                    priceRightToLeft: isGoodBignumber(priceRightToLeft)
+                        ? priceRightToLeft.toFixed()
+                        : undefined,
+                })
+                debug('Virtual prices fetched')
+            }
+            catch (e) {
+                error('Fetch virtual prices error', e)
+            }
+
+            return
+        }
+
+        if (
             !isGoodBignumber(this.rightAmountNumber)
             || this.amount === undefined
             || this.expectedAmount === undefined
-            || this.pair === undefined
-            || this.pair.contract === undefined
-            || this.pair.denominator === undefined
-            || this.pair.numerator === undefined
+            || this.pair?.contract === undefined
+            || this.pair.feeParams?.denominator === undefined
+            || this.pair.feeParams?.numerator === undefined
         ) {
             if (isGoodBignumber(priceLeftToRight)) {
                 this.setData('priceLeftToRight', priceLeftToRight.toFixed())
@@ -674,6 +723,8 @@ export class BaseSwapStore<
             if (isGoodBignumber(priceRightToLeft)) {
                 this.setData('priceRightToLeft', priceRightToLeft.toFixed())
             }
+
+            debug('Prices calculated')
 
             return
         }
@@ -693,20 +744,52 @@ export class BaseSwapStore<
             this.leftTokenDecimals,
         )
 
-        amountNumber = amountNumber
-            .times(new BigNumber(this.pair.denominator).minus(this.pair.numerator))
-            .div(this.pair.denominator)
+        if (this.pair?.type === PairType.STABLESWAP && this.pair.address !== undefined) {
+            const contract = new staticRpc.Contract(DexAbi.StablePair, this.pair.address)
+            try {
+                const currentValue = (await contract.methods.getPriceImpact({
+                    amount: this.amount,
+                    // todo do something with this => root is key
+                    price_amount: new BigNumber(1).shiftedBy(this.leftTokenDecimals).toFixed(),
+                    spent_token_root: this.leftTokenAddress as Address,
+                }).call()).value0
+                const currentValueNumber = new BigNumber(currentValue ?? 0).shiftedBy(-18)
+                this.setData('bill', {
+                    ...this.data.bill,
+                    priceImpact: currentValueNumber.dp(2, BigNumber.ROUND_DOWN).toFixed(),
+                })
+                debug('Price impact fetched')
+            }
+            catch (e) {
+                error('Fetch price impact error', e)
+            }
+        }
+        else if (this.pair?.type === PairType.CONSTANT_PRODUCT) {
+            amountNumber = amountNumber
+                .times(new BigNumber(this.pair.feeParams.denominator).minus(this.pair.feeParams.numerator))
+                .div(this.pair.feeParams.denominator)
 
-        const expectedLeftPairBalanceNumber = pairLeftBalanceNumber.plus(amountNumber)
-        const expectedRightPairBalanceNumber = pairRightBalanceNumber.minus(expectedAmountNumber)
+            const expectedLeftPairBalanceNumber = pairLeftBalanceNumber.plus(
+                amountNumber.minus(
+                    new BigNumber(this.data.bill?.fee ?? 0)
+                        .times(this.data.pair.feeParams?.beneficiaryNumerator ?? 0)
+                        .div(new BigNumber(this.pair.feeParams?.numerator ?? 0)
+                            .plus(this.pair.feeParams?.beneficiaryNumerator ?? 0)),
+                ),
+            )
+            const expectedRightPairBalanceNumber = pairRightBalanceNumber.minus(expectedAmountNumber)
 
-        this.setData('bill', {
-            ...this.data.bill,
-            priceImpact: getDirectExchangePriceImpact(
+            const priceImpact = getDirectExchangePriceImpact(
                 pairRightBalanceNumber.div(pairLeftBalanceNumber),
                 expectedRightPairBalanceNumber.div(expectedLeftPairBalanceNumber),
-            ).toFixed(),
-        })
+            ).toFixed()
+
+            this.setData('bill', {
+                ...this.data.bill,
+                priceImpact,
+            })
+            debug('Price impact calculated')
+        }
 
         if (isGoodBignumber(priceLeftToRight)) {
             this.setData('priceLeftToRight', priceLeftToRight.toFixed())
@@ -730,7 +813,12 @@ export class BaseSwapStore<
 
         const [
             { left, right },
-            { denominator, pool_numerator: numerator },
+            {
+                denominator,
+                pool_numerator: numerator,
+                beneficiary_numerator: beneficiaryNumerator,
+            },
+            type,
         ] = await Promise.all([
             this.pair.contract.methods.getTokenRoots({
                 answerId: 0,
@@ -742,13 +830,20 @@ export class BaseSwapStore<
             }).call({
                 cachedState: toJS(this.pair.state),
             })).value0,
+            (await this.pair.contract.methods.getPoolType({ answerId: 0 }).call({
+                cachedState: toJS(this.pair.state),
+            })).value0,
         ])
 
         this.setData('pair', {
             ...this.pair,
-            denominator,
-            numerator,
+            feeParams: {
+                beneficiaryNumerator,
+                denominator,
+                numerator,
+            },
             roots: { left, right },
+            type,
         })
     }
 

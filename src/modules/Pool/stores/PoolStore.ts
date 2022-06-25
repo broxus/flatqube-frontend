@@ -13,12 +13,14 @@ import {
 import { Address, Subscriber } from 'everscale-inpage-provider'
 
 import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import {
     checkPair,
     Dex,
     DexAbi,
     PairBalances,
     PairTokenRoots,
+    PairType,
     TokenWallet,
 } from '@/misc'
 import { DEFAULT_DECIMALS } from '@/modules/Swap/constants'
@@ -44,13 +46,15 @@ import { FavoritePairs, useFavoritePairs } from '@/stores/FavoritePairs'
 import {
     concatSymbols,
     debounce,
-    error, formattedBalance,
+    error,
+    formattedBalance,
     isGoodBignumber,
 } from '@/utils'
 import { BaseStore } from '@/stores/BaseStore'
 
 
 const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
@@ -89,6 +93,7 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             | 'handleTokensChange'
             | 'handleStepChange'
             | 'handleWalletAddressChange'
+            | 'resetPoolData'
         >(this, {
             pool: observable,
             depositLiquidityReceipt: observable,
@@ -97,10 +102,12 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             handleTokensChange: action.bound,
             handleStepChange: action.bound,
             handleWalletAddressChange: action.bound,
+            resetPoolData: action.bound,
             isAutoExchangeAvailable: computed,
             isDexAccountDataAvailable: computed,
             isPoolDataAvailable: computed,
             isPoolShareDataAvailable: computed,
+            isStablePair: computed,
             isSupplyComputeReady: computed,
             isSupplyReady: computed,
             dexLeftBalance: computed,
@@ -167,6 +174,17 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
      * Toggle to initial step.
      */
     public async init(): Promise<void> {
+        try {
+            await Promise.all([
+                rpc.ensureInitialized(),
+                staticRpc.ensureInitialized(),
+            ])
+        }
+        catch (e) {
+            error('RPC initializing error', e)
+            return
+        }
+
         await this.unsubscribeTransactionSubscriber()
 
         this.#transactionSubscriber = new rpc.Subscriber()
@@ -207,18 +225,17 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
         this.#tokensDisposer = reaction(
             () => [this.data.leftToken, this.data.rightToken],
             this.handleTokensChange,
+            { fireImmediately: true },
         )
 
         this.#walletAccountDisposer = reaction(() => this.wallet.address, this.handleWalletAddressChange)
 
-        if (this.wallet.address) {
-            await this.handleStepChange(undefined)
-            await this.setStep(AddLiquidityStep.INIT)
-        }
+        await this.handleStepChange(undefined)
+        await this.setStep(AddLiquidityStep.INIT)
     }
 
     /**
-     * Manually dispose all of the internal subscribers.
+     * Manually dispose all the internal subscribers.
      * Reset all data to their defaults.
      * Stop DEX account balances updater
      */
@@ -438,7 +455,7 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
         const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
             const result = await owner.decodeTransaction({
                 transaction,
-                methods: ['dexPairDepositLiquiditySuccess', 'dexPairOperationCancelled'],
+                methods: ['dexPairDepositLiquiditySuccess', 'dexPairDepositLiquiditySuccessV2', 'dexPairOperationCancelled'],
             })
 
             if (result !== undefined) {
@@ -446,7 +463,15 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                     result.method === 'dexPairOperationCancelled'
                     && result.input.id.toString() === callId
                 ) {
-                    return E.left({ input: result.input })
+                    return E.left<DepositLiquidityFailureResult>({ input: result.input })
+                }
+
+                if (
+                    result.method === 'dexPairDepositLiquiditySuccessV2'
+                    && result.input.id.toString() === callId
+                    && result.input.via_account
+                ) {
+                    return E.right<never, DepositLiquiditySuccessResult>({ input: result.input, transaction, type: 'stable' })
                 }
 
                 if (
@@ -454,7 +479,7 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                     && result.input.id.toString() === callId
                     && result.input.via_account
                 ) {
-                    return E.right({ input: result.input, transaction })
+                    return E.right<never, DepositLiquiditySuccessResult>({ input: result.input, transaction, type: 'common' })
                 }
             }
 
@@ -481,9 +506,9 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             )
 
             if (resultHandler !== undefined) {
-                E.match(
-                    (r: DepositLiquidityFailureResult) => this.handleLiquidityFailure(r),
-                    (r: DepositLiquiditySuccessResult) => this.handleLiquiditySuccess(r),
+                E.match<DepositLiquidityFailureResult, DepositLiquiditySuccessResult, void>(
+                    r => this.handleLiquidityFailure(r),
+                    r => this.handleLiquiditySuccess(r),
                 )(await resultHandler)
             }
 
@@ -593,6 +618,7 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             return
         }
 
+        await this.syncPairType()
         await this.syncPairRoots()
         await this.syncPairBalances()
         await this.syncPoolShare()
@@ -605,10 +631,6 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
      * @protected
      */
     protected async handleStepChange(step?: AddLiquidityStep): Promise<void> {
-        if (!this.wallet.address) {
-            return
-        }
-
         switch (step) {
             case AddLiquidityStep.INIT:
                 this.handleInitStep()
@@ -707,9 +729,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
      * Success transaction callback handler
      * @param {DepositLiquiditySuccessResult['input']} input
      * @param {DepositLiquiditySuccessResult['transaction']} transaction
+     * @param type
      * @protected
      */
-    protected async handleLiquiditySuccess({ input, transaction }: DepositLiquiditySuccessResult): Promise<void> {
+    protected async handleLiquiditySuccess({ input, transaction, type }: DepositLiquiditySuccessResult): Promise<void> {
         if (
             !transaction
             || !this.wallet.address
@@ -752,99 +775,132 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             this.favoritePairs.add(this.pairAddress, name)
         }
 
-        const share = new BigNumber(input.result.step_1_lp_reward.toString())
-            .plus(new BigNumber(input.result.step_3_lp_reward.toString()))
-            .toFixed()
-
-        const sharePercent = this.isPoolEmpty
-            ? '100.0'
-            : new BigNumber(share)
-                .plus(this.lpWalletBalance || 0)
-                .multipliedBy(100)
-                .dividedBy(new BigNumber(pairLpBalance).plus(share))
-                .decimalPlaces(8, BigNumber.ROUND_DOWN)
-                .toFixed()
-
-        const currentSharePercent = this.isPoolEmpty
-            ? '0.0'
-            : new BigNumber(this.lpWalletBalance || 0)
-                .multipliedBy(100)
-                .dividedBy(new BigNumber(pairLpBalance))
-                .decimalPlaces(8, BigNumber.ROUND_DOWN)
-                .toFixed()
-
-        const shareChangePercent = this.isPoolEmpty
-            ? '100.0'
-            : new BigNumber(sharePercent)
-                .minus(currentSharePercent)
-                .decimalPlaces(8, BigNumber.ROUND_DOWN)
-                .toFixed()
-
-        let leftBN = new BigNumber(input.result.step_1_left_deposit).plus(input.result.step_3_left_deposit),
-            rightBN = new BigNumber(input.result.step_1_right_deposit).plus(input.result.step_3_right_deposit)
-
-        if (input.result.step_2_left_to_right) {
-            leftBN = leftBN.plus(input.result.step_2_spent)
-            rightBN = rightBN.minus(input.result.step_2_received)
-        }
-
-        if (input.result.step_2_right_to_left) {
-            rightBN = rightBN.plus(input.result.step_2_spent)
-            leftBN = leftBN.minus(input.result.step_2_received)
-        }
-
         const isInverted = this.pairRoots.left.toString() !== this.leftToken.root
 
         const leftDecimals = this.leftToken.decimals
         const rightDecimals = this.rightToken.decimals
 
-        const leftDeposit = isInverted ? rightBN.toFixed() : leftBN.toFixed()
-        const rightDeposit = isInverted ? leftBN.toFixed() : rightBN.toFixed()
+        if (type === 'stable') {
+            runInAction(() => {
+                this.depositLiquidityReceipt = {
+                    success: true,
+                    successData: {
+                        leftDecimals,
+                        rightDecimals,
+                        leftDeposit: '-',
+                        rightDeposit: '-',
+                        hash: transaction.id.hash,
+                        leftSymbol,
+                        rightSymbol,
+                        lpDecimals: this.lpDecimals!,
+                        lpRoot: this.lpRoot!,
+                        newLeft: '',
+                        newRight: '',
+                        newLeftPrice: '',
+                        newRightPrice: '',
+                        currentSharePercent: '-',
+                        share: input.result.lp_reward,
+                        shareChangePercent: '',
+                        sharePercent: '',
+                    },
+                    errorData: undefined,
+                    type: 'stable',
+                }
 
-        const newLeftBN = new BigNumber(pairLeftBalance).plus(leftDeposit)
-        const newRightBN = new BigNumber(pairRightBalance).plus(rightDeposit)
+                this.data.leftAmount = ''
+                this.data.rightAmount = ''
+            })
+        }
+        else if (type === 'common') {
+            const share = new BigNumber(input.result.step_1_lp_reward.toString())
+                .plus(new BigNumber(input.result.step_3_lp_reward.toString()))
+                .toFixed()
 
-        const newLeft = newLeftBN.toFixed()
-        const newRight = newRightBN.toFixed()
+            const sharePercent = this.isPoolEmpty
+                ? '100.0'
+                : new BigNumber(share)
+                    .plus(this.lpWalletBalance || 0)
+                    .multipliedBy(100)
+                    .dividedBy(new BigNumber(pairLpBalance).plus(share))
+                    .decimalPlaces(8, BigNumber.ROUND_DOWN)
+                    .toFixed()
 
-        const newLeftPrice = newLeftBN.shiftedBy(-leftDecimals)
-            .dividedBy(newRightBN.shiftedBy(-rightDecimals))
-            .decimalPlaces(leftDecimals, BigNumber.ROUND_UP)
-            .toFixed()
-        const newRightPrice = newRightBN.shiftedBy(-rightDecimals)
-            .dividedBy(newLeftBN.shiftedBy(-leftDecimals))
-            .decimalPlaces(rightDecimals, BigNumber.ROUND_UP)
-            .toFixed()
+            const currentSharePercent = this.isPoolEmpty
+                ? '0.0'
+                : new BigNumber(this.lpWalletBalance || 0)
+                    .multipliedBy(100)
+                    .dividedBy(new BigNumber(pairLpBalance))
+                    .decimalPlaces(8, BigNumber.ROUND_DOWN)
+                    .toFixed()
 
-        runInAction(() => {
-            this.depositLiquidityReceipt = {
-                success: true,
-                successData: {
-                    leftDecimals,
-                    rightDecimals,
-                    leftDeposit,
-                    rightDeposit,
-                    hash: transaction.id.hash,
-                    leftSymbol,
-                    rightSymbol,
-                    lpDecimals: this.lpDecimals!,
-                    lpRoot: this.lpRoot!,
-                    newLeft,
-                    newRight,
-                    newLeftPrice,
-                    newRightPrice,
-                    currentSharePercent,
-                    share,
-                    shareChangePercent,
-                    sharePercent,
-                },
-                errorData: undefined,
+            const shareChangePercent = this.isPoolEmpty
+                ? '100.0'
+                : new BigNumber(sharePercent)
+                    .minus(currentSharePercent)
+                    .decimalPlaces(8, BigNumber.ROUND_DOWN)
+                    .toFixed()
+
+            let leftBN = new BigNumber(input.result.step_1_left_deposit).plus(input.result.step_3_left_deposit),
+                rightBN = new BigNumber(input.result.step_1_right_deposit).plus(input.result.step_3_right_deposit)
+
+            if (input.result.step_2_left_to_right) {
+                leftBN = leftBN.plus(input.result.step_2_spent)
+                rightBN = rightBN.minus(input.result.step_2_received)
             }
 
-            this.data.leftAmount = ''
-            this.data.rightAmount = ''
-        })
+            if (input.result.step_2_right_to_left) {
+                rightBN = rightBN.plus(input.result.step_2_spent)
+                leftBN = leftBN.minus(input.result.step_2_received)
+            }
 
+            const leftDeposit = isInverted ? rightBN.toFixed() : leftBN.toFixed()
+            const rightDeposit = isInverted ? leftBN.toFixed() : rightBN.toFixed()
+
+            const newLeftBN = new BigNumber(pairLeftBalance).plus(leftDeposit)
+            const newRightBN = new BigNumber(pairRightBalance).plus(rightDeposit)
+
+            const newLeft = newLeftBN.toFixed()
+            const newRight = newRightBN.toFixed()
+
+            const newLeftPrice = newLeftBN.shiftedBy(-leftDecimals)
+                .dividedBy(newRightBN.shiftedBy(-rightDecimals))
+                .decimalPlaces(leftDecimals, BigNumber.ROUND_UP)
+                .toFixed()
+            const newRightPrice = newRightBN.shiftedBy(-rightDecimals)
+                .dividedBy(newLeftBN.shiftedBy(-leftDecimals))
+                .decimalPlaces(rightDecimals, BigNumber.ROUND_UP)
+                .toFixed()
+
+            runInAction(() => {
+                this.depositLiquidityReceipt = {
+                    success: true,
+                    successData: {
+                        leftDecimals,
+                        rightDecimals,
+                        leftDeposit,
+                        rightDeposit,
+                        hash: transaction.id.hash,
+                        leftSymbol,
+                        rightSymbol,
+                        lpDecimals: this.lpDecimals!,
+                        lpRoot: this.lpRoot!,
+                        newLeft,
+                        newRight,
+                        newLeftPrice,
+                        newRightPrice,
+                        currentSharePercent,
+                        share,
+                        shareChangePercent,
+                        sharePercent,
+                    },
+                    errorData: undefined,
+                    type: 'common',
+                }
+
+                this.data.leftAmount = ''
+                this.data.rightAmount = ''
+            })
+        }
         this.setStep(AddLiquidityStep.CHECK_PAIR)
         this.unsubscribeTransactionSubscriber().catch(reason => error(reason))
     }
@@ -888,7 +944,12 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
      */
     protected handleInitStep(): void {
         this.resetPoolData()
-        this.setStep(AddLiquidityStep.CHECK_ACCOUNT)
+        if (this.wallet.isConnected) {
+            this.setStep(AddLiquidityStep.CHECK_ACCOUNT)
+        }
+        else {
+            this.setStep(AddLiquidityStep.CHECK_PAIR)
+        }
     }
 
     /**
@@ -979,19 +1040,24 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             const address = await Dex.pairLpRoot(new Address(this.pairAddress))
             this.changePoolData('lpRoot', address.toString())
         }
-        catch (e) {}
-
-        if (!this.dex.address) {
-            this.setStep(AddLiquidityStep.INIT)
-            return
+        catch (e) {
+            error('Pair LP Root error', e)
         }
 
-        try {
-            await this.dex.syncWallets()
-            await this.dex.syncBalances()
-        }
-        catch (e) {}
+        // if (!this.dex.address) {
+        //     this.setStep(AddLiquidityStep.INIT)
+        //     return
+        // }
 
+        if (this.dex.isConnected) {
+            try {
+                await this.dex.syncWallets()
+                await this.dex.syncBalances()
+            }
+            catch (e) {}
+        }
+
+        await this.syncPairType()
         await this.syncLpBalance()
         await this.syncPairRoots()
         await this.syncPairBalances()
@@ -1223,6 +1289,32 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
         }
     }
 
+    protected async syncPairType(): Promise<void> {
+        if (!this.pairAddress) {
+            return
+        }
+
+        this.setState('isSyncPairType', true)
+
+        try {
+            const type = await Dex.pairType(new Address(this.pairAddress)) as PairType
+            this.changePoolData('pair', {
+                ...this.pool.pair,
+                type,
+            })
+        }
+        catch (e) {
+            error('DEX account pair type error', e)
+            this.changePoolData('pair', {
+                ...this.pool.pair,
+                type: PairType.CONSTANT_PRODUCT,
+            })
+        }
+        finally {
+            this.setState('isSyncPairType', false)
+        }
+    }
+
     /**
      *
      * @returns {Promise<void>}
@@ -1352,15 +1444,202 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
      * @protected
      */
     protected async syncPoolShare(): Promise<void> {
+        if (this.pair?.type === PairType.STABLESWAP) {
+            await this.syncStablePoolShare()
+        }
+        else {
+            await this.syncLegacyPoolShare()
+        }
+
+        // if (
+        //     !this.pairAddress
+        //     || !this.pairRoots
+        //     || !this.leftToken
+        //     || !this.rightToken
+        //     || (!this.isLeftAmountValid && !this.isRightAmountValid)
+        // ) {
+        //     return
+        // }
+        //
+        // const leftAmount = new BigNumber(this.leftAmount || 0)
+        //     .shiftedBy(this.leftToken.decimals)
+        //     .decimalPlaces(0)
+        //     .toFixed()
+        //
+        // const rightAmount = new BigNumber(this.rightAmount || 0)
+        //     .shiftedBy(this.rightToken.decimals)
+        //     .decimalPlaces(0)
+        //     .toFixed()
+        //
+        // const isInverted = this.pairRoots.left.toString() !== this.leftToken.root
+        // const left = isInverted ? rightAmount : leftAmount
+        // const right = isInverted ? leftAmount : rightAmount
+        //
+        // try {
+        //     let result,
+        //         leftNumber,
+        //         rightNumber
+        //
+        //     if (this.pair?.type === PairType.CONSTANT_PRODUCT) {
+        //         result = await Dex.pairExpectedDepositLiquidity(
+        //             new Address(this.pairAddress),
+        //             this.isAutoExchangeEnabled,
+        //             left,
+        //             right,
+        //         )
+        //
+        //         this.changePoolData(
+        //             'share',
+        //             new BigNumber(result.step_1_lp_reward.toString())
+        //                 .plus(new BigNumber(result.step_3_lp_reward.toString()))
+        //                 .toFixed(),
+        //         )
+        //
+        //         leftNumber = new BigNumber(result.step_1_left_deposit).plus(result.step_3_left_deposit)
+        //         rightNumber = new BigNumber(result.step_1_right_deposit).plus(result.step_3_right_deposit)
+        //
+        //         if (result.step_2_left_to_right) {
+        //             leftNumber = leftNumber.plus(result.step_2_spent)
+        //             rightNumber = rightNumber.minus(result.step_2_received)
+        //         }
+        //
+        //         if (result.step_2_right_to_left) {
+        //             rightNumber = rightNumber.plus(result.step_2_spent)
+        //             leftNumber = leftNumber.minus(result.step_2_received)
+        //         }
+        //
+        //     }
+        //     else {
+        //         result = await Dex.pairExpectedDepositLiquidityV2(
+        //             new Address(this.pairAddress),
+        //             left,
+        //             right,
+        //         )
+        //         this.changePoolData(
+        //             'share',
+        //             new BigNumber(result.lp_reward.toString()).toFixed(),
+        //         )
+        //         debugger
+        //     }
+        //
+        //     const pairLp = this.pairBalances?.lp
+        //     const pairLeft = this.pairBalances?.left || '0'
+        //     const pairRight = this.pairBalances?.right || '0'
+        //
+        //     if (this.lpRoot && pairLp !== undefined) {
+        //         if (this.isPoolEmpty) {
+        //             this.changePoolData('sharePercent', '100')
+        //             this.changePoolData('currentSharePercent', '0')
+        //             this.changePoolData('currentShareLeft', '0')
+        //             this.changePoolData('currentShareRight', '0')
+        //             this.changePoolData('shareChangePercent', '100')
+        //         }
+        //         else {
+        //             this.changePoolData(
+        //                 'sharePercent',
+        //                 new BigNumber(this.poolShare || 0)
+        //                     .plus(this.lpWalletBalance || 0)
+        //                     .multipliedBy(100)
+        //                     .dividedBy(new BigNumber(pairLp).plus(this.poolShare || 0))
+        //                     .decimalPlaces(8, BigNumber.ROUND_DOWN)
+        //                     .toFixed(),
+        //             )
+        //             this.changePoolData(
+        //                 'currentSharePercent',
+        //                 new BigNumber(this.lpWalletBalance || 0)
+        //                     .multipliedBy(100)
+        //                     .dividedBy(new BigNumber(pairLp))
+        //                     .decimalPlaces(8, BigNumber.ROUND_DOWN)
+        //                     .toFixed(),
+        //             )
+        //
+        //             if (this.leftToken !== undefined) {
+        //                 this.changePoolData(
+        //                     'currentShareLeft',
+        //                     new BigNumber(this.lpWalletBalance || 0)
+        //                         .times(new BigNumber(isInverted ? pairRight : pairLeft))
+        //                         .dividedBy(new BigNumber(pairLp))
+        //                         .decimalPlaces(0, BigNumber.ROUND_DOWN)
+        //                         .shiftedBy(-this.leftToken.decimals)
+        //                         .toFixed(),
+        //                 )
+        //             }
+        //
+        //             if (this.rightToken !== undefined) {
+        //                 this.changePoolData(
+        //                     'currentShareRight',
+        //                     new BigNumber(this.lpWalletBalance || '0')
+        //                         .times(new BigNumber(isInverted ? pairLeft : pairRight))
+        //                         .dividedBy(new BigNumber(pairLp))
+        //                         .decimalPlaces(0, BigNumber.ROUND_DOWN)
+        //                         .shiftedBy(-this.rightToken.decimals)
+        //                         .toFixed(),
+        //                 )
+        //             }
+        //
+        //             this.changePoolData(
+        //                 'shareChangePercent',
+        //                 new BigNumber(this.sharePercent || 0)
+        //                     .minus(this.currentSharePercent || 0)
+        //                     .decimalPlaces(8, BigNumber.ROUND_DOWN)
+        //                     .toFixed(),
+        //             )
+        //         }
+        //
+        //         this.changePoolData('leftDeposit', isInverted ? rightNumber?.toFixed() : leftNumber?.toFixed())
+        //         this.changePoolData('rightDeposit', isInverted ? leftNumber?.toFixed() : rightNumber?.toFixed())
+        //
+        //         const newLeftBN = new BigNumber(pairLeft).plus(this.leftDeposit || 0)
+        //         const newRightBN = new BigNumber(pairRight).plus(this.rightDeposit || 0)
+        //
+        //         this.changePoolData('newLeft', newLeftBN.toFixed())
+        //         this.changePoolData('newRight', newRightBN.toFixed())
+        //
+        //         this.changePoolData(
+        //             'newLeftPrice',
+        //             newLeftBN
+        //                 .shiftedBy(-this.leftToken.decimals)
+        //                 .dividedBy(newRightBN.shiftedBy(-this.rightToken.decimals))
+        //                 .decimalPlaces(this.leftToken.decimals, BigNumber.ROUND_UP)
+        //                 .toFixed(),
+        //         )
+        //
+        //         this.changePoolData(
+        //             'newRightPrice',
+        //             newRightBN
+        //                 .shiftedBy(-this.rightToken.decimals)
+        //                 .dividedBy(newLeftBN.shiftedBy(-this.leftToken.decimals))
+        //                 .decimalPlaces(this.rightToken.decimals, BigNumber.ROUND_UP)
+        //                 .toFixed(),
+        //         )
+        //     }
+        //     else {
+        //         this.changePoolData('sharePercent', undefined)
+        //         this.changePoolData('shareChangePercent', undefined)
+        //         this.changePoolData('currentSharePercent', undefined)
+        //         this.changePoolData('newLeft', undefined)
+        //         this.changePoolData('newRight', undefined)
+        //         this.changePoolData('newLeftPrice', undefined)
+        //         this.changePoolData('newRightPrice', undefined)
+        //         this.changePoolData('leftDeposit', undefined)
+        //         this.changePoolData('rightDeposit', undefined)
+        //     }
+        // }
+        // catch (e) {
+        //     error('Pool share sync error', e)
+        // }
+    }
+
+    protected async syncStablePoolShare(): Promise<void> {
         if (
             !this.pairAddress
             || !this.pairRoots
             || !this.leftToken
             || !this.rightToken
+            || (!this.isLeftAmountValid && !this.isRightAmountValid)
         ) {
             return
         }
-
         const leftAmount = new BigNumber(this.leftAmount || 0)
             .shiftedBy(this.leftToken.decimals)
             .decimalPlaces(0)
@@ -1376,28 +1655,28 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
         const right = isInverted ? leftAmount : rightAmount
 
         try {
-            const result = await Dex.pairExpectedDepositLiquidity(
+            const result = await Dex.pairExpectedDepositLiquidityV2(
                 new Address(this.pairAddress),
-                this.isAutoExchangeEnabled,
                 left,
                 right,
             )
 
-            this.changePoolData('share', new BigNumber(result.step_1_lp_reward.toString())
-                .plus(new BigNumber(result.step_3_lp_reward.toString()))
-                .toFixed())
+            this.changePoolData(
+                'share',
+                new BigNumber(result.lp_reward.toString()).toFixed(),
+            )
 
-            const pairLp = this.pairBalances?.lp
-            const pairLeft = this.pairBalances?.left || '0'
-            const pairRight = this.pairBalances?.right || '0'
+            if (this.lpRoot && this.pairBalances?.lp !== undefined) {
+                const pairLp = this.pairBalances?.lp
+                const pairLeft = this.pairBalances?.left || '0'
+                const pairRight = this.pairBalances?.right || '0'
 
-            if (this.lpRoot && pairLp !== undefined) {
                 if (this.isPoolEmpty) {
-                    this.changePoolData('sharePercent', '100.0')
-                    this.changePoolData('currentSharePercent', '0.0')
-                    this.changePoolData('currentShareLeft', '0.0')
-                    this.changePoolData('currentShareRight', '0.0')
-                    this.changePoolData('shareChangePercent', '100.0')
+                    this.changePoolData('sharePercent', '100')
+                    this.changePoolData('currentSharePercent', '0')
+                    this.changePoolData('currentShareLeft', '0')
+                    this.changePoolData('currentShareRight', '0')
+                    this.changePoolData('shareChangePercent', '100')
                 }
                 else {
                     this.changePoolData(
@@ -1451,22 +1730,11 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                     )
                 }
 
+                const leftNumber = new BigNumber(result.result_balances[0] || 0)
+                const rightNumber = new BigNumber(result.result_balances[1] || 0)
 
-                let leftBN = new BigNumber(result.step_1_left_deposit).plus(result.step_3_left_deposit),
-                    rightBN = new BigNumber(result.step_1_right_deposit).plus(result.step_3_right_deposit)
-
-                if (result.step_2_left_to_right) {
-                    leftBN = leftBN.plus(result.step_2_spent)
-                    rightBN = rightBN.minus(result.step_2_received)
-                }
-
-                if (result.step_2_right_to_left) {
-                    rightBN = rightBN.plus(result.step_2_spent)
-                    leftBN = leftBN.minus(result.step_2_received)
-                }
-
-                this.changePoolData('leftDeposit', isInverted ? rightBN.toFixed() : leftBN.toFixed())
-                this.changePoolData('rightDeposit', isInverted ? leftBN.toFixed() : rightBN.toFixed())
+                this.changePoolData('leftDeposit', isInverted ? rightNumber?.toFixed() : leftNumber?.toFixed())
+                this.changePoolData('rightDeposit', isInverted ? leftNumber?.toFixed() : rightNumber?.toFixed())
 
                 const newLeftBN = new BigNumber(pairLeft).plus(this.leftDeposit || 0)
                 const newRightBN = new BigNumber(pairRight).plus(this.rightDeposit || 0)
@@ -1474,25 +1742,23 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                 this.changePoolData('newLeft', newLeftBN.toFixed())
                 this.changePoolData('newRight', newRightBN.toFixed())
 
-                if (this.leftToken && this.rightToken) {
-                    this.changePoolData(
-                        'newLeftPrice',
-                        newLeftBN
-                            .shiftedBy(-this.leftToken.decimals)
-                            .dividedBy(newRightBN.shiftedBy(-this.rightToken.decimals))
-                            .decimalPlaces(this.leftToken.decimals, BigNumber.ROUND_UP)
-                            .toFixed(),
-                    )
+                this.changePoolData(
+                    'newLeftPrice',
+                    newLeftBN
+                        .shiftedBy(-this.leftToken.decimals)
+                        .dividedBy(newRightBN.shiftedBy(-this.rightToken.decimals))
+                        .decimalPlaces(this.leftToken.decimals, BigNumber.ROUND_UP)
+                        .toFixed(),
+                )
 
-                    this.changePoolData(
-                        'newRightPrice',
-                        newRightBN
-                            .shiftedBy(-this.rightToken.decimals)
-                            .dividedBy(newLeftBN.shiftedBy(-this.leftToken.decimals))
-                            .decimalPlaces(this.rightToken.decimals, BigNumber.ROUND_UP)
-                            .toFixed(),
-                    )
-                }
+                this.changePoolData(
+                    'newRightPrice',
+                    newRightBN
+                        .shiftedBy(-this.rightToken.decimals)
+                        .dividedBy(newLeftBN.shiftedBy(-this.leftToken.decimals))
+                        .decimalPlaces(this.rightToken.decimals, BigNumber.ROUND_UP)
+                        .toFixed(),
+                )
             }
             else {
                 this.changePoolData('sharePercent', undefined)
@@ -1507,7 +1773,164 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             }
         }
         catch (e) {
-            error('PoolStoreSingleton share sync error', e)
+            error('Pool share sync error', e)
+        }
+    }
+
+    protected async syncLegacyPoolShare(): Promise<void> {
+        if (
+            !this.pairAddress
+            || !this.pairRoots
+            || !this.leftToken
+            || !this.rightToken
+        ) {
+            return
+        }
+
+        try {
+            const leftAmount = new BigNumber(this.leftAmount || 0)
+                .shiftedBy(this.leftToken.decimals)
+                .decimalPlaces(0)
+                .toFixed()
+
+            const rightAmount = new BigNumber(this.rightAmount || 0)
+                .shiftedBy(this.rightToken.decimals)
+                .decimalPlaces(0)
+                .toFixed()
+
+            const isInverted = this.pairRoots.left.toString() !== this.leftToken.root
+            const left = isInverted ? rightAmount : leftAmount
+            const right = isInverted ? leftAmount : rightAmount
+
+            const result = await Dex.pairExpectedDepositLiquidity(
+                new Address(this.pairAddress),
+                this.isAutoExchangeEnabled,
+                left,
+                right,
+            )
+
+            this.changePoolData('share', new BigNumber(result.step_1_lp_reward.toString())
+                .plus(new BigNumber(result.step_3_lp_reward.toString()))
+                .toFixed())
+
+            let leftNumber = new BigNumber(result.step_1_left_deposit).plus(result.step_3_left_deposit),
+                rightNumber = new BigNumber(result.step_1_right_deposit).plus(result.step_3_right_deposit)
+
+            if (result.step_2_left_to_right) {
+                leftNumber = leftNumber.plus(result.step_2_spent)
+                rightNumber = rightNumber.minus(result.step_2_received)
+            }
+
+            if (result.step_2_right_to_left) {
+                rightNumber = rightNumber.plus(result.step_2_spent)
+                leftNumber = leftNumber.minus(result.step_2_received)
+            }
+
+            if (this.lpRoot && this.pairBalances?.lp !== undefined) {
+                const pairLp = this.pairBalances?.lp
+                const pairLeft = this.pairBalances?.left || '0'
+                const pairRight = this.pairBalances?.right || '0'
+
+                if (this.isPoolEmpty) {
+                    this.changePoolData('sharePercent', '100')
+                    this.changePoolData('currentSharePercent', '0')
+                    this.changePoolData('currentShareLeft', '0')
+                    this.changePoolData('currentShareRight', '0')
+                    this.changePoolData('shareChangePercent', '100')
+                }
+                else {
+                    this.changePoolData(
+                        'sharePercent',
+                        new BigNumber(this.poolShare || 0)
+                            .plus(this.lpWalletBalance || 0)
+                            .multipliedBy(100)
+                            .dividedBy(new BigNumber(pairLp).plus(this.poolShare || 0))
+                            .decimalPlaces(8, BigNumber.ROUND_DOWN)
+                            .toFixed(),
+                    )
+                    this.changePoolData(
+                        'currentSharePercent',
+                        new BigNumber(this.lpWalletBalance || 0)
+                            .multipliedBy(100)
+                            .dividedBy(new BigNumber(pairLp))
+                            .decimalPlaces(8, BigNumber.ROUND_DOWN)
+                            .toFixed(),
+                    )
+
+                    if (this.leftToken !== undefined) {
+                        this.changePoolData(
+                            'currentShareLeft',
+                            new BigNumber(this.lpWalletBalance || 0)
+                                .times(new BigNumber(isInverted ? pairRight : pairLeft))
+                                .dividedBy(new BigNumber(pairLp))
+                                .decimalPlaces(0, BigNumber.ROUND_DOWN)
+                                .shiftedBy(-this.leftToken.decimals)
+                                .toFixed(),
+                        )
+                    }
+
+                    if (this.rightToken !== undefined) {
+                        this.changePoolData(
+                            'currentShareRight',
+                            new BigNumber(this.lpWalletBalance || '0')
+                                .times(new BigNumber(isInverted ? pairLeft : pairRight))
+                                .dividedBy(new BigNumber(pairLp))
+                                .decimalPlaces(0, BigNumber.ROUND_DOWN)
+                                .shiftedBy(-this.rightToken.decimals)
+                                .toFixed(),
+                        )
+                    }
+
+                    this.changePoolData(
+                        'shareChangePercent',
+                        new BigNumber(this.sharePercent || 0)
+                            .minus(this.currentSharePercent || 0)
+                            .decimalPlaces(8, BigNumber.ROUND_DOWN)
+                            .toFixed(),
+                    )
+                }
+
+                this.changePoolData('leftDeposit', isInverted ? rightNumber?.toFixed() : leftNumber?.toFixed())
+                this.changePoolData('rightDeposit', isInverted ? leftNumber?.toFixed() : rightNumber?.toFixed())
+
+                const newLeftBN = new BigNumber(pairLeft).plus(this.leftDeposit || 0)
+                const newRightBN = new BigNumber(pairRight).plus(this.rightDeposit || 0)
+
+                this.changePoolData('newLeft', newLeftBN.toFixed())
+                this.changePoolData('newRight', newRightBN.toFixed())
+
+                this.changePoolData(
+                    'newLeftPrice',
+                    newLeftBN
+                        .shiftedBy(-this.leftToken.decimals)
+                        .dividedBy(newRightBN.shiftedBy(-this.rightToken.decimals))
+                        .decimalPlaces(this.leftToken.decimals, BigNumber.ROUND_UP)
+                        .toFixed(),
+                )
+
+                this.changePoolData(
+                    'newRightPrice',
+                    newRightBN
+                        .shiftedBy(-this.rightToken.decimals)
+                        .dividedBy(newLeftBN.shiftedBy(-this.leftToken.decimals))
+                        .decimalPlaces(this.rightToken.decimals, BigNumber.ROUND_UP)
+                        .toFixed(),
+                )
+            }
+            else {
+                this.changePoolData('sharePercent', undefined)
+                this.changePoolData('shareChangePercent', undefined)
+                this.changePoolData('currentSharePercent', undefined)
+                this.changePoolData('newLeft', undefined)
+                this.changePoolData('newRight', undefined)
+                this.changePoolData('newLeftPrice', undefined)
+                this.changePoolData('newRightPrice', undefined)
+                this.changePoolData('leftDeposit', undefined)
+                this.changePoolData('rightDeposit', undefined)
+            }
+        }
+        catch (e) {
+            error('Pool share sync error', e)
         }
     }
 
@@ -1583,6 +2006,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             && this.rightToken !== undefined
             && this.isSupplyComputeReady
         )
+    }
+
+    public get isStablePair(): boolean {
+        return this.pair?.type === PairType.STABLESWAP
     }
 
     public get isSupplyComputeReady(): boolean {
@@ -1720,7 +2147,7 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
      */
 
     public get isAutoExchangeEnabled(): PoolStoreState['isAutoExchangeEnabled'] {
-        return this.state.isAutoExchangeEnabled
+        return this.isStablePair || this.state.isAutoExchangeEnabled
     }
 
     public get isDepositingLeft(): PoolStoreState['isDepositingLeft'] {

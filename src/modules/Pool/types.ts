@@ -1,6 +1,11 @@
 import { DecodedAbiFunctionInputs, Transaction } from 'everscale-inpage-provider'
 
-import { DexAbi, PairBalances, PairTokenRoots } from '@/misc'
+import {
+    DexAbi,
+    PairBalances,
+    PairTokenRoots,
+    PairType,
+} from '@/misc'
 
 
 export type PoolStoreData = {
@@ -19,6 +24,7 @@ export type PoolStoreState = {
     isPreparing: boolean;
     isSyncPairBalances: boolean;
     isSyncPairRoots: boolean;
+    isSyncPairType: boolean;
     isWithdrawingLeft: boolean;
     isWithdrawingLiquidity: boolean;
     isWithdrawingRight: boolean;
@@ -29,6 +35,7 @@ export type PoolPair = {
     address?: string;
     balances?: PairBalances;
     roots?: PairTokenRoots;
+    type?: PairType;
 }
 
 export type PoolData = {
@@ -56,8 +63,13 @@ export type PoolData = {
 }
 
 export type DepositLiquiditySuccessResult = {
-    input: DecodedAbiFunctionInputs<typeof DexAbi.Callbacks, 'dexPairDepositLiquiditySuccess'>,
-    transaction: Transaction
+    input: DecodedAbiFunctionInputs<typeof DexAbi.Callbacks, 'dexPairDepositLiquiditySuccess'>;
+    transaction: Transaction;
+    type: 'common';
+} | {
+    input: DecodedAbiFunctionInputs<typeof DexAbi.Callbacks, 'dexPairDepositLiquiditySuccessV2'>;
+    transaction: Transaction;
+    type: 'stable';
 }
 
 export type DepositLiquidityFailureResult = {
@@ -90,6 +102,7 @@ export type DepositLiquidityReceipt = {
     success: boolean;
     successData?: DepositLiquiditySuccessData;
     errorData?: DepositLiquidityErrorData;
+    type?: 'common' | 'stable';
 }
 
 export enum AddLiquidityStep {
