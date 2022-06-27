@@ -25,7 +25,7 @@ import {
 } from '@/modules/Currencies/types'
 import { PairsRequest } from '@/modules/Pairs/types'
 import { TransactionsRequest } from '@/modules/Transactions/types'
-import { getImportedTokens } from '@/stores/TokensCacheService'
+import { getImportedTokens, useTokensCache } from '@/stores/TokensCacheService'
 import { parseCurrencyBillions } from '@/utils'
 import { CurrenciesApi, useCurrenciesApi } from '@/modules/Currencies/hooks/useApi'
 
@@ -47,11 +47,39 @@ export class CurrencyStore {
     protected readonly api: CurrenciesApi = useCurrenciesApi()
 
     constructor(protected readonly address: string) {
+        const tokensCache = useTokensCache()
+        this.changeState('isTransactionsLoading', !tokensCache.isReady)
+        this.changeState('isPairsLoading', !tokensCache.isReady)
+        this.changeState('isLoading', !tokensCache.isReady)
+
         makeAutoObservable(this, {
             loadPricesGraph: action.bound,
             loadTvlGraph: action.bound,
             loadVolumeGraph: action.bound,
         })
+
+        this.#tokensDisposer = reaction(
+            () => [tokensCache.isFetching, tokensCache.isReady],
+            async ([isFetching, isReady]) => {
+                if (!isFetching && isReady) {
+                    this.changeState('isTransactionsLoading', false)
+                    this.changeState('isPairsLoading', false)
+                    this.changeState('isLoading', false)
+                    try {
+                        await Promise.allSettled([
+                            this.load(),
+                            this.loadPairs(),
+                            this.loadTransactions(),
+                        ])
+                    }
+                    catch (e) {
+
+                    }
+                }
+
+            },
+            { fireImmediately: true },
+        )
 
         this.#timeframeDisposer = reaction(() => this.timeframe, () => {
             this.changeState('isPricesGraphLoading', false)
@@ -511,6 +539,8 @@ export class CurrencyStore {
      * Internal reaction disposers
      * ----------------------------------------------------------------------------------
      */
+
+    #tokensDisposer: IReactionDisposer | undefined
 
     #timeframeDisposer: IReactionDisposer | undefined
 

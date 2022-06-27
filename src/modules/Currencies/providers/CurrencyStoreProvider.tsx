@@ -1,12 +1,11 @@
 import * as React from 'react'
 
 import { CurrencyStore } from '@/modules/Currencies/stores/CurrencyStore'
-import { error } from '@/utils'
 
 
 type Props = {
     address: string;
-    children: React.ReactChild;
+    children: React.ReactNode;
 }
 
 
@@ -18,17 +17,6 @@ export function useCurrencyStore(): CurrencyStore {
 
 export function CurrencyStoreProvider({ address, children }: Props): JSX.Element {
     const store = React.useMemo(() => new CurrencyStore(address), [address])
-
-    React.useEffect(() => {
-        try {
-            store.load()
-            store.loadPairs()
-            store.loadTransactions()
-        }
-        catch (e) {
-            error(e)
-        }
-    }, [address])
 
     return (
         <Context.Provider value={store}>
