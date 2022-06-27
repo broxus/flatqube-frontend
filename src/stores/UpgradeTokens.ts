@@ -8,6 +8,7 @@ import {
     runInAction,
 } from 'mobx'
 
+import { useRpc } from '@/hooks/useRpc'
 import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { MigrationTokenAbi, TokenWallet, TokenWalletV4 } from '@/misc'
 import { useWallet, WalletService } from '@/stores/WalletService'
@@ -44,6 +45,7 @@ export type UpgradeTokensState = {
 }
 
 
+const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
@@ -184,7 +186,7 @@ export class UpgradeTokens {
         this.state.upgradingTokens.set(token.rootV4, true)
 
         const walletAddress = new Address(token.wallet)
-        const walletContract = new staticRpc.Contract(MigrationTokenAbi.WalletV4, walletAddress)
+        const walletContract = new rpc.Contract(MigrationTokenAbi.WalletV4, walletAddress)
 
         try {
             await walletContract.methods.burnByOwner({
