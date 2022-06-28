@@ -177,13 +177,6 @@ export function useSwapForm(): SwapFormShape {
             leftParam = 'coin'
         }
 
-        if (formStore.isMultipleSwapMode) {
-            formStore.setState({
-                exchangeMode: SwapExchangeMode.DIRECT_EXCHANGE,
-                isMultiple: false,
-            })
-        }
-
         const params = [leftParam, rightParam].filter(Boolean)
         const hasParams = params.length > 0
 

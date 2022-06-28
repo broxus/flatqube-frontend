@@ -613,7 +613,11 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
 
         this.setState({
             direction: this.direction === SwapDirection.RTL ? SwapDirection.LTR : SwapDirection.RTL,
-            nativeCoinSide: this.nativeCoinSide && (this.nativeCoinSide === 'leftToken' ? 'rightToken' : 'leftToken'),
+            exchangeMode: this.isMultipleSwapMode ? SwapExchangeMode.DIRECT_EXCHANGE : this.exchangeMode,
+            isMultiple: false,
+            nativeCoinSide: this.isMultipleSwapMode
+                ? undefined
+                : (this.nativeCoinSide && (this.nativeCoinSide === 'leftToken' ? 'rightToken' : 'leftToken')),
         })
 
         debug('Toggle direction. Stores data', this, this.currentSwap, this.#crossPairSwap)

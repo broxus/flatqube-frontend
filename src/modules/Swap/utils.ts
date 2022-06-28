@@ -12,6 +12,7 @@ import { toJS } from 'mobx'
 import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { DexAbi, PairType } from '@/misc'
 import { SwapRouteResult, SwapRouteStep } from '@/modules/Swap/types'
+import { error } from '@/utils'
 
 const staticRpc = useStaticRpc()
 
@@ -250,7 +251,7 @@ export async function getCrossExchangeStablePriceImpact(
 
         if (type === PairType.STABLESWAP) {
             const contract = new staticRpc.Contract(DexAbi.StablePair, step.pair.address)
-            const currentValue = (await contract.methods.getPriceImpact({
+            const params = {
                 amount: step.amount,
                 // todo do something with this => root is key
                 price_amount: new BigNumber(1).shiftedBy(
@@ -259,7 +260,16 @@ export async function getCrossExchangeStablePriceImpact(
                         : step.pair.decimals?.left) ?? 0,
                 ).toFixed(),
                 spent_token_root: new Address(leftRoot),
-            }).call()).value0
+            }
+            let currentValue: string | null = '0'
+            try {
+                currentValue = (await contract.methods.getPriceImpact(params).call({
+                    cachedState: toJS(step.pair.state),
+                })).value0
+            }
+            catch (e) {
+                error('Get price impact error', e)
+            }
             const currentValueNumber = new BigNumber(currentValue ?? 0).abs()
 
             value = value.times(new BigNumber(1).minus(currentValueNumber.shiftedBy(-20)))
