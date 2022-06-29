@@ -3,6 +3,7 @@ import { makeAutoObservable, runInAction, toJS } from 'mobx'
 import { Address } from 'everscale-inpage-provider'
 
 import { TokenListURI } from '@/config'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { Farm } from '@/misc'
 import { FarmingApi, useApi } from '@/modules/Farming/hooks/useApi'
 import {
@@ -184,6 +185,13 @@ export class FarmingListStore {
         FarmingPoolsItemResponse[],
         number,
     ]> {
+        try {
+            const staticRpc = useStaticRpc()
+            await staticRpc.ensureInitialized()
+        }
+        catch (e) {
+        }
+
         const { pools, total } = await this.fetchFarmingPools()
         const totalPage = Math.ceil(total / PAGE_SIZE)
 
