@@ -58,12 +58,14 @@ function PairInner(): JSX.Element {
     ))
 
     const priceLeftToRight = React.useMemo(
-        () => getPrice(baseToken, counterToken, store.pair?.leftLocked, store.pair?.rightLocked),
+        () => (store.pair?.meta.pairType === 'stable' ? store.pair.oneLeftToRight : undefined)
+            ?? getPrice(baseToken, counterToken, store.pair?.leftLocked, store.pair?.rightLocked),
         [baseToken, counterToken, store.pair],
     )
 
     const priceRightToLeft = React.useMemo(
-        () => getPrice(counterToken, baseToken, store.pair?.rightLocked, store.pair?.leftLocked),
+        () => (store.pair?.meta.pairType === 'stable' ? store.pair?.oneRightToLeft : undefined)
+            ?? getPrice(counterToken, baseToken, store.pair?.rightLocked, store.pair?.leftLocked),
         [baseToken, counterToken, store.pair],
     )
 

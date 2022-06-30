@@ -24,7 +24,10 @@ export type PairInfo = {
     feeAllTime: string;
     leftLocked: string;
     leftPrice: string;
+    lpLocked: string;
     meta: PairMeta;
+    oneLeftToRight: string | null;
+    oneRightToLeft: string | null;
     rightLocked: string;
     rightPrice: string;
     tvl: string;
@@ -37,9 +40,13 @@ export type PairInfo = {
 export type PairMeta = {
     base: string,
     baseAddress: string;
+    beneficiaryAddress: string;
     counter: string,
     counterAddress: string;
     fee: string
+    feeBeneficiary: string;
+    lpAddress: string;
+    pairType: 'default' | 'stable';
     poolAddress: string;
 }
 

@@ -88,23 +88,31 @@ export function usePoolContent(): PoolContent {
         pool && tokensCache.get(pool.right.address)
     ), [pool])
 
-    const priceLeftToRight = React.useMemo(() => (
-        pair && pool && leftToken && rightToken && getPrice(
+    const priceLeftToRight = React.useMemo(() => {
+        const price = pair && pool && leftToken && rightToken && getPrice(
             pair.leftLocked,
             pair.rightLocked,
             leftToken.decimals,
             rightToken.decimals,
         )
-    ), [pair, pool])
+        if (pair?.meta.pairType === 'stable') {
+            return pair.oneLeftToRight ?? price
+        }
+        return price
+    }, [pair, pool])
 
-    const priceRightToLeft = React.useMemo(() => (
-        pair && pool && leftToken && rightToken && getPrice(
+    const priceRightToLeft = React.useMemo(() => {
+        const price = pair && pool && leftToken && rightToken && getPrice(
             pair.rightLocked,
             pair.leftLocked,
             rightToken.decimals,
             leftToken.decimals,
         )
-    ), [pair, pool])
+        if (pair?.meta.pairType === 'stable') {
+            return pair.oneRightToLeft ?? price
+        }
+        return price
+    }, [pair, pool])
 
     const lockedLp = React.useMemo(() => (
         pool && farm.reduce((acc, item) => (
