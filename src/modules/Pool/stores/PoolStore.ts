@@ -13,7 +13,6 @@ import {
 import { Address, Subscriber } from 'everscale-inpage-provider'
 
 import { useRpc } from '@/hooks/useRpc'
-import { useStaticRpc } from '@/hooks/useStaticRpc'
 import {
     checkPair,
     Dex,
@@ -54,7 +53,6 @@ import { BaseStore } from '@/stores/BaseStore'
 
 
 const rpc = useRpc()
-const staticRpc = useStaticRpc()
 
 
 export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
@@ -174,17 +172,6 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
      * Toggle to initial step.
      */
     public async init(): Promise<void> {
-        try {
-            await Promise.all([
-                rpc.ensureInitialized(),
-                staticRpc.ensureInitialized(),
-            ])
-        }
-        catch (e) {
-            error('RPC initializing error', e)
-            return
-        }
-
         await this.unsubscribeTransactionSubscriber()
 
         this.#transactionSubscriber = new rpc.Subscriber()

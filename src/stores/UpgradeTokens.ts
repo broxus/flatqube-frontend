@@ -74,7 +74,6 @@ export class UpgradeTokens {
 
         reaction(() => this.wallet.address, async address => {
             if (address !== undefined) {
-                await staticRpc.ensureInitialized()
                 await this.checkForUpdates()
             }
         }, { fireImmediately: true })

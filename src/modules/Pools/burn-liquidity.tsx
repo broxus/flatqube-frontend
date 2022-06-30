@@ -51,7 +51,6 @@ export function BurnLiquidityInner(): JSX.Element {
     React.useEffect(() => {
         if (wallet.address && leftTokenRoot && rightTokenRoot) {
             (async () => {
-                await removeLiquidityStore.init()
                 await removeLiquidityStore.getData(leftTokenRoot, rightTokenRoot)
             })()
         }

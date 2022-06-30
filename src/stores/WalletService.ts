@@ -378,6 +378,13 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         let hasProvider = false
 
         try {
+            await rpc.ensureInitialized()
+        }
+        catch (e) {
+            return
+        }
+
+        try {
             hasProvider = await hasEverscaleProvider()
         }
         catch (e) {}
@@ -391,13 +398,6 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         }
 
         this.setState('hasProvider', hasProvider)
-
-        try {
-            await rpc.ensureInitialized()
-        }
-        catch (e) {
-            return
-        }
 
         this.setState('isConnecting', true)
 

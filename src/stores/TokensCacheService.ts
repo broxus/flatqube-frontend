@@ -10,7 +10,6 @@ import { Address, Subscription } from 'everscale-inpage-provider'
 
 import { TokenListURI } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
-import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { isAddressValid, Token, TokenWallet } from '@/misc'
 import { BaseStore } from '@/stores/BaseStore'
 import { TokensListService, useTokensList } from '@/stores/TokensListService'
@@ -45,7 +44,6 @@ export type TokensCacheCtorConfig = {
 
 
 const rpc = useRpc()
-const staticRpc = useStaticRpc()
 
 
 export const IMPORTED_TOKENS_STORAGE_KEY = 'imported_tokens'
@@ -111,13 +109,6 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         this.#tokensBalancesSubscribersMutex = new Mutex();
 
         (async () => {
-            try {
-                await Promise.all([
-                    rpc.ensureInitialized(),
-                    staticRpc.ensureInitialized(),
-                ])
-            }
-            catch (e) {}
             await tokensList.fetch(TokenListURI)
         })()
     }

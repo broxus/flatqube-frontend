@@ -9,8 +9,6 @@ import {
 } from 'mobx'
 
 import { EVERMultipleSwapFee, EVERWrapGas, WEVERRootAddress } from '@/config'
-import { useRpc } from '@/hooks/useRpc'
-import { useStaticRpc } from '@/hooks/useStaticRpc'
 import {
     DEFAULT_LEFT_TOKEN_ROOT,
     DEFAULT_RIGHT_TOKEN_ROOT,
@@ -40,14 +38,11 @@ import { useWallet, WalletService } from '@/stores/WalletService'
 import { TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
 import {
     debounce,
-    debug, error,
+    debug,
     formattedBalance,
     isGoodBignumber,
     storage,
 } from '@/utils'
-
-const rpc = useRpc()
-const staticRpc = useStaticRpc()
 
 
 export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStoreState> {
@@ -189,17 +184,6 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * Run all necessary subscribers.
      */
     public async init(): Promise<void> {
-        try {
-            await Promise.all([
-                rpc.ensureInitialized(),
-                staticRpc.ensureInitialized(),
-            ])
-        }
-        catch (e) {
-            error('RPC initializing error', e)
-            return
-        }
-
         this.#walletAccountDisposer?.()
         this.#walletAccountDisposer = reaction(
             () => this.wallet.address,
