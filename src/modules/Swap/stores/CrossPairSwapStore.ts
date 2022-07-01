@@ -6,7 +6,6 @@ import {
 } from 'mobx'
 import BigNumber from 'bignumber.js'
 import { Address } from 'everscale-inpage-provider'
-import * as E from 'fp-ts/Either'
 import type { DecodedAbiFunctionInputs, DecodedAbiFunctionOutputs } from 'everscale-inpage-provider'
 
 import {
@@ -351,7 +350,9 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
                     )
 
                     if (cancelStepIndex === 0) {
-                        return E.left({})
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onTransactionFailure?.({})
+                        return {}
                     }
 
                     results = results.slice(0, cancelStepIndex + 1)
@@ -360,11 +361,9 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
                         return undefined
                     }
 
-                    return E.left({
-                        cancelStep: results[cancelStepIndex],
-                        index: cancelStepIndex,
-                        step: results[cancelStepIndex - 1],
-                    })
+                    this.setState('isSwapping', false)
+                    this.callbacks?.onTransactionFailure?.({})
+                    return {}
                 }
 
                 if (result?.method === 'dexPairExchangeSuccess' && result.input.id.toString() === processingId) {
