@@ -144,7 +144,9 @@ export class FarmingListStore {
         pools: FarmingPoolsItemResponse[],
     ): Promise<void> {
         if (!this.wallet.address) {
-            return
+            runInAction(() => {
+                this.state.rewards = []
+            })
         }
 
         pools.forEach((pool, index) => {
