@@ -26,7 +26,7 @@ export function FarmingFilters({
 }: Props): JSX.Element {
     const intl = useIntl()
     const locationFilter = useLocationFilter(queryParamPrefix)
-    const [filter, setFilter] = React.useState<FarmingPoolFilter>(locationFilter.parse())
+    const filter = locationFilter.parse()
     const [query, setQuery] = React.useState('')
     const [tokenListVisible, setTokenListVisible] = React.useState(false)
     const dropdown = useDropdown(!tokenListVisible)
@@ -40,7 +40,8 @@ export function FarmingFilters({
     }
 
     const onChangeFilter = (value: FarmingPoolFilter) => {
-        setFilter(value)
+        locationFilter.update(value)
+        onSubmit(value)
     }
 
     const onChangeQuery = (e: React.FormEvent<HTMLInputElement>) => {
@@ -58,14 +59,6 @@ export function FarmingFilters({
             }
             return value === undefined ? acc : acc + 1
         }, 0)
-
-    React.useEffect(() => {
-        locationFilter.update(filter)
-    }, [filter])
-
-    React.useEffect(() => {
-        onSubmit(filter)
-    }, [filter])
 
     return (
         <div className="farming-filters">
@@ -89,7 +82,9 @@ export function FarmingFilters({
                     id: 'FARMING_FILTER_FORM_BUTTON',
                 })}
                 {enabledFilterCount > 0 && (
-                    <span className="btn__counter">{enabledFilterCount}</span>
+                    <span className="farming-filters__counter">
+                        {enabledFilterCount}
+                    </span>
                 )}
             </Button>
 

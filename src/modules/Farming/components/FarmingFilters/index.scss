@@ -14,6 +14,15 @@
     > .filter-field {
         width: 100%;
     }
+
+    &__counter {
+        background: #c5e4f3;
+        color: #050b2e;
+        line-height: 20px;
+        padding: 0 5px;
+        border-radius: 50px;
+        min-width: 20px;
+    }
 }
 
 .farming-filters-popup {

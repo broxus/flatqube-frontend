@@ -11,15 +11,27 @@ import {
 } from '@/modules/Farming/stores/FarmingListStore'
 import { appRoutes } from '@/routes'
 import { useFavoriteFarmings } from '@/stores/FavoritePairs'
+import { useWallet } from '@/stores/WalletService'
+import { useLocationFilter } from '@/modules/Farming/hooks/useLocationFilter'
 
 import './index.scss'
 
-
-function FarmingsInner(): JSX.Element {
+function FarmingsInner(): JSX.Element | null {
     const intl = useIntl()
+    const filter = useLocationFilter()
+    const favFilter = useLocationFilter('fav')
     const favoriteFarmings = useFavoriteFarmings()
     const farmingListStore = useFarmingListStore()
     const favoriteFarmingListStore = useFavoriteFarmingListStore()
+    const everWalet = useWallet()
+
+    React.useEffect(() => {
+        farmingListStore.changeFilter(filter.parse())
+
+        if (favoriteFarmings.addresses.length > 0) {
+            favoriteFarmingListStore.changeFilter(favFilter.parse())
+        }
+    }, [everWalet.address])
 
     React.useEffect(() => () => {
         farmingListStore.dispose()

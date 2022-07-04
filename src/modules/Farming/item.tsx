@@ -69,6 +69,7 @@ export function FarmingInner(): JSX.Element {
         return undefined
     }, [
         params.user,
+        params.address,
         wallet.isConnecting,
         wallet.isInitializing,
     ])
