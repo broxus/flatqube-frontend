@@ -178,7 +178,9 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
 
         const routes: SwapRoute[] = []
         const tokens: TokenCache[] = []
-        const roots = this.data.crossPairs.reduce<string[]>((acc, pair) => {
+        const roots = this.data.crossPairs.filter(
+            pair => pair.address?.toString().toLowerCase() !== this.pair?.address?.toString().toLowerCase(),
+        ).reduce<string[]>((acc, pair) => {
             const pairRoots = [pair.roots?.left.toString(), pair.roots?.right.toString()]
 
             let idx = pairRoots.indexOf(this.leftToken?.root),
