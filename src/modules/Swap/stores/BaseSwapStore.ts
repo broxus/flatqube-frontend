@@ -2,12 +2,10 @@ import BigNumber from 'bignumber.js'
 import { Address } from 'everscale-inpage-provider'
 import { computed, makeObservable, toJS } from 'mobx'
 
+import { useStaticRpc } from '@/hooks/useStaticRpc'
+import { checkPair, DexAbi, PairType } from '@/misc'
 import { DEFAULT_DECIMALS, DEFAULT_SLIPPAGE_VALUE, DEFAULT_SWAP_BILL } from '@/modules/Swap/constants'
-import { BaseStore } from '@/stores/BaseStore'
-import { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
-import {
-    debug, error, formattedBalance, isGoodBignumber,
-} from '@/utils'
+import { useSwapApi } from '@/modules/Swap/hooks/useApi'
 import type { BaseSwapStoreData, BaseSwapStoreInitialData, BaseSwapStoreState } from '@/modules/Swap/types'
 import { SwapDirection } from '@/modules/Swap/types'
 import {
@@ -18,13 +16,16 @@ import {
     getExpectedSpendAmount,
     getSlippageMinExpectedAmount,
 } from '@/modules/Swap/utils'
-import { checkPair, DexAbi, PairType } from '@/misc'
-import { useSwapApi } from '@/modules/Swap/hooks/useApi'
-import { useRpc } from '@/hooks/useRpc'
-import { useStaticRpc } from '@/hooks/useStaticRpc'
+import { BaseStore } from '@/stores/BaseStore'
+import { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
+import {
+    debug,
+    error,
+    formattedBalance,
+    isGoodBignumber,
+} from '@/utils'
 
 
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
@@ -418,7 +419,7 @@ export class BaseSwapStore<
             const address = await checkPair(this.data.leftToken, this.data.rightToken)
             this.setData('pair', address !== undefined ? {
                 address,
-                contract: new rpc.Contract(DexAbi.Pair, address),
+                contract: new staticRpc.Contract(DexAbi.Pair, address),
             } : undefined)
         }
         catch (e) {
@@ -883,7 +884,7 @@ export class BaseSwapStore<
             return
         }
 
-        const { state } = await rpc.getFullContractState({
+        const { state } = await staticRpc.getFullContractState({
             address: this.pair.address,
         })
 

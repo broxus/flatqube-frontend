@@ -4,11 +4,11 @@ import {
     makeAutoObservable,
     reaction,
 } from 'mobx'
-import * as E from 'fp-ts/Either'
-import { Address, AddressLiteral, Subscriber } from 'everscale-inpage-provider'
+import { AddressLiteral, Subscriber } from 'everscale-inpage-provider'
 
 import { TokenFactoryAddress } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { TokenAbi } from '@/misc'
 import {
     DEFAULT_CREATE_TOKEN_STORE_DATA,
@@ -26,6 +26,7 @@ import { error } from '@/utils'
 
 
 const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class CreateTokenStore {
@@ -100,14 +101,8 @@ export class CreateTokenStore {
     }
 
     public async init(): Promise<void> {
-        if (this.transactionSubscriber !== undefined) {
-            await this.transactionSubscriber.unsubscribe()
-            this.transactionSubscriber = undefined
-        }
-
-        this.transactionSubscriber = new rpc.Subscriber()
-
         this.#walletAccountDisposer = reaction(() => this.wallet.address, this.handleWalletAccountChange)
+        await this.unsubscribeTransactionSubscriber()
     }
 
     /**
@@ -115,13 +110,26 @@ export class CreateTokenStore {
      * Clean reset creating token `data` to default values.
      */
     public async dispose(): Promise<void> {
-        if (this.transactionSubscriber !== undefined) {
-            await this.transactionSubscriber.unsubscribe()
-            this.transactionSubscriber = undefined
-        }
-
         this.#walletAccountDisposer?.()
         this.reset()
+        await this.unsubscribeTransactionSubscriber()
+    }
+
+    /**
+     * Try to unsubscribe from transaction subscriber
+     * @protected
+     */
+    protected async unsubscribeTransactionSubscriber(): Promise<void> {
+        if (this.#transactionSubscriber !== undefined) {
+            try {
+                await this.#transactionSubscriber.unsubscribe()
+            }
+            catch (e) {
+                error('Transaction unsubscribe error', e)
+            }
+
+            this.#transactionSubscriber = undefined
+        }
     }
 
     /**
@@ -189,7 +197,7 @@ export class CreateTokenStore {
      */
     public async createToken(): Promise<void> {
         if (
-            !this.wallet.address
+            !this.wallet.account?.address
             || !this.name
             || !this.symbol
             || !this.decimals
@@ -198,75 +206,72 @@ export class CreateTokenStore {
             return
         }
 
-        // eslint-disable-next-line no-bitwise
-        const callId = ((Math.random() * 100000) | 0).toString()
-
         this.changeState('isCreating', true)
 
         try {
-            await new rpc.Contract(
-                TokenAbi.Factory,
-                TokenFactoryAddress,
-            ).methods.createToken({
-                callId,
-                name: this.name.trim(),
-                symbol: this.symbol.trim(),
-                decimals: this.decimals.trim(),
-                initialSupplyTo: new AddressLiteral('0:0000000000000000000000000000000000000000000000000000000000000000'),
-                initialSupply: 0,
-                deployWalletValue: '0',
-                mintDisabled: false,
-                burnByRootDisabled: false,
-                burnPaused: false,
-                remainingGasTo: new Address(this.wallet.address),
-            }).send({
-                from: new Address(this.wallet.address),
-                amount: '5000000000',
-                bounce: true,
-            })
+            // eslint-disable-next-line no-bitwise
+            const callId = ((Math.random() * 100000) | 0).toString()
+            const startLt = this.wallet.contract?.lastTransactionId?.lt
+
+            this.#transactionSubscriber = new staticRpc.Subscriber()
+
+            const stream = await this.#transactionSubscriber
+                .transactions(this.wallet.account.address)
+                .flatMap(a => a.transactions)
+                .filter(tx => !startLt || tx.id.lt > startLt)
+                .filterMap(async transaction => {
+                    const decodedTx = await new staticRpc.Contract(
+                        TokenAbi.TokenRootDeployCallbacks,
+                        this.wallet.account!.address,
+                    ).decodeTransaction({
+                        methods: ['onTokenRootDeployed'],
+                        transaction,
+                    })
+
+                    if (decodedTx !== undefined) {
+                        if (decodedTx.method === 'onTokenRootDeployed' && decodedTx.input.callId.toString() === callId) {
+                            this.handleCreateTokenSuccess({ input: decodedTx.input, transaction })
+                            return { input: decodedTx.input, transaction }
+                        }
+
+                        this.handleCreateTokenFailure()
+                        return { input: decodedTx.input }
+                    }
+
+                    return undefined
+                })
+                .delayed(s => s.first())
+
+            await new rpc.Contract(TokenAbi.Factory, TokenFactoryAddress)
+                .methods.createToken({
+                    callId,
+                    name: this.name.trim(),
+                    symbol: this.symbol.trim(),
+                    decimals: this.decimals.trim(),
+                    initialSupplyTo: new AddressLiteral('0:0000000000000000000000000000000000000000000000000000000000000000'),
+                    initialSupply: 0,
+                    deployWalletValue: '0',
+                    mintDisabled: false,
+                    burnByRootDisabled: false,
+                    burnPaused: false,
+                    remainingGasTo: this.wallet.account.address,
+                })
+                .send({
+                    amount: '5000000000',
+                    bounce: true,
+                    from: this.wallet.account.address,
+                })
+
+            await stream()
         }
         catch (e) {
             error('Create token error', e)
             this.changeState('isCreating', false)
         }
-
-        const owner = new rpc.Contract(TokenAbi.TokenRootDeployCallbacks, new Address(this.wallet.address))
-
-        let stream = this.transactionSubscriber?.transactions(
-            new Address(this.wallet.address),
-        )
-
-        const oldStream = this.transactionSubscriber?.oldTransactions(new Address(this.wallet.address), {
-            fromLt: this.wallet.contract?.lastTransactionId?.lt,
-        })
-
-        if (stream !== undefined && oldStream !== undefined) {
-            stream = stream.merge(oldStream)
+        finally {
+            await this.unsubscribeTransactionSubscriber()
         }
 
-        const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
-            const result = await owner.decodeTransaction({
-                transaction,
-                methods: ['onTokenRootDeployed'],
-            })
-
-            if (result !== undefined) {
-                if (result.method === 'onTokenRootDeployed' && result.input.callId.toString() === callId) {
-                    return E.right({ input: result.input, transaction })
-                }
-
-                return E.left({ input: result.input })
-            }
-
-            return undefined
-        }).first()
-
-        if (resultHandler !== undefined) {
-            E.match(
-                this.handleCreateTokenFailure,
-                this.handleCreateTokenSuccess,
-            )(await resultHandler)
-        }
     }
 
     /**
@@ -312,6 +317,13 @@ export class CreateTokenStore {
     }
 
     #walletAccountDisposer: IReactionDisposer | undefined
+
+    /**
+     * Internal swap transaction subscriber
+     * @type {Subscriber}
+     * @protected
+     */
+    #transactionSubscriber: Subscriber | undefined
 
 }
 

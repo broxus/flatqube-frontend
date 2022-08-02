@@ -79,48 +79,62 @@ export class Pool {
         const payloadId = new Date().getTime().toString()
         const owner = new staticRpc.Contract(DexAbi.Callbacks, walletAddress)
         const subscriber = new staticRpc.Subscriber()
-        const transactionsStream = subscriber
-            .transactions(walletAddress)
-            .flatMap(item => item.transactions)
-            .filterMap<TransactionId | null>(async transaction => {
-                const result = await owner.decodeTransaction({
-                    transaction,
-                    methods: [WITHDRAW_SUCCESS_METHOD, WITHDRAW_FAIL_METHOD],
-                })
-                if (
-                    result
+
+        try {
+            const transactionsStream = await subscriber
+                .transactions(walletAddress)
+                .flatMap(item => item.transactions)
+                .filterMap<TransactionId | null>(async transaction => {
+                    const result = await owner.decodeTransaction({
+                        transaction,
+                        methods: [WITHDRAW_SUCCESS_METHOD, WITHDRAW_FAIL_METHOD],
+                    })
+                    if (
+                        result
                     && result.method === WITHDRAW_SUCCESS_METHOD
                     && result.input.id === payloadId
-                ) {
-                    return transaction.id
-                }
-                if (
-                    result
+                    ) {
+                        return transaction.id
+                    }
+                    if (
+                        result
                     && result.method === WITHDRAW_FAIL_METHOD
                     && result.input.id === payloadId
-                ) {
-                    return null
-                }
-                return undefined
-            })
-            .first()
+                    ) {
+                        return null
+                    }
+                    return undefined
+                })
+                .delayed(stream => stream.first())
 
-        await Dex.withdrawLiquidity(
-            walletAddress,
-            leftAddress,
-            rightAddress,
-            lpAddress,
-            amount,
-            payloadId,
-        )
+            await Dex.withdrawLiquidity(
+                walletAddress,
+                leftAddress,
+                rightAddress,
+                lpAddress,
+                amount,
+                payloadId,
+            )
 
-        const transactionId = await transactionsStream
+            const transactionId = await transactionsStream()
 
-        if (!transactionId) {
+            if (!transactionId) {
+                throw new Error('Dex pair operation cancelled')
+            }
+
+            try {
+                await subscriber.unsubscribe()
+            }
+            catch (e) {
+
+            }
+
+            return transactionId
+        }
+        catch (e) {
+            await subscriber.unsubscribe()
             throw new Error('Dex pair operation cancelled')
         }
-
-        return transactionId
     }
 
 }

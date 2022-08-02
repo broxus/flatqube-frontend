@@ -1,5 +1,4 @@
 import BigNumber from 'bignumber.js'
-import * as E from 'fp-ts/Either'
 import isEqual from 'lodash.isequal'
 import {
     action,
@@ -12,11 +11,10 @@ import {
 } from 'mobx'
 import { Address, Subscriber } from 'everscale-inpage-provider'
 
-import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import {
     checkPair,
     Dex,
-    DexAbi,
     PairBalances,
     PairTokenRoots,
     PairType,
@@ -38,10 +36,11 @@ import {
     PoolStoreState,
 } from '@/modules/Pool/types'
 import { TokenSide } from '@/modules/TokensList'
+import { BaseStore } from '@/stores/BaseStore'
 import { DexAccountService, useDexAccount } from '@/stores/DexAccountService'
+import { FavoritePairs, useFavoritePairs } from '@/stores/FavoritePairs'
 import { TokenCache, TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
 import { useWallet, WalletService } from '@/stores/WalletService'
-import { FavoritePairs, useFavoritePairs } from '@/stores/FavoritePairs'
 import {
     concatSymbols,
     debounce,
@@ -49,10 +48,9 @@ import {
     formattedBalance,
     isGoodBignumber,
 } from '@/utils'
-import { BaseStore } from '@/stores/BaseStore'
 
 
-const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
@@ -173,8 +171,6 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
      */
     public async init(): Promise<void> {
         await this.unsubscribeTransactionSubscriber()
-
-        this.#transactionSubscriber = new rpc.Subscriber()
 
         this.#dexLeftBalanceValidationDisposer = reaction(() => this.isDexLeftBalanceValid, value => {
             if (value) {
@@ -420,60 +416,59 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
         }
 
         this.cleanDepositLiquidityResult()
+
         this.setState('isDepositingLiquidity', true)
 
-        const owner = new rpc.Contract(DexAbi.Callbacks, new Address(this.wallet.address))
-
-        // eslint-disable-next-line no-bitwise
-        const callId = ((Math.random() * 100000) | 0).toString()
-
-        let stream = this.#transactionSubscriber?.transactions(
-            new Address(this.wallet.address),
-        )
-
-        const oldStream = this.#transactionSubscriber?.oldTransactions(new Address(this.wallet.address), {
-            fromLt: this.wallet.contract?.lastTransactionId?.lt,
-        })
-
-        if (stream !== undefined && oldStream !== undefined) {
-            stream = stream.merge(oldStream)
-        }
-
-        const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
-            const result = await owner.decodeTransaction({
-                transaction,
-                methods: ['dexPairDepositLiquiditySuccess', 'dexPairDepositLiquiditySuccessV2', 'dexPairOperationCancelled'],
-            })
-
-            if (result !== undefined) {
-                if (
-                    result.method === 'dexPairOperationCancelled'
-                    && result.input.id.toString() === callId
-                ) {
-                    return E.left<DepositLiquidityFailureResult>({ input: result.input })
-                }
-
-                if (
-                    result.method === 'dexPairDepositLiquiditySuccessV2'
-                    && result.input.id.toString() === callId
-                    && result.input.via_account
-                ) {
-                    return E.right<never, DepositLiquiditySuccessResult>({ input: result.input, transaction, type: 'stable' })
-                }
-
-                if (
-                    result.method === 'dexPairDepositLiquiditySuccess'
-                    && result.input.id.toString() === callId
-                    && result.input.via_account
-                ) {
-                    return E.right<never, DepositLiquiditySuccessResult>({ input: result.input, transaction, type: 'common' })
-                }
-            }
-
-            return undefined
-        }).first()
+        await this.unsubscribeTransactionSubscriber()
 
         try {
+            this.#transactionSubscriber = new staticRpc.Subscriber()
+
+            // eslint-disable-next-line no-bitwise
+            const callId = ((Math.random() * 100000) | 0).toString()
+            const startLt = this.wallet.contract?.lastTransactionId?.lt
+
+            const stream = await this.#transactionSubscriber
+                .transactions(new Address(this.wallet.address))
+                .flatMap(item => item.transactions)
+                .filter(tx => !startLt || tx.id.lt > startLt)
+                .filterMap(async transaction => {
+                    const decodedTx = await this.wallet.walletContractCallbacks?.decodeTransaction({
+                        methods: [
+                            'dexPairOperationCancelled',
+                            'dexPairDepositLiquiditySuccess',
+                            'dexPairDepositLiquiditySuccessV2',
+                        ],
+                        transaction,
+                    })
+
+                    if (decodedTx?.method === 'dexPairOperationCancelled' && decodedTx.input.id.toString() === callId) {
+                        this.handleLiquidityFailure({ input: decodedTx.input })
+                        return { input: decodedTx.input }
+                    }
+
+                    if (
+                        decodedTx?.method === 'dexPairDepositLiquiditySuccessV2'
+                        && decodedTx.input.id.toString() === callId
+                        && decodedTx.input.via_account
+                    ) {
+                        await this.handleLiquiditySuccess({ input: decodedTx.input, transaction, type: 'stable' })
+                        return { input: decodedTx.input, transaction, type: 'stable' }
+                    }
+
+                    if (
+                        decodedTx?.method === 'dexPairDepositLiquiditySuccess'
+                        && decodedTx.input.id.toString() === callId
+                        && decodedTx.input.via_account
+                    ) {
+                        await this.handleLiquiditySuccess({ input: decodedTx.input, transaction, type: 'common' })
+                        return { input: decodedTx.input, transaction, type: 'common' }
+                    }
+
+                    return undefined
+                })
+                .delayed(s => s.first())
+
             await Dex.depositAccountLiquidity(
                 new Address(this.dex.address),
                 new Address(this.wallet.address),
@@ -492,19 +487,16 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                 callId,
             )
 
-            if (resultHandler !== undefined) {
-                E.match<DepositLiquidityFailureResult, DepositLiquiditySuccessResult, void>(
-                    r => this.handleLiquidityFailure(r),
-                    r => this.handleLiquiditySuccess(r),
-                )(await resultHandler)
-            }
-
+            await stream()
             await this.dex.syncBalances()
             await this.syncPoolShare()
         }
         catch (e) {
             error('Cannot deposit liquidity', e)
             this.setState('isDepositingLiquidity', false)
+        }
+        finally {
+            await this.unsubscribeTransactionSubscriber()
         }
     }
 
@@ -888,8 +880,8 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                 this.data.rightAmount = ''
             })
         }
+
         this.setStep(AddLiquidityStep.CHECK_PAIR)
-        this.unsubscribeTransactionSubscriber().catch(reason => error(reason))
     }
 
     /**

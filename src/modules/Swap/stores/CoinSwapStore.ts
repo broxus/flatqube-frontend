@@ -1,24 +1,19 @@
 import BigNumber from 'bignumber.js'
 import { Address, Subscriber } from 'everscale-inpage-provider'
-import * as E from 'fp-ts/Either'
 import { computed, makeObservable, override } from 'mobx'
 
 import { EverToTip3Address, Tip3ToEverAddress, WeverVaultAddress } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
-import { EverAbi, TokenAbi } from '@/misc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
+import { EverAbi, TokenAbi, TokenWallet } from '@/misc'
 import { DirectSwapStore } from '@/modules/Swap/stores/DirectSwapStore'
 import { WalletService } from '@/stores/WalletService'
 import { TokensCacheService } from '@/stores/TokensCacheService'
-import { error, isGoodBignumber } from '@/utils'
-import type {
-    CoinSwapFailureResult,
-    CoinSwapStoreInitialData,
-    CoinSwapSuccessResult,
-    CoinSwapTransactionCallbacks,
-} from '@/modules/Swap/types'
-
+import { error, getSafeProcessingId, isGoodBignumber } from '@/utils'
+import type { CoinSwapStoreInitialData, CoinSwapTransactionCallbacks } from '@/modules/Swap/types'
 
 const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class CoinSwapStore extends DirectSwapStore {
@@ -36,8 +31,6 @@ export class CoinSwapStore extends DirectSwapStore {
             isLeftAmountValid: override,
             isValid: override,
         })
-
-        this.#transactionSubscriber = new rpc.Subscriber()
     }
 
 
@@ -130,107 +123,84 @@ export class CoinSwapStore extends DirectSwapStore {
 
         this.setState('isSwapping', true)
 
-        const tokenRoot = new rpc.Contract(TokenAbi.Root, this.rightTokenAddress!)
-        const walletAddress = (await tokenRoot.methods.walletOf({
-            answerId: 0,
-            walletOwner: EverToTip3Address,
-        }).call()).value0
-
-        if (walletAddress === undefined) {
-            return
-        }
-
-        const coinToTip3WalletContract = new rpc.Contract(TokenAbi.Wallet, walletAddress)
-
-        let hasWallet = false
+        await this.unsubscribeTransactionSubscriber()
 
         try {
-            hasWallet = (await coinToTip3WalletContract
-                .methods.balance({ answerId: 0 })
-                .call()).value0 !== undefined
-        }
-        catch (e) {
-            error(e)
-        }
-
-        const deployGrams = (this.rightToken?.balance === undefined || !hasWallet) ? '100000000' : '0'
-
-        const processingId = new BigNumber(
-            Math.floor(
-                Math.random() * (Number.MAX_SAFE_INTEGER - 1),
-            ) + 1,
-        ).toFixed()
-
-        const coinToTip3Contract = new rpc.Contract(EverAbi.EverToTip3, EverToTip3Address)
-
-        const payload = (await coinToTip3Contract.methods.buildExchangePayload({
-            deployWalletValue: deployGrams,
-            expectedAmount: this.minExpectedAmount!,
-            id: processingId,
-            pair: this.pair!.address!,
-        }).call()).value0
-
-        let stream = this.#transactionSubscriber?.transactions(this.wallet.account!.address)
-
-        const oldStream = this.#transactionSubscriber?.oldTransactions(this.wallet.account!.address, {
-            fromLt: this.wallet.contract?.lastTransactionId?.lt,
-        })
-
-        if (stream !== undefined && oldStream !== undefined) {
-            stream = stream.merge(oldStream)
-        }
-
-        const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
-            const result = await this.wallet.walletContractCallbacks?.decodeTransaction({
-                transaction,
-                methods: ['onSwapEverToTip3Success', 'onSwapEverToTip3Cancel'],
+            const walletAddress = await TokenWallet.walletAddress({
+                root: this.rightTokenAddress!,
+                owner: EverToTip3Address,
             })
 
-            if (result !== undefined) {
-                if (result.method === 'onSwapEverToTip3Cancel' && result.input.id.toString() === processingId) {
-                    this.setState('isSwapping', false)
-                    return E.left({ input: result.input })
-                }
-
-                if (result.method === 'onSwapEverToTip3Success' && result.input.id.toString() === processingId) {
-                    this.setState('isSwapping', false)
-                    return E.right({ input: result.input, transaction })
-                }
+            if (walletAddress === undefined) {
+                this.setState('isSwapping', false)
+                return
             }
 
-            return undefined
-        }).first()
+            const hasWallet = (await TokenWallet.balance({ wallet: walletAddress })) !== undefined
 
-        const weverVault = new rpc.Contract(EverAbi.WeverVault, WeverVaultAddress)
+            const callId = getSafeProcessingId()
+            const deployGrams = (this.rightToken?.balance === undefined || !hasWallet) ? '100000000' : '0'
+            const startLt = this.wallet.contract?.lastTransactionId?.lt
 
-        try {
-            await weverVault.methods.wrap({
-                gas_back_address: this.wallet.account!.address,
-                owner_address: EverToTip3Address,
-                payload,
-                tokens: this.leftAmountNumber.toFixed(),
-            }).send({
-                amount: this.leftAmountNumber.plus('5000000000').toFixed(),
-                bounce: true,
-                from: this.wallet.account!.address,
-            })
+            this.#transactionSubscriber = new staticRpc.Subscriber()
 
-            if (resultHandler !== undefined) {
-                E.match(
-                    (r: CoinSwapFailureResult) => {
+            const stream = await this.#transactionSubscriber
+                .transactions(this.wallet.account!.address)
+                .flatMap(item => item.transactions)
+                .filter(tx => !startLt || tx.id.lt > startLt)
+                .filterMap(async transaction => {
+                    const decodedTx = await this.wallet.walletContractCallbacks?.decodeTransaction({
+                        methods: ['onSwapEverToTip3Cancel', 'onSwapEverToTip3Success'],
+                        transaction,
+                    })
+
+                    if (decodedTx?.method === 'onSwapEverToTip3Cancel' && decodedTx.input.id.toString() === callId) {
                         this.setState('isSwapping', false)
-                        this._callbacks?.onTransactionFailure?.(r)
-                    },
-                    (r: CoinSwapSuccessResult) => {
+                        this._callbacks?.onTransactionFailure?.({ input: decodedTx.input })
+                        return { input: decodedTx.input }
+                    }
+
+                    if (decodedTx?.method === 'onSwapEverToTip3Success' && decodedTx.input.id.toString() === callId) {
                         this.setState('isSwapping', false)
-                        this._callbacks?.onTransactionSuccess?.(r)
-                    },
-                )(await resultHandler)
-            }
+                        this._callbacks?.onTransactionSuccess?.({ input: decodedTx.input, transaction })
+                        return { input: decodedTx.input, transaction }
+                    }
+
+                    return undefined
+                })
+                .delayed(s => s.first())
+
+            const payload = (await new staticRpc.Contract(EverAbi.EverToTip3, EverToTip3Address)
+                .methods.buildExchangePayload({
+                    deployWalletValue: deployGrams,
+                    expectedAmount: this.minExpectedAmount!,
+                    id: callId,
+                    pair: this.pair!.address!,
+                })
+                .call())
+                .value0
+
+            await new rpc.Contract(EverAbi.WeverVault, WeverVaultAddress)
+                .methods.wrap({
+                    gas_back_address: this.wallet.account!.address,
+                    owner_address: EverToTip3Address,
+                    payload,
+                    tokens: this.leftAmountNumber.toFixed(),
+                })
+                .send({
+                    amount: this.leftAmountNumber.plus('5000000000').toFixed(),
+                    bounce: true,
+                    from: this.wallet.account!.address,
+                })
+
+            await stream()
         }
         catch (e) {
-            error('decodeTransaction error: ', e)
+            error('Currency to Tip3 Swap finished with error: ', e)
             this.setState('isSwapping', false)
+        }
+        finally {
+            await this.unsubscribeTransactionSubscriber()
         }
     }
 
@@ -245,108 +215,102 @@ export class CoinSwapStore extends DirectSwapStore {
 
         this.setState('isSwapping', true)
 
-        const tip3ToCoinContract = new rpc.Contract(EverAbi.Tip3ToEver, Tip3ToEverAddress)
-
-        const tokenRoot = new rpc.Contract(TokenAbi.Root, new Address(this.leftToken!.root))
-        const walletAddress = (await tokenRoot.methods.walletOf({
-            answerId: 0,
-            walletOwner: Tip3ToEverAddress,
-        }).call()).value0
-
-        if (walletAddress === undefined) {
-            return
-        }
-
-        const tip3ToCoinWalletContract = new rpc.Contract(TokenAbi.Wallet, walletAddress)
-
-        let hasWallet = false
+        await this.unsubscribeTransactionSubscriber()
 
         try {
-            hasWallet = (await tip3ToCoinWalletContract
-                .methods.balance({ answerId: 0 })
-                .call()).value0 !== undefined
-        }
-        catch (e) {
-            error(e)
-        }
-
-        const deployGrams = !hasWallet ? '100000000' : '0'
-
-        const processingId = new BigNumber(
-            Math.floor(
-                Math.random() * (Number.MAX_SAFE_INTEGER - 1),
-            ) + 1,
-        ).toFixed()
-
-        const payload = (await tip3ToCoinContract.methods.buildExchangePayload({
-            expectedAmount: this.minExpectedAmount!,
-            id: processingId,
-            pair: this.pair!.address!,
-        }).call()).value0
-
-        let stream = this.#transactionSubscriber?.transactions(this.wallet.account!.address)
-
-        const oldStream = this.#transactionSubscriber?.oldTransactions(this.wallet.account!.address, {
-            fromLt: this.wallet.contract?.lastTransactionId?.lt,
-        })
-
-        if (stream !== undefined && oldStream !== undefined) {
-            stream = stream.merge(oldStream)
-        }
-
-        const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
-            const result = await this.wallet.walletContractCallbacks?.decodeTransaction({
-                transaction,
-                methods: ['onSwapTip3ToEverSuccess', 'onSwapTip3ToEverCancel'],
+            const walletAddress = await TokenWallet.walletAddress({
+                root: this.leftTokenAddress!,
+                owner: Tip3ToEverAddress,
             })
 
-            if (result !== undefined) {
-                if (result.method === 'onSwapTip3ToEverCancel' && result.input.id.toString() === processingId) {
-                    this.setState('isSwapping', false)
-                    return E.left({ input: result.input })
-                }
-
-                if (result.method === 'onSwapTip3ToEverSuccess' && result.input.id.toString() === processingId) {
-                    this.setState('isSwapping', false)
-                    return E.right({ input: result.input, transaction })
-                }
+            if (walletAddress === undefined) {
+                this.setState('isSwapping', false)
+                return
             }
 
-            return undefined
-        }).first()
+            const hasWallet = (await TokenWallet.balance({ wallet: walletAddress })) !== undefined
 
-        const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, new Address(this.leftToken!.wallet!))
+            const callId = getSafeProcessingId()
+            const deployGrams = !hasWallet ? '100000000' : '0'
+            const startLt = this.wallet.contract?.lastTransactionId?.lt
 
-        try {
-            await tokenWalletContract.methods.transfer({
-                amount: this.amount!,
-                deployWalletValue: deployGrams,
-                notify: true,
-                payload,
-                recipient: Tip3ToEverAddress,
-                remainingGasTo: this.wallet.account!.address!,
-            }).send({
-                amount: new BigNumber(3600000000).plus(deployGrams).toFixed(),
-                bounce: true,
-                from: this.wallet.account!.address!,
-            })
+            this.#transactionSubscriber = new staticRpc.Subscriber()
 
-            if (resultHandler !== undefined) {
-                E.match(
-                    (r: CoinSwapFailureResult) => {
+            const stream = await this.#transactionSubscriber
+                .transactions(this.wallet.account!.address)
+                .flatMap(item => item.transactions)
+                .filter(tx => !startLt || tx.id.lt > startLt)
+                .filterMap(async transaction => {
+                    const decodedTx = await this.wallet.walletContractCallbacks?.decodeTransaction({
+                        methods: ['onSwapTip3ToEverCancel', 'onSwapTip3ToEverSuccess'],
+                        transaction,
+                    })
+
+                    if (decodedTx?.method === 'onSwapTip3ToEverCancel' && decodedTx.input.id.toString() === callId) {
                         this.setState('isSwapping', false)
-                        this._callbacks?.onTransactionFailure?.(r)
-                    },
-                    (r: CoinSwapSuccessResult) => {
+                        this._callbacks?.onTransactionFailure?.({ input: decodedTx.input })
+                        return { input: decodedTx.input }
+                    }
+
+                    if (decodedTx?.method === 'onSwapTip3ToEverSuccess' && decodedTx.input.id.toString() === callId) {
                         this.setState('isSwapping', false)
-                        this._callbacks?.onTransactionSuccess?.(r)
-                    },
-                )(await resultHandler)
-            }
+                        this._callbacks?.onTransactionSuccess?.({ input: decodedTx.input, transaction })
+                        return { input: decodedTx.input, transaction }
+                    }
+
+                    return undefined
+                })
+                .delayed(s => s.first())
+
+            const payload = (await new staticRpc.Contract(EverAbi.Tip3ToEver, Tip3ToEverAddress)
+                .methods.buildExchangePayload({
+                    expectedAmount: this.minExpectedAmount!,
+                    id: callId,
+                    pair: this.pair!.address!,
+                })
+                .call())
+                .value0
+
+            await new rpc.Contract(TokenAbi.Wallet, new Address(this.leftToken!.wallet!))
+                .methods.transfer({
+                    amount: this.amount!,
+                    deployWalletValue: deployGrams,
+                    notify: true,
+                    payload,
+                    recipient: Tip3ToEverAddress,
+                    remainingGasTo: this.wallet.account!.address!,
+                })
+                .send({
+                    amount: new BigNumber(3600000000).plus(deployGrams).toFixed(),
+                    bounce: true,
+                    from: this.wallet.account!.address!,
+                })
+
+            await stream()
         }
         catch (e) {
             error('decodeTransaction error: ', e)
             this.setState('isSwapping', false)
+        }
+        finally {
+            await this.unsubscribeTransactionSubscriber()
+        }
+    }
+
+    /**
+     * Try to unsubscribe from transaction subscriber
+     * @protected
+     */
+    protected async unsubscribeTransactionSubscriber(): Promise<void> {
+        if (this.#transactionSubscriber !== undefined) {
+            try {
+                await this.#transactionSubscriber.unsubscribe()
+            }
+            catch (e) {
+                error('Transaction unsubscribe error', e)
+            }
+
+            this.#transactionSubscriber = undefined
         }
     }
 
