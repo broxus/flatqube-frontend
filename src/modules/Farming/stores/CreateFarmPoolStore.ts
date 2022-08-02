@@ -6,11 +6,10 @@ import {
     makeAutoObservable,
     reaction,
 } from 'mobx'
-import { Address } from 'everscale-inpage-provider'
-import * as E from 'fp-ts/Either'
+import { Address, Subscriber } from 'everscale-inpage-provider'
 
 import { FarmFabricAddress } from '@/config'
-import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { Farm, FarmAbi } from '@/misc'
 import {
     DEFAULT_CREATE_FARM_POOL_STORE_DATA,
@@ -25,7 +24,10 @@ import {
 } from '@/modules/Farming/types'
 import { parseDate, resolveToken } from '@/modules/Farming/utils'
 import { useWallet, WalletService } from '@/stores/WalletService'
-import { debounce } from '@/utils'
+import { debounce, error } from '@/utils'
+
+
+const staticRpc = useStaticRpc()
 
 
 export class CreateFarmPoolStore {
@@ -97,20 +99,22 @@ export class CreateFarmPoolStore {
     /**
      *
      */
-    public init(): void {
+    public async init(): Promise<void> {
         this.#farmTokenResolveDisposer = reaction(() => this.farmToken, debounce(this.handleFarmTokenChange, 2000))
         this.#farmStartDisposer = reaction(() => this.farmStart, this.handleFarmStartChange)
         this.#rewardTokensDisposer = reaction(() => this.rewardTokens, debounce(this.handleRewardTokensChange, 2000))
+        await this.unsubscribeTransactionSubscriber()
     }
 
     /**
      *
      */
-    public dispose(): void {
+    public async dispose(): Promise<void> {
         this.#farmTokenResolveDisposer?.()
         this.#farmStartDisposer?.()
         this.#rewardTokensDisposer?.()
         this.reset()
+        await this.unsubscribeTransactionSubscriber()
     }
 
     /**
@@ -127,46 +131,44 @@ export class CreateFarmPoolStore {
 
         this.changeState('isCreating', true)
 
-        const rpc = useRpc()
-        const subscriber = new rpc.Subscriber()
-
-        let stream = subscriber.transactions(FarmFabricAddress)
-
-        const oldStream = subscriber.oldTransactions(this.wallet.account!.address, {
-            fromLt: this.wallet.contract?.lastTransactionId?.lt,
-        })
-
-        stream = stream.merge(oldStream)
-
-        const fabricContract = new rpc.Contract(FarmAbi.Fabric, FarmFabricAddress)
-
-        const resultHandler = stream.flatMap(a => a.transactions).filterMap(async transaction => {
-            const result = await fabricContract.decodeTransaction({
-                transaction,
-                methods: ['onPoolDeploy'],
-            })
-
-            if (result?.method === 'onPoolDeploy' && result.input.pool_owner.toString() === this.wallet.address) {
-                return E.right<never, { createdFarmPoolAddress?: Address }>({
-                    createdFarmPoolAddress: transaction.inMessage.src,
-                })
-            }
-
-            return undefined
-        }).first()
-
-        const rps = this.rewardTokens
-            .map(token => new BigNumber(token.farmSpeed || 0).shiftedBy(token.decimals as number)
-                .decimalPlaces(0, BigNumber.ROUND_DOWN)
-                .toFixed())
+        await this.unsubscribeTransactionSubscriber()
 
         try {
+            const startLt = this.wallet.contract?.lastTransactionId?.lt
+
+            this.#transactionSubscriber = new staticRpc.Subscriber()
+
+            const stream = await this.#transactionSubscriber
+                .transactions(FarmFabricAddress)
+                .flatMap(a => a.transactions)
+                .filter(tx => !startLt || tx.id.lt > startLt)
+                .filterMap(async transaction => {
+                    const decodedTx = await new staticRpc.Contract(FarmAbi.Fabric, FarmFabricAddress)
+                        .decodeTransaction({
+                            methods: ['onPoolDeploy'],
+                            transaction,
+                        })
+
+                    if (decodedTx?.method === 'onPoolDeploy' && decodedTx.input.pool_owner.toString() === this.wallet.address) {
+                        this.changeData('createdFarmPoolAddress', transaction.inMessage.src)
+                        this.changeState('isCreating', false)
+                        return { createdFarmPoolAddress: transaction.inMessage.src }
+                    }
+
+                    return undefined
+                })
+                .delayed(s => s.first())
+
             await Farm.createPool(
                 new Address(this.wallet.address),
                 new Address(this.farmToken.root as string),
                 this.rewardTokens.map(token => new Address(token.root as string)),
                 ((this.farmStart.date as Date).getTime() / 1000).toFixed(0),
-                rps,
+                this.rewardTokens.map(
+                    token => new BigNumber(token.farmSpeed || 0).shiftedBy(token.decimals as number)
+                        .decimalPlaces(0, BigNumber.ROUND_DOWN)
+                        .toFixed(),
+                ),
                 this.farmVesting.vestingPeriod || '0',
                 new BigNumber(this.farmVesting.vestingRatio || '0')
                     .times(10)
@@ -174,19 +176,14 @@ export class CreateFarmPoolStore {
                     .toFixed(),
             )
 
-            E.match(
-                _ => {
-                    //
-                },
-                ({ createdFarmPoolAddress }: { createdFarmPoolAddress?: Address }) => {
-                    this.changeData('createdFarmPoolAddress', createdFarmPoolAddress)
-                    this.changeState('isCreating', false)
-                },
-            )(await resultHandler)
+            await stream()
         }
         catch (e) {
             this.changeState('isCreating', false)
             throw e
+        }
+        finally {
+            await this.unsubscribeTransactionSubscriber()
         }
     }
 
@@ -269,6 +266,23 @@ export class CreateFarmPoolStore {
      * Internal utilities methods
      * ----------------------------------------------------------------------------------
      */
+
+    /**
+     * Try to unsubscribe from transaction subscriber
+     * @protected
+     */
+    protected async unsubscribeTransactionSubscriber(): Promise<void> {
+        if (this.#transactionSubscriber !== undefined) {
+            try {
+                await this.#transactionSubscriber.unsubscribe()
+            }
+            catch (e) {
+                error('Transaction unsubscribe error', e)
+            }
+
+            this.#transactionSubscriber = undefined
+        }
+    }
 
     /**
      *
@@ -415,6 +429,13 @@ export class CreateFarmPoolStore {
     #farmStartDisposer: IReactionDisposer | undefined
 
     #rewardTokensDisposer: IReactionDisposer | undefined
+
+    /**
+     * Internal swap transaction subscriber
+     * @type {Subscriber}
+     * @protected
+     */
+    #transactionSubscriber: Subscriber | undefined
 
 }
 

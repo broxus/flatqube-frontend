@@ -72,15 +72,19 @@ export function Create(): JSX.Element {
     }
 
     React.useEffect(() => {
-        creatingPool.init()
+        (async () => {
+            await creatingPool.init()
+        })()
         const logoutDisposer = reaction(() => wallet.address, address => {
             if (!address) {
                 history.push('/farming')
             }
         })
         return () => {
-            logoutDisposer?.()
-            creatingPool.dispose()
+            logoutDisposer?.();
+            (async () => {
+                await creatingPool.dispose()
+            })()
         }
     }, [])
 

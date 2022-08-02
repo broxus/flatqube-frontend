@@ -1,27 +1,23 @@
 import BigNumber from 'bignumber.js'
 import { Address, Subscriber } from 'everscale-inpage-provider'
-import * as E from 'fp-ts/Either'
 import { computed, makeObservable, toJS } from 'mobx'
 
-import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { TokenWallet } from '@/misc'
 import { DEFAULT_SWAP_BILL } from '@/modules/Swap/constants'
 import { BaseSwapStore } from '@/modules/Swap/stores/BaseSwapStore'
 import { TokensCacheService } from '@/stores/TokensCacheService'
 import { WalletService } from '@/stores/WalletService'
-import { error } from '@/utils'
+import { error, getSafeProcessingId } from '@/utils'
 import type {
     BaseSwapStoreState,
     DirectSwapStoreData,
     DirectSwapStoreInitialData,
     DirectTransactionCallbacks,
-    DirectTransactionFailureResult,
-    DirectTransactionSuccessResult,
 } from '@/modules/Swap/types'
 import { SwapDirection } from '@/modules/Swap/types'
 
-
-const rpc = useRpc()
+const staticRpc = useStaticRpc()
 
 
 export class DirectSwapStore extends BaseSwapStore<DirectSwapStoreData, BaseSwapStoreState> {
@@ -42,8 +38,29 @@ export class DirectSwapStore extends BaseSwapStore<DirectSwapStoreData, BaseSwap
         this.setData({
             coin: initialData?.coin,
         })
+    }
 
-        this.#transactionSubscriber = new rpc.Subscriber()
+
+    /*
+     * Internal utilities methods
+     * ----------------------------------------------------------------------------------
+     */
+
+    /**
+     * Try to unsubscribe from transaction subscriber
+     * @protected
+     */
+    protected async unsubscribeTransactionSubscriber(): Promise<void> {
+        if (this.#transactionSubscriber !== undefined) {
+            try {
+                await this.#transactionSubscriber.unsubscribe()
+            }
+            catch (e) {
+                error('Transaction unsubscribe error', e)
+            }
+
+            this.#transactionSubscriber = undefined
+        }
     }
 
 
@@ -72,61 +89,57 @@ export class DirectSwapStore extends BaseSwapStore<DirectSwapStoreData, BaseSwap
 
         this.setState('isSwapping', true)
 
-        const deployGrams = this.rightToken?.balance === undefined ? '100000000' : '0'
-
-        const pairWallet = await TokenWallet.walletAddress({
-            root: this.leftTokenAddress!,
-            owner: this.pair!.address!,
-        })
-
-        const processingId = new BigNumber(
-            Math.floor(
-                Math.random() * (Number.MAX_SAFE_INTEGER - 1),
-            ) + 1,
-        ).toFixed()
-
-        const payload = (await this.pair!.contract!
-            .methods.buildExchangePayload({
-                deploy_wallet_grams: deployGrams,
-                expected_amount: this.minExpectedAmount!,
-                id: processingId,
-            })
-            .call({
-                cachedState: toJS(this.pair!.state),
-            })).value0
-
-        let stream = this.#transactionSubscriber?.transactions(this.wallet.account!.address)
-
-        const oldStream = this.#transactionSubscriber?.oldTransactions(this.wallet.account!.address, {
-            fromLt: this.wallet.contract?.lastTransactionId?.lt,
-        })
-
-        if (stream !== undefined && oldStream !== undefined) {
-            stream = stream.merge(oldStream)
-        }
-
-        const resultHandler = stream?.flatMap(a => a.transactions).filterMap(async transaction => {
-            const result = await this.wallet.walletContractCallbacks?.decodeTransaction({
-                transaction,
-                methods: ['dexPairExchangeSuccess', 'dexPairOperationCancelled'],
-            })
-
-            if (result !== undefined) {
-                if (result.method === 'dexPairOperationCancelled' && result.input.id.toString() === processingId) {
-                    this.setState('isSwapping', false)
-                    return E.left({ input: result.input })
-                }
-
-                if (result.method === 'dexPairExchangeSuccess' && result.input.id.toString() === processingId) {
-                    this.setState('isSwapping', false)
-                    return E.right({ input: result.input, transaction })
-                }
-            }
-
-            return undefined
-        }).first()
+        await this.unsubscribeTransactionSubscriber()
 
         try {
+            this.#transactionSubscriber = new staticRpc.Subscriber()
+
+            const pairWallet = await TokenWallet.walletAddress({
+                root: this.leftTokenAddress!,
+                owner: this.pair!.address!,
+            })
+
+            const callId = getSafeProcessingId()
+            const deployGrams = this.rightToken?.balance === undefined ? '100000000' : '0'
+            const startLt = this.wallet.contract?.lastTransactionId?.lt
+
+            const stream = await this.#transactionSubscriber
+                .transactions(this.wallet.account!.address)
+                .flatMap(item => item.transactions)
+                .filter(tx => !startLt || tx.id.lt > startLt)
+                .filterMap(async transaction => {
+                    const decodedTx = await this.wallet.walletContractCallbacks?.decodeTransaction({
+                        methods: ['dexPairOperationCancelled', 'dexPairExchangeSuccess'],
+                        transaction,
+                    })
+
+                    if (decodedTx?.method === 'dexPairOperationCancelled' && decodedTx.input.id.toString() === callId) {
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onTransactionFailure?.({ input: decodedTx.input })
+                        return { input: decodedTx.input }
+                    }
+
+                    if (decodedTx?.method === 'dexPairExchangeSuccess' && decodedTx.input.id.toString() === callId) {
+                        this.setState('isSwapping', false)
+                        this.callbacks?.onTransactionSuccess?.({ input: decodedTx.input, transaction })
+                        return { input: decodedTx.input, transaction }
+                    }
+
+                    return undefined
+                })
+                .delayed(s => s.first())
+
+            const payload = (await this.pair!.contract!
+                .methods.buildExchangePayload({
+                    deploy_wallet_grams: deployGrams,
+                    expected_amount: this.minExpectedAmount!,
+                    id: callId,
+                })
+                .call({
+                    cachedState: toJS(this.pair!.state),
+                }))
+                .value0
+
             await TokenWallet.send({
                 address: new Address(this.leftToken!.wallet!),
                 grams: new BigNumber(2500000000).plus(deployGrams).toFixed(),
@@ -136,22 +149,14 @@ export class DirectSwapStore extends BaseSwapStore<DirectSwapStoreData, BaseSwap
                 tokens: this.amount!,
             })
 
-            if (resultHandler !== undefined) {
-                E.match(
-                    (r: DirectTransactionFailureResult) => {
-                        this.setState('isSwapping', false)
-                        this.callbacks?.onTransactionFailure?.(r)
-                    },
-                    (r: DirectTransactionSuccessResult) => {
-                        this.setState('isSwapping', false)
-                        this.callbacks?.onTransactionSuccess?.(r)
-                    },
-                )(await resultHandler)
-            }
+            await stream()
         }
         catch (e) {
-            error('decodeTransaction error: ', e)
+            error('Swap finished with error: ', e)
             this.setState('isSwapping', false)
+        }
+        finally {
+            await this.unsubscribeTransactionSubscriber()
         }
     }
 
