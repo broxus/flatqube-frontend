@@ -71,7 +71,11 @@ export function Swap(): JSX.Element {
                                         nativeCoin={(formStore.isMultipleSwapMode || formStore.nativeCoinSide === 'leftToken')
                                             ? formStore.coin
                                             : undefined}
-                                        readOnly={formStore.isPreparing || formStore.isSwapping}
+                                        readOnly={(
+                                            formStore.isPreparing
+                                            || formStore.isPairChecking
+                                            || formStore.isSwapping
+                                        )}
                                         showMaximizeButton={formStore.leftBalanceNumber.gt(0)}
                                         token={formStore.leftToken}
                                         value={(
@@ -118,7 +122,11 @@ export function Swap(): JSX.Element {
                                             || formStore.isRightAmountValid
                                         )}
                                         nativeCoin={formStore.nativeCoinSide === 'rightToken' ? formStore.coin : undefined}
-                                        readOnly={formStore.isPreparing || formStore.isSwapping}
+                                        readOnly={(
+                                            formStore.isPreparing
+                                            || formStore.isPairChecking
+                                            || formStore.isSwapping
+                                        )}
                                         token={formStore.rightToken}
                                         value={(
                                             formStore.isCrossExchangeMode
