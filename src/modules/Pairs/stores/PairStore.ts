@@ -51,13 +51,6 @@ export class PairStore {
             loadTvlGraph: action.bound,
             loadVolumeGraph: action.bound,
         })
-
-        this.#timeframeDisposer = reaction(() => this.timeframe, () => {
-            this.changeState('isOhlcvGraphLoading', false)
-            this.changeState('isTvlGraphLoading', false)
-            this.changeState('isVolumeGraphLoading', false)
-            this.changeData('graphData', DEFAULT_PAIR_STORE_DATA.graphData)
-        })
     }
 
     /**
@@ -77,6 +70,15 @@ export class PairStore {
      */
     public changeState<K extends keyof PairStoreState>(key: K, value: PairStoreState[K]): void {
         this.state[key] = value
+    }
+
+    public init(): void {
+        this.#timeframeDisposer = reaction(() => this.timeframe, () => {
+            this.changeState('isOhlcvGraphLoading', false)
+            this.changeState('isTvlGraphLoading', false)
+            this.changeState('isVolumeGraphLoading', false)
+            this.changeData('graphData', DEFAULT_PAIR_STORE_DATA.graphData)
+        })
     }
 
     /**
