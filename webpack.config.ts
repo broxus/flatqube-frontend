@@ -1,11 +1,10 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin'
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import path from 'path'
 import webpack from 'webpack'
 import { Configuration as DevServerConfiguration } from 'webpack-dev-server'
-
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 type WebpackConfig = webpack.Configuration & { devServer?: DevServerConfiguration }
 
@@ -37,6 +36,7 @@ export default (_: any, options: any): WebpackConfig => {
      */
 
     config.output = {
+        assetModuleFilename: 'assets/[hash][ext]',
         path: path.resolve(__dirname, 'dist'),
         filename: 'js/[name]-[contenthash:6].js',
         publicPath: '/',
@@ -153,15 +153,7 @@ export default (_: any, options: any): WebpackConfig => {
             },
             {
                 test: /\.(png|jpe?g|gif|webp|svg|woff2?)$/,
-                use: {
-                    loader: 'file-loader',
-                    options: {
-                        publicPath: '/assets/',
-                        outputPath: 'assets/',
-                        esModule: false,
-                        name: '[hash:16].[ext]',
-                    },
-                },
+                type: 'asset/resource',
             },
         ],
     }

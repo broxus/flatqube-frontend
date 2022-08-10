@@ -13,7 +13,7 @@ import {
 import { useWallet, WalletService } from '@/stores/WalletService'
 import { getImportedTokens, TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
 import { FavoritePairs, useFavoriteFarmings } from '@/stores/FavoritePairs'
-import { error, lastOfCalls } from '@/utils'
+import { error, lastOfCalls, makeArray } from '@/utils'
 
 type Reward = {
     vested?: string[];
@@ -32,12 +32,12 @@ type State = {
 }
 
 const defaultState: State = Object.freeze({
+    currentPage: 1,
     data: [],
+    filter: {},
+    loading: false,
     rewards: [],
     totalPage: 1,
-    currentPage: 1,
-    loading: false,
-    filter: {},
     query: '',
 })
 
@@ -68,26 +68,26 @@ export class FarmingListStore {
             .split(CURRENCY_DELIMITER)
 
         return {
+            aprGe: filter.aprFrom ? filter.aprFrom : undefined,
+            aprLe: filter.aprTo ? filter.aprTo : undefined,
+            favoritePoolAddresses: this.favoritePools,
+            isActive: (filter.state === 'active' ? true : undefined)
+                || (filter.state === 'noActive' ? false : undefined),
+            isAwaitingStart: filter.state === 'awaiting' ? true : undefined,
+            isLowBalance: this.favoritePairs ? undefined : Boolean(filter.isLowBalance),
+            isWithMyFarming: filter.ownerInclude,
+            leftAddress: filter.leftRoot,
+            leftCurrency: leftCurrency || undefined,
             limit: PAGE_SIZE,
             offset: PAGE_SIZE * (currentPage - 1),
             ordering: 'tvldescending',
-            aprGe: filter.aprFrom ? filter.aprFrom : undefined,
-            aprLe: filter.aprTo ? filter.aprTo : undefined,
+            rightAddress: filter.rightRoot,
+            rightCurrency: rightCurrency || undefined,
             tvlGe: filter.tvlFrom ? filter.tvlFrom : undefined,
             tvlLe: filter.tvlTo ? filter.tvlTo : undefined,
             userAddress: this.wallet.address,
-            isAwaitingStart: filter.state === 'awaiting' ? true : undefined,
-            isWithMyFarming: filter.ownerInclude,
-            leftAddress: filter.leftRoot,
-            rightAddress: filter.rightRoot,
-            leftCurrency: leftCurrency || undefined,
-            rightCurrency: rightCurrency || undefined,
-            isActive: (filter.state === 'active' ? true : undefined)
-                || (filter.state === 'noActive' ? false : undefined),
-            favoritePoolAddresses: this.favoritePools,
             whiteCurrencyAddresses: getImportedTokens(),
             whiteListUri: TokenListURI,
-            isLowBalance: this.favoritePairs ? undefined : Boolean(filter.isLowBalance),
         }
     }
 
@@ -129,13 +129,13 @@ export class FarmingListStore {
             ))
             const entitled = reward._entitled
 
-            return { vested, entitled }
+            return { entitled, vested }
         }
         catch (e) {
             error(e)
             return {
-                vested: [],
                 entitled: [],
+                vested: [],
             }
         }
     }
@@ -145,7 +145,11 @@ export class FarmingListStore {
     ): Promise<void> {
         if (!this.wallet.address) {
             runInAction(() => {
-                this.state.rewards = []
+                this.state.rewards = makeArray(pools.length, () => ({
+                    entitled: undefined,
+                    loading: true,
+                    vested: undefined,
+                }))
             })
         }
 
@@ -153,8 +157,8 @@ export class FarmingListStore {
             (async () => {
                 runInAction(() => {
                     this.state.rewards[index] = {
-                        loading: true,
                         entitled: undefined,
+                        loading: true,
                         vested: undefined,
                     }
                 })
@@ -164,8 +168,8 @@ export class FarmingListStore {
 
                     runInAction(() => {
                         this.state.rewards[index] = {
-                            loading: false,
                             entitled: reward.entitled,
+                            loading: false,
                             vested: reward.vested,
                         }
                     })
@@ -203,7 +207,7 @@ export class FarmingListStore {
             return
         }
 
-        this.fetchRewards(result[0])
+        await this.fetchRewards(result[0])
 
         runInAction(() => {
             [
