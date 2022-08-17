@@ -7,17 +7,42 @@ import { useTokensCache } from '@/stores/TokensCacheService'
 import { formatDateUTC, formattedAmount } from '@/utils'
 import { useFarmingDataStore } from '@/modules/Farming/stores/FarmingDataStore'
 import { Placeholder } from '@/components/common/Placeholder'
+import { Pagination } from '@/components/common/Pagination'
+import { usePagination } from '@/hooks/usePagination'
 
 import './index.scss'
+
+const PAGINATION_LIMIT = 5
 
 export function FarmingSpeedTableInner(): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
     const farmingData = useFarmingDataStore()
+    const pagination = usePagination()
+
     const rewardTokens = farmingData.rewardTokensAddress
         ?.map(root => tokensCache.get(root))
 
     const { roundStartTimes, roundRps, endTime } = farmingData
+
+    const totalPages = roundRps
+        ? Math.ceil(roundRps.length / PAGINATION_LIMIT)
+        : 1
+
+    const offset = (pagination.currentPage - 1) * PAGINATION_LIMIT
+
+    const items = roundRps
+        ? roundRps
+            .map((rps, i) => ({
+                rps,
+                start: roundStartTimes?.[i],
+                end: endTime > 0 && !roundStartTimes?.[i + 1]
+                    ? endTime
+                    : roundStartTimes?.[i + 1],
+            }))
+            .reverse()
+            .slice(offset, offset + PAGINATION_LIMIT)
+        : undefined
 
     return (
         <div className="card card--small card--flat">
@@ -76,7 +101,7 @@ export function FarmingSpeedTableInner(): JSX.Element {
                         </div>
                     </>
                 ) : (
-                    roundRps?.map((rps, index) => (
+                    items?.map(({ rps, start, end }, index) => (
                         /* eslint-disable react/no-array-index-key */
                         <div className="list__row" key={index}>
                             <div className="list__cell list__cell--left">
@@ -101,23 +126,25 @@ export function FarmingSpeedTableInner(): JSX.Element {
                                 ))}
                             </div>
                             <div className="list__cell list__cell--right">
-                                {roundStartTimes?.[index] ? formatDateUTC(roundStartTimes[index]) : '—'}
+                                {start ? formatDateUTC(start) : '—'}
                             </div>
                             <div className="list__cell list__cell--right">
-                                {endTime > 0 && !roundStartTimes?.[index + 1] ? (
-                                    formatDateUTC(endTime)
-                                ) : (
-                                    <>
-                                        {roundStartTimes?.[index + 1]
-                                            ? formatDateUTC(roundStartTimes[index + 1])
-                                            : '—'}
-                                    </>
-                                )}
+                                {end ? formatDateUTC(end) : '—'}
                             </div>
                         </div>
                     ))
                 )}
             </div>
+
+            {totalPages > 1 && (
+                <Pagination
+                    totalPages={totalPages}
+                    currentPage={pagination.currentPage}
+                    onNext={pagination.onNext}
+                    onPrev={pagination.onPrev}
+                    onSubmit={pagination.onSubmit}
+                />
+            )}
         </div>
     )
 }
