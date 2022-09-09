@@ -14,7 +14,7 @@ export function useStaticRpc(): ProviderRpcClient {
         )
         rpc = new ProviderRpcClient({
             fallback: () => EverscaleStandaloneClient.create({
-                connection: 'mainnet',
+                connection: 'mainnetJrpc',
             }),
             forceUseFallback: true,
         })
