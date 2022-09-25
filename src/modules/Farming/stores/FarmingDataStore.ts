@@ -721,6 +721,14 @@ export class FarmingDataStore {
         return this.state.apiResponse?.pool_info.vesting_ratio
     }
 
+    public get vestingPeriod(): number | undefined {
+        if (!this.state.apiResponse) {
+            return undefined
+        }
+
+        return this.state.apiResponse.pool_info.vesting_period
+    }
+
     public get vestingPeriodDays(): string | undefined {
         if (!this.state.apiResponse) {
             return undefined

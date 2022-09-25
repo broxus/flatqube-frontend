@@ -75,16 +75,17 @@ export class FarmingAdminWithdrawStore {
     }
 
     public get isEnabled(): boolean {
-        const { endTime } = this.farmingDataStore
+        const { endTime, vestingPeriod } = this.farmingDataStore
 
-        if (endTime === 0) {
+        if (endTime === 0 || !vestingPeriod) {
             return false
         }
 
         const currentTime = new Date().getTime()
         const lockTime = SECONDS_IN_DAY * 30 * 1000
+        const vesting = vestingPeriod * 1000
 
-        if (endTime + lockTime < currentTime) {
+        if (endTime + lockTime + vesting < currentTime) {
             return true
         }
 
