@@ -40,7 +40,7 @@ export function Footer(): JSX.Element {
             <Button
                 className="footer-tool"
                 ghost
-                href="https://github.com/broxus/tonswap-frontend"
+                href="https://github.com/broxus/flatqube-frontend"
                 rel="noopener noreferrer"
                 size="md"
                 target="_blank"
