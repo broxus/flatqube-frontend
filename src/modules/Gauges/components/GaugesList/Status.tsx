@@ -21,7 +21,7 @@ function StatusInner({
     const ref = React.useRef<HTMLDivElement | null>(null)
 
     const now = Date.now()
-    const loading = data.loading[gaugeId]
+    const loaded = data.loaded[gaugeId]
     const endDate = data.endDate[gaugeId]
     const startDate = data.startDate[gaugeId]
 
@@ -59,10 +59,10 @@ function StatusInner({
                 ref={ref}
                 className={classNames(
                     styles.status,
-                    loading ? undefined : [styles[type]],
+                    loaded ? [styles[type]] : undefined,
                 )}
             />
-            {!loading && (
+            {loaded && (
                 <Tooltip target={ref}>
                     {intl.formatMessage({
                         id,

@@ -14,6 +14,7 @@ import { getEndDate, getStartDate } from '@/modules/Gauges/utils'
 
 type Data = {
     loading: {[k: string]: boolean | undefined};
+    loaded: {[k: string]: boolean | undefined};
     share: {[k: string]: string | undefined};
     unlockedReward: {[k: string]: string[] | undefined};
     lockedReward: {[k: string]: string[] | undefined};
@@ -24,6 +25,7 @@ type Data = {
 }
 
 const initialData: Data = {
+    loaded: {},
     loading: {},
     lockedReward: {},
     qubeLockedReward: {},
@@ -168,10 +170,43 @@ export class GaugesListDataStore {
                     gauge_sync_data: syncData.value0,
                 }).call()
 
+                const qubeTokenBalance = tokenDetails._qubeTokenData.balance
+                const extraTokensBalance = tokenDetails._extraTokenData.map(item => item.balance)
+
                 qubeLockedReward = pendingReward._qubeReward.lockedReward
                 qubeUnlockedReward = pendingReward._qubeReward.unlockedReward
-                extraLockedReward = pendingReward._extraReward.map(item => item.lockedReward)
-                extraUnlockedReward = pendingReward._extraReward.map(item => item.unlockedReward)
+
+                extraLockedReward = pendingReward._extraReward
+                    .map(item => item.lockedReward)
+
+                extraUnlockedReward = pendingReward._extraReward
+                    .map(item => item.unlockedReward)
+
+                const extraTokensDebt = extraUnlockedReward.map((item, index) => (
+                    new BigNumber(item).gt(extraTokensBalance[index])
+                        ? new BigNumber(item).minus(extraTokensBalance[index]).toFixed()
+                        : '0'
+                ))
+
+                const qubeDebt = new BigNumber(qubeUnlockedReward).gt(qubeTokenBalance)
+                    ? new BigNumber(qubeUnlockedReward).minus(qubeTokenBalance).toFixed()
+                    : '0'
+
+                extraLockedReward = extraLockedReward.map((item, index) => (
+                    new BigNumber(item).plus(extraTokensDebt[index]).toFixed()
+                ))
+
+                extraUnlockedReward = extraUnlockedReward.map((item, index) => (
+                    new BigNumber(item).gt(extraTokensBalance[index])
+                        ? extraTokensBalance[index]
+                        : item
+                ))
+
+                qubeLockedReward = new BigNumber(qubeDebt).plus(qubeLockedReward).toFixed()
+
+                qubeUnlockedReward = new BigNumber(qubeUnlockedReward).gt(qubeTokenBalance)
+                    ? qubeTokenBalance
+                    : qubeUnlockedReward
 
                 share = new BigNumber(tokenDetails._depositTokenData.balance).gt(0)
                     ? new BigNumber(userDetails._balance)
@@ -226,6 +261,11 @@ export class GaugesListDataStore {
             this.data.loading = {
                 ...this.data.loading,
                 [gaugeId]: false,
+            }
+
+            this.data.loaded = {
+                ...this.data.loaded,
+                [gaugeId]: true,
             }
         })
     }
@@ -303,6 +343,10 @@ export class GaugesListDataStore {
 
     public get loading(): Data['loading'] {
         return this.data.loading
+    }
+
+    public get loaded(): Data['loaded'] {
+        return this.data.loaded
     }
 
 }

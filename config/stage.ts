@@ -37,7 +37,7 @@ export const API_URL = 'https://api.flatqube.io/v1'
 
 export const FARMING_POOL_API_URL = 'https://farming.flatqube.io/v1'
 
-export const QUBE_DAO_API_URL = 'https://qube.flatqube.io/v1'
+export const QUBE_API_URL = 'https://qube.flatqube.io/v1'
 
 export const GAUGES_API_URL = 'https://farming.flatqube.io/v2'
 
