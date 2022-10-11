@@ -10,6 +10,7 @@ import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { TextInput } from '@/components/common/TextInput'
 import { TokenBadge } from '@/components/common/TokenBadge'
+import { QubeDaoMaxLockPeriod, QubeDaoMinLockPeriod } from '@/config'
 import { useQubeDaoDepositFormStore } from '@/modules/QubeDao/providers/QubeDaoDepositFormStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { debounce, formattedTokenAmount, isGoodBignumber } from '@/utils'
@@ -114,8 +115,8 @@ export function QubeDaoDepositForm(): JSX.Element {
                                 <Slider
                                     defaultValue={90}
                                     disabled={daoContext.isDepositing}
-                                    max={365 * 4}
-                                    min={1}
+                                    max={QubeDaoMaxLockPeriod}
+                                    min={QubeDaoMinLockPeriod}
                                     value={Number(value)}
                                     onChange={onChangeLockPeriod}
                                 />
@@ -125,6 +126,7 @@ export function QubeDaoDepositForm(): JSX.Element {
                                     disabled={daoContext.isDepositing}
                                     id="lock-period"
                                     inputMode="numeric"
+                                    invalid={!depositForm.isLockPeriodValid}
                                     prefix={(
                                         <span className={styles.token_amount_badge__label}>
                                             {intl.formatMessage({ id: 'QUBE_DAO_DEPOSIT_FORM_LABEL_DAYS' })}

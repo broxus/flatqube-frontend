@@ -1,1 +1,1 @@
-export * from '../config/review'
+export * from '../config/prod'

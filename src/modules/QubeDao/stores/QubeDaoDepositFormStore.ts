@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { action, computed, makeObservable } from 'mobx'
 
+import { QubeDaoMaxLockPeriod, QubeDaoMinLockPeriod } from '@/config'
 import { SECONDS_IN_DAY } from '@/constants'
 import type { QubeDaoDepositCallbacks, QubeDaoStore } from '@/modules/QubeDao/stores/QubeDaoStore'
 import { BaseStore } from '@/stores/BaseStore'
@@ -32,7 +33,7 @@ export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreDa
 
         this.setData(() => ({
             amount: '',
-            lockPeriod: 90,
+            lockPeriod: QubeDaoMinLockPeriod,
             veMintAmount: '0',
         }))
 
@@ -46,6 +47,7 @@ export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreDa
             deposit: action.bound,
             isAmountValid: computed,
             isCalculating: computed,
+            isLockPeriodValid: computed,
             isValid: computed,
             lockPeriod: computed,
             veMintAmount: computed,
@@ -121,8 +123,18 @@ export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreDa
             : true
     }
 
+    public get isLockPeriodValid(): boolean {
+        return (
+            this.lockPeriod >= QubeDaoMinLockPeriod
+            && this.lockPeriod <= QubeDaoMaxLockPeriod
+        )
+    }
+
     public get isValid(): boolean {
-        return this.amount.length > 0 && this.isAmountValid
+        return (
+            this.amount.length > 0 && this.isAmountValid
+            && this.isLockPeriodValid
+        )
     }
 
 }

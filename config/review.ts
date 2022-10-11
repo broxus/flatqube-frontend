@@ -5,6 +5,10 @@ export const EVERWrapGas = '1000000000' // <= 1 EVER
 
 export const EVERMultipleSwapFee = '10000000000' // <= 10 EVER
 
+export const QubeDaoMinLockPeriod = 14
+
+export const QubeDaoMaxLockPeriod = 1460
+
 export const DexRootAddress = new AddressLiteral('0:5eb5713ea9b4a0f3a13bc91b282cde809636eb1e68d2fcb6427b9ad78a5a9008')
 
 export const EverToTip3Address = new AddressLiteral('0:8ebe12dd57e0bec16d84135f82743ea4b5bf65c0fd9e526cbfa1d10d2f0f1402')
