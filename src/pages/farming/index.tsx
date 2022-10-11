@@ -4,7 +4,6 @@ import { useIntl } from 'react-intl'
 import { Button } from '@/components/common/Button'
 import { SectionTitle } from '@/components/common/SectionTitle'
 import { Farmings } from '@/modules/Farming'
-import { WalletMiddleware } from '@/modules/WalletMiddleware'
 import { appRoutes } from '@/routes'
 import { Badge } from '@/components/common/Badge'
 
@@ -39,9 +38,7 @@ export default function Page(): JSX.Element {
                     </Button>
                 </div>
 
-                <WalletMiddleware>
-                    <Farmings />
-                </WalletMiddleware>
+                <Farmings />
             </section>
         </div>
     )
