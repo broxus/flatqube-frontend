@@ -43,21 +43,22 @@ export function QubeDaoLastEpochDetails(): JSX.Element {
                             )}
                         </SectionTitle>
                         <div className="section__header-actions">
+                            {/* eslint-disable-next-line no-nested-ternary */}
                             {(epochStore.isFetchingEpoch || epochStore.isFetchingEpoch === undefined) ? (
                                 <Placeholder height={24} width={120} />
-                            ) : (
+                            ) : epochStore.epochNum !== undefined ? (
                                 <Link
                                     className="btn-with-icon text-bold"
-                                    to={epochStore.epochNum ? appRoutes.daoEpoch.makeUrl({
+                                    to={appRoutes.daoEpoch.makeUrl({
                                         epochNum: epochStore.epochNum.toString(),
-                                    }) : '/'}
+                                    })}
                                 >
                                     {intl.formatMessage({
                                         id: 'QUBE_DAO_EPOCH_DETAIL_LINK_TEXT',
                                     })}
                                     <Icon icon="chevronRight" ratio={0.8} />
                                 </Link>
-                            )}
+                            ) : null}
                         </div>
                     </header>
                 )}

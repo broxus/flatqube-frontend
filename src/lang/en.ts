@@ -32,7 +32,7 @@ export default {
 
     WALLET_MIDDLEWARE_INSTALLATION_TITLE: 'Install EVER Wallet Extension',
     WALLET_MIDDLEWARE_INSTALLATION_NOTE: '<p>At the moment, only EVER Wallet supports FlatQube.</p><p>If you haven’t installed the extension yet, you can do it at <a href="https://chrome.google.com/webstore/detail/ever-wallet/cgeeodpfagjceefieflmdfphplkenlfk" target="_blank" rel="nofollow noopener noreferrer">chrome.google.com</a></p>',
-    WALLET_MIDDLEWARE_CONNECTION_TITLE: 'Connect EVER Wallet',
+    WALLET_MIDDLEWARE_CONNECTION_TITLE: 'Connect Wallet',
 
     WALLET_BALANCE_HINT: '{value} {currency}',
     WALLET_CONNECT_BTN_TEXT: 'Connect',
@@ -40,7 +40,7 @@ export default {
     WALLET_DISCONNECT_BTN_TEXT: 'Logout',
 
     EVER_WALLET_CONNECTOR_BLOCKCHAIN_NAME: 'Everscale',
-    EVER_WALLET_CONNECT_BTN_TEXT: 'Connect EVER Wallet',
+    EVER_WALLET_CONNECT_BTN_TEXT: 'Connect Wallet',
 
     TOKENS_UPGRADE_POPUP_TITLE: 'Upgrade tokens',
     TOKENS_UPGRADE_POPUP_NOTE: 'We found some outdated tokens in your wallet. Please, upgrade these tokens to continue.',
@@ -724,7 +724,7 @@ export default {
     QUBE_DAO_VOTE_PREVIEW_CARD_SUPHEADER: 'Your vote',
     QUBE_DAO_VOTE_PREVIEW_CARD_NOT_CONNECTED_LEAD: 'Unknown',
     QUBE_DAO_VOTE_PREVIEW_CARD_NOT_CONNECTED_NOTE: 'Connect EVER Wallet Extension to access your {veSymbol} balance and start voting for candidates.',
-    QUBE_DAO_VOTE_PREVIEW_CARD_CONNECT_WALLET_BTN_TEXT: 'Connect EVER Wallet',
+    QUBE_DAO_VOTE_PREVIEW_CARD_CONNECT_WALLET_BTN_TEXT: 'Connect Wallet',
     QUBE_DAO_VOTE_PREVIEW_CARD_AWAITING_LEAD: 'The voting starts {date} at {time} (UTC{offset})',
     QUBE_DAO_VOTE_PREVIEW_CARD_AWAITING_NOTE: 'After that you will be able to vote for candidates (farming pools).',
     QUBE_DAO_VOTE_PREVIEW_CARD_DEPOSIT_LEAD: 'Deposit {symbol} tokens to get {veSymbol} and start voting',
