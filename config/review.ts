@@ -23,11 +23,11 @@ export const USDTRootAddress = new AddressLiteral('0:a519f99bb5d6d51ef958ed24d33
 
 export const TokenFactoryAddress = new AddressLiteral('0:d291ab784f3ce6958fad0e473bcd61891b303cfe7a96e2c7074f20eadd500f44')
 
-export const QubeDaoTokenAddress = new AddressLiteral('0:044ea4b4a7ebad8a24e1dfcec4d06f204e57119d43f4da4272156099d480c337')
+export const QubeDaoTokenAddress = new AddressLiteral('0:9f20666ce123602fd7a995508aeaa0ece4f92133503c0dfbd609b3239f3901e2')
 
-export const VoteEscrowAddress = new AddressLiteral('0:c74a6ea093cbb3003d089dc9e910c11830374daf9c72a3ba2122456c794b2ce4')
+export const VoteEscrowAddress = new AddressLiteral('0:8317ae7ee92d748500e179843b587d7fbd98d6bb37402e2b44566f9f6f3cdd90')
 
-export const GaugeFactoryAddress = new AddressLiteral('0:dd18d6995863f7f0f093fd07cee64323467f7b7e073d06b304318757fa10b466')
+export const GaugeFactoryAddress = new AddressLiteral('0:9509c21b9b098f6c47af3ce4b013da335ed96cb24367ba8de5b07001a1702441')
 
 export const TokenListURI = 'https://raw.githubusercontent.com/broxus/flatqube-assets/master/manifest.json'
 
@@ -37,8 +37,8 @@ export const API_URL = 'https://api.flatqube.io/v1'
 
 export const FARMING_POOL_API_URL = 'https://farming.flatqube.io/v1'
 
-export const QUBE_DAO_API_URL = 'https://qubeapi-test.flatqube.io/v1'
+export const QUBE_DAO_API_URL = 'https://qube.flatqube.io/v1'
 
-export const GAUGES_API_URL = 'https://farming-test.flatqube.io/v2'
+export const GAUGES_API_URL = 'https://farming.flatqube.io/v2'
 
 export const TOKENS_API_URL = 'https://tokens.everscan.io/v1'
