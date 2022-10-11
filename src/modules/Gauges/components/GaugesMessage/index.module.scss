@@ -1,0 +1,52 @@
+@import '~@/styles/_mix';
+
+.message {
+    background: #c5e4f3;
+    color: #000;
+    display: flex;
+    font-size: 14px;
+    gap: 24px;
+    justify-content: space-between;
+    line-height: 20px;
+    margin: 24px 0 0;
+    padding: 24px;
+    position: relative;
+
+    &.danger {
+        background: #eb4361;
+        color: #fff;
+    }
+
+    @media only screen and (max-width: 767px) {
+        flex-direction: column;
+    }
+
+    h3 {
+        font-size: 18px;
+        font-weight: bold;
+        line-height: 24px;
+        margin: 0 0 4px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    p {
+        margin: 0 0 1em;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.actions {
+    align-items: center;
+    column-gap: 12px;
+    display: flex;
+
+    @media only screen and (max-width: 767px) {
+        justify-content: flex-end;
+    }
+}

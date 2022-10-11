@@ -1,0 +1,75 @@
+.popup {
+    :global(.popup__wrap) {
+        padding: 16px;
+        max-width: 360px;
+    }
+}
+
+.title {
+    font-size: 24px;
+    line-height: 28px;
+    font-weight: 500;
+}
+
+.content,
+.form {
+    display: flex;
+    flex-direction: column;
+    grid-gap: 16px;
+}
+
+.label {
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.6px;
+    font-weight: 500;
+    margin: 0 0 4px;
+}
+
+.fields {
+    display: flex;
+    align-items: center;
+    grid-gap: 8px;
+
+    .field {
+        flex-grow: 1;
+    }
+}
+
+.actions {
+    padding: 20px 0 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    grid-gap: 8px;
+}
+
+.warn {
+    border-left: 4px solid #E6AC00;
+    background: rgba(230, 172, 0, 0.48);
+    padding: 12px;
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.75px;
+    font-weight: 700;
+}
+
+.message {
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.5px;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    grid-gap: 8px;
+}
+
+.hint {
+    margin: 4px 0 0;
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.2px;
+    color: rgba(255, 255, 255, 0.48);
+}

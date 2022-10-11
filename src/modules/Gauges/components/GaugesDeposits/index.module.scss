@@ -1,0 +1,30 @@
+.deposits {
+    .table {
+        min-height: unset;
+        --list-grid-template: minmax(180px, 1fr) minmax(180px, 1fr) minmax(180px, 1fr) minmax(160px, 1fr) minmax(160px, 1fr) minmax(180px, 1fr);
+    }
+
+    .pagination {
+        margin: 0;
+    }
+
+    .noData {
+        --list-grid-template: 1fr;
+    }
+}
+
+.body {
+    position: relative;
+}
+
+.spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}

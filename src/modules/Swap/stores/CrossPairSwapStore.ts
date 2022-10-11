@@ -79,6 +79,7 @@ export class CrossPairSwapStore extends BaseSwapStore<CrossPairSwapStoreData, Cr
         super(tokensCache, initialData)
 
         this.setData({
+            // @ts-ignore
             coin: initialData?.coin,
             crossPairs: [],
             routes: [],

@@ -1,0 +1,15 @@
+@import '@/styles/variables.scss';
+
+.stats {
+    &_grid {
+        display: grid;
+        flex-flow: column wrap;
+        gap: 16px;
+    }
+
+    &_grid__stat {
+        @media only screen and (min-width: $breakpoint-large) {
+            grid-template-columns: 272px calc(100% - 272px - 16px);
+        }
+    }
+}

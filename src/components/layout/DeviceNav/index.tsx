@@ -48,10 +48,24 @@ export function DeviceNav({ onNavigate }: Props): JSX.Element {
                     })}
                 </NavLink>
             </Nav.Item>
-            <Nav.Item key="farming">
+            <Nav.Item key="farming_v1">
                 <NavLink to="/farming" onClick={onNavigate}>
                     {intl.formatMessage({
-                        id: 'NAV_LINK_TEXT_FARMING',
+                        id: 'NAV_LINK_TEXT_FARMING_OLD',
+                    })}
+                </NavLink>
+            </Nav.Item>
+            <Nav.Item key="farming_v2">
+                <NavLink to="/gauges" onClick={onNavigate}>
+                    {intl.formatMessage({
+                        id: 'NAV_LINK_TEXT_FARMING_NEW',
+                    })}
+                </NavLink>
+            </Nav.Item>
+            <Nav.Item key="dao">
+                <NavLink to="/dao" onClick={onNavigate}>
+                    {intl.formatMessage({
+                        id: 'NAV_LINK_TEXT_QUBE_DAO',
                     })}
                 </NavLink>
             </Nav.Item>

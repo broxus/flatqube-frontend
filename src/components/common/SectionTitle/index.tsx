@@ -1,7 +1,7 @@
 import * as React from 'react'
 import classNames from 'classnames'
 
-import './style.scss'
+import './index.scss'
 
 type Props = {
     tagName?: keyof JSX.IntrinsicElements

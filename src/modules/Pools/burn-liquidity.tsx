@@ -6,7 +6,6 @@ import { RemoveLiquidityForm } from '@/modules/Pools/components/RemoveLiquidityF
 import { RemoveLiquidityProcess } from '@/modules/Pools/components/RemoveLiquidityProcess'
 import { RemoveLiquiditySuccess } from '@/modules/Pools/components/RemoveLiquiditySuccess'
 import { useRemoveLiquidityStore } from '@/modules/Pools/stores/RemoveLiquidity'
-import { WalletInstaller } from '@/modules/WalletConnector/WalletInstaller'
 import { useWallet } from '@/stores/WalletService'
 import { appRoutes } from '@/routes'
 
@@ -57,56 +56,54 @@ export function BurnLiquidityInner(): JSX.Element {
     }, [wallet.address, leftTokenRoot, rightTokenRoot])
 
     return (
-        <div className="container container--small">
-            <WalletInstaller>
-                <RemoveLiquidityForm
-                    receiveLeft={removeLiquidityStore.willReceiveLeft}
-                    receiveRight={removeLiquidityStore.willReceiveRight}
-                    currentShare={removeLiquidityStore.currentShare}
-                    resultShare={removeLiquidityStore.resultShare}
-                    currentLeftAmount={removeLiquidityStore.currentLeftAmount}
-                    currentRightAmount={removeLiquidityStore.currentRightAmount}
-                    resultLeftAmount={removeLiquidityStore.resultLeftAmount}
-                    resultRightAmount={removeLiquidityStore.resultRightAmount}
-                    leftTokenAddress={removeLiquidityStore.leftToken?.root}
-                    rightTokenAddress={removeLiquidityStore.rightToken?.root}
+        <>
+            <RemoveLiquidityForm
+                receiveLeft={removeLiquidityStore.willReceiveLeft}
+                receiveRight={removeLiquidityStore.willReceiveRight}
+                currentShare={removeLiquidityStore.currentShare}
+                resultShare={removeLiquidityStore.resultShare}
+                currentLeftAmount={removeLiquidityStore.currentLeftAmount}
+                currentRightAmount={removeLiquidityStore.currentRightAmount}
+                resultLeftAmount={removeLiquidityStore.resultLeftAmount}
+                resultRightAmount={removeLiquidityStore.resultRightAmount}
+                leftTokenAddress={removeLiquidityStore.leftToken?.root}
+                rightTokenAddress={removeLiquidityStore.rightToken?.root}
+                amount={removeLiquidityStore.amount}
+                amountIsValid={removeLiquidityStore.amountIsValid}
+                amountIsPositiveNum={removeLiquidityStore.amountIsPositiveNum}
+                amountIsLessOrEqualBalance={removeLiquidityStore.amountIsLessOrEqualBalance}
+                userLpTotalAmount={removeLiquidityStore.userLpTotalAmount}
+                lpDecimals={removeLiquidityStore.lpTokenDecimals}
+                lpTokenSymbol={removeLiquidityStore.lpTokenSymbol}
+                loading={removeLiquidityStore.loading}
+                onChangeLeftToken={changeLeftToken}
+                onChangeRightToken={changeRightToken}
+                onChangeAmount={removeLiquidityStore.setAmount}
+                onSubmit={removeLiquidityStore.withdraw}
+                walletConnected={wallet.isConnected}
+                onClickConnect={connectWallet}
+            />
+
+            {removeLiquidityStore.processing && (
+                <RemoveLiquidityProcess
                     amount={removeLiquidityStore.amount}
-                    amountIsValid={removeLiquidityStore.amountIsValid}
-                    amountIsPositiveNum={removeLiquidityStore.amountIsPositiveNum}
-                    amountIsLessOrEqualBalance={removeLiquidityStore.amountIsLessOrEqualBalance}
-                    userLpTotalAmount={removeLiquidityStore.userLpTotalAmount}
-                    lpDecimals={removeLiquidityStore.lpTokenDecimals}
-                    lpTokenSymbol={removeLiquidityStore.lpTokenSymbol}
-                    loading={removeLiquidityStore.loading}
-                    onChangeLeftToken={changeLeftToken}
-                    onChangeRightToken={changeRightToken}
-                    onChangeAmount={removeLiquidityStore.setAmount}
-                    onSubmit={removeLiquidityStore.withdraw}
-                    walletConnected={wallet.isConnected}
-                    onClickConnect={connectWallet}
+                    symbol={removeLiquidityStore.lpTokenSymbol}
                 />
+            )}
 
-                {removeLiquidityStore.processing && (
-                    <RemoveLiquidityProcess
-                        amount={removeLiquidityStore.amount}
-                        symbol={removeLiquidityStore.lpTokenSymbol}
-                    />
-                )}
-
-                {removeLiquidityStore.transactionHash && (
-                    <RemoveLiquiditySuccess
-                        leftAmount={removeLiquidityStore.receivedLeft}
-                        rightAmount={removeLiquidityStore.receivedRight}
-                        lpAmount={removeLiquidityStore.amount}
-                        lpSymbol={removeLiquidityStore.lpTokenSymbol}
-                        leftTokenAddress={leftTokenRoot}
-                        rightTokenAddress={rightTokenRoot}
-                        transactionHash={removeLiquidityStore.transactionHash}
-                        onClose={removeLiquidityStore.reset}
-                    />
-                )}
-            </WalletInstaller>
-        </div>
+            {removeLiquidityStore.transactionHash && (
+                <RemoveLiquiditySuccess
+                    leftAmount={removeLiquidityStore.receivedLeft}
+                    rightAmount={removeLiquidityStore.receivedRight}
+                    lpAmount={removeLiquidityStore.amount}
+                    lpSymbol={removeLiquidityStore.lpTokenSymbol}
+                    leftTokenAddress={leftTokenRoot}
+                    rightTokenAddress={rightTokenRoot}
+                    transactionHash={removeLiquidityStore.transactionHash}
+                    onClose={removeLiquidityStore.reset}
+                />
+            )}
+        </>
     )
 }
 

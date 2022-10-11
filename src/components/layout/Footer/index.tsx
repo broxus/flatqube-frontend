@@ -19,6 +19,7 @@ export function Footer(): JSX.Element {
         <div className="toolbar">
             <Observer>
                 {() => (
+                    // eslint-disable-next-line react/jsx-no-useless-fragment
                     <>
                         {(!wallet.isInitialized && !wallet.isInitializing) && (
                             <Button
@@ -102,7 +103,21 @@ export function Footer(): JSX.Element {
                                 <li>
                                     <NavLink to="/farming">
                                         {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_FARMING',
+                                            id: 'NAV_LINK_TEXT_FARMING_OLD',
+                                        })}
+                                    </NavLink>
+                                </li>
+                                <li>
+                                    <NavLink to="/gauges">
+                                        {intl.formatMessage({
+                                            id: 'NAV_LINK_TEXT_FARMING_NEW',
+                                        })}
+                                    </NavLink>
+                                </li>
+                                <li>
+                                    <NavLink to="/dao">
+                                        {intl.formatMessage({
+                                            id: 'NAV_LINK_TEXT_QUBE_DAO',
                                         })}
                                     </NavLink>
                                 </li>

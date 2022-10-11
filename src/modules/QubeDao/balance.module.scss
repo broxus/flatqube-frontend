@@ -1,0 +1,35 @@
+@import '@/styles/variables.scss';
+
+.balance {
+    &__container {
+        display: flex;
+        flex-flow: column wrap;
+        gap: 20px;
+
+        @media only screen and (min-width: $breakpoint-medium) {
+            flex-flow: row nowrap;
+        }
+    }
+
+    &__content {
+        min-width: 1px;
+        width: 100%;
+    }
+
+    &__sidebar {
+        @media only screen and (min-width: $breakpoint-medium) {
+            min-width: 300px;
+            width: 300px;
+        }
+        @media only screen and (min-width: $breakpoint-large) {
+            min-width: 360px;
+            width: 360px;
+        }
+    }
+
+    &__featured_deposit_trigger {
+        margin: 0 -16px;
+        min-width: 100%;
+        width: auto !important;
+    }
+}

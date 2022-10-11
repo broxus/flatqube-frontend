@@ -1,6 +1,14 @@
-import { action, makeObservable, observable } from 'mobx'
+import {
+    action,
+    makeObservable,
+    observable,
+    toJS,
+} from 'mobx'
 
-export class BaseStore<T extends Record<string, any>, U extends Record<string, any>> {
+export abstract class BaseStore<
+    T extends Record<string, any> = Record<string, any>,
+    U extends Record<string, any> = Record<string, any>
+> {
 
     /**
      * Store data (e.g. user data, account data, form data etc.)
@@ -14,7 +22,7 @@ export class BaseStore<T extends Record<string, any>, U extends Record<string, a
      */
     protected state: U = {} as U
 
-    constructor() {
+    protected constructor() {
         makeObservable<
             BaseStore<T, U>,
             | 'data'
@@ -28,42 +36,35 @@ export class BaseStore<T extends Record<string, any>, U extends Record<string, a
     }
 
     /**
+     * Set partial data with `key:value` hash or pass a function as
+     * an argument that takes the argument of the current data object.
+     * @template {object} T
+     * @template {keyof T & string} K
+     * @param {Pick<T, K> | ((prevData: Readonly<T>) => Pick<T, K>)} dataOrFn
+     */
+    public setData<K extends keyof T & string>(dataOrFn: Pick<T, K> | ((prevData: Readonly<T>) => Pick<T, K>)): this;
+    /**
      * Set data by the given key and value.
      * @template {object} T
      * @template {keyof T & string} K
      * @param {K} key
-     * @param {T[K]} [value]
+     * @param {T[K]} value
      */
     public setData<K extends keyof T & string>(key: K, value: T[K]): this;
-    /**
-     * Set partial data with `key:value` hash.
-     * @template {object} T
-     * @template {keyof T & string} K
-     * @param {Partial<Pick<T, K>> | T} data
-     */
-    public setData<K extends keyof T & string>(data: Partial<Pick<T, K>> | T): this;
-    /**
-     * Pass a function as an argument that takes the argument of the current data object.
-     * @template {object} T
-     * @template {keyof T & string} K
-     * @param {((prevData: Readonly<Partial<T>>) => (Pick<T, K> | T)) } data
-     */
-    public setData<K extends keyof T & string>(data: (prevData: Readonly<Partial<T>>) => (Pick<T, K> | T)): this;
     /**
      * Pass `key:value` hash  (one or many keys) of the data.
      * You may also pass individual keys and values to change data.
      * @template {object} T
      * @template {keyof T & string} K
-     * @param {K | (Partial<Pick<T, K>> | T) | ((prevData: Readonly<Partial<T>>) => (Pick<T, K> | T))} keyOrData
+     * @param {Pick<T, K> | ((prevData: Readonly<T>) => Pick<T, K>) | K} keyOrData
      * @param {T[K]} [value]
      */
     public setData<K extends keyof T & string>(
-        keyOrData: K | (Partial<Pick<T, K>> | T) | ((prevData: Readonly<Partial<T>>) => (Pick<T, K> | T)),
+        keyOrData: Pick<T, K> | ((prevData: Readonly<T>) => Pick<T, K>) | K,
         value?: T[K],
     ): this {
         if (typeof keyOrData === 'function') {
-            // @ts-ignore
-            this.data = keyOrData(this.data)
+            return this.setData(keyOrData({ ...this.data }))
         }
 
         if (typeof keyOrData === 'string') {
@@ -71,6 +72,7 @@ export class BaseStore<T extends Record<string, any>, U extends Record<string, a
                 ...this.data,
                 [keyOrData]: value,
             }
+            return this
         }
 
         if (typeof keyOrData === 'object' && !Array.isArray(keyOrData)) {
@@ -81,12 +83,13 @@ export class BaseStore<T extends Record<string, any>, U extends Record<string, a
     }
 
     /**
-     * Pass a function as an argument that takes the argument of the current state object.
+     * Set partial state with `key:value` hash or pass a function as
+     * an argument that takes the argument of the current state object.
      * @template {object} U
      * @template {keyof U & string} K
-     * @param {((prevData: Readonly<Partial<U>>) => (Pick<U, K> | U)) } data
+     * @param {Pick<U, K> | ((prevState: Readonly<U>) => Pick<U, K>)} stateOrFn
      */
-    public setState<K extends keyof U & string>(data: (prevData: Readonly<Partial<U>>) => (Pick<U, K> | U)): this;
+    public setState<K extends keyof U & string>(stateOrFn: Pick<U, K> | ((prevState: Readonly<U>) => Pick<U, K>)): this;
     /**
      * Set state by the given key and value.
      * @template {object} U
@@ -96,27 +99,19 @@ export class BaseStore<T extends Record<string, any>, U extends Record<string, a
      */
     public setState<K extends keyof U & string>(key: K, value?: U[K]): this;
     /**
-     * Set partial state with `key:value` hash.
-     * @template {object} U
-     * @template {keyof U & string} K
-     * @param {Partial<Pick<U, K>> | U} state
-     */
-    public setState<K extends keyof U & string>(state: Partial<Pick<U, K>> | U): this;
-    /**
      * Pass `key:value` hash  (one or many keys) of the state.
      * You may also pass individual keys and values to change state.
      * @template {object} U
      * @template {keyof U & string} K
-     * @param {((prevData: Readonly<Partial<U>>) => (Pick<U, K> | U)) | K | (Partial<Pick<U, K>> | U)} keyOrState
+     * @param {Pick<U, K> | ((prevState: Readonly<U>) => Pick<U, K>) | K} keyOrState
      * @param {U[K]} [value]
      */
     public setState<K extends keyof U & string>(
-        keyOrState: ((prevData: Readonly<Partial<U>>) => (Pick<U, K> | U)) | K | (Partial<Pick<U, K>> | U),
+        keyOrState: Pick<U, K> | ((prevState: Readonly<U>) => Pick<U, K>) | K,
         value?: U[K],
     ): this {
         if (typeof keyOrState === 'function') {
-            // @ts-ignore
-            this.state = keyOrState(this.state)
+            return this.setState(keyOrState({ ...this.state }))
         }
 
         if (typeof keyOrState === 'string') {
@@ -124,6 +119,7 @@ export class BaseStore<T extends Record<string, any>, U extends Record<string, a
                 ...this.state,
                 [keyOrState]: value,
             }
+            return this
         }
 
         if (typeof keyOrState === 'object' && !Array.isArray(keyOrState)) {
@@ -131,6 +127,13 @@ export class BaseStore<T extends Record<string, any>, U extends Record<string, a
         }
 
         return this
+    }
+
+    /**
+     * Returns plain object of the store data
+     */
+    public toJSON(): T {
+        return toJS(this.data)
     }
 
 }

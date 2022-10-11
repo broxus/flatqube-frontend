@@ -1,0 +1,6 @@
+.vesting {
+    .table {
+        --list-grid-template: minmax(160px, 1fr) minmax(160px, 2fr) minmax(160px, 2fr) minmax(160px, 2fr);
+        min-height: unset;
+    }
+}

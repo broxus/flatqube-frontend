@@ -1,12 +1,10 @@
+@import '@/styles/variables.scss';
+
 .pairs-list {
     &.list {
         --list-grid-template: minmax(160px, 65%) minmax(80px, 140px);
 
-        @media only screen and (min-width: 768px) {
-            --list-grid-template: 50px minmax(30%, 60%) minmax(100px, 120px) minmax(100px, 120px);
-        }
-
-        @media only screen and (min-width: 960px) {
+        @media only screen and (min-width: $breakpoint-small) {
             --list-grid-template: 50px minmax(30%, 60%) minmax(100px, 120px) minmax(100px, 120px) minmax(100px, 120px);
         }
     }
@@ -21,8 +19,8 @@
 
             .btn.btn-icon {
                 max-width: fit-content;
-                padding: 0 5px;
                 min-height: 36px;
+                padding: 0 5px;
             }
         }
 

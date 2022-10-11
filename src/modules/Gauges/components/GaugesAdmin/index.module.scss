@@ -1,0 +1,88 @@
+@import '@/styles/mix';
+
+.adminBalance {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 8px;
+
+    @media (max-width: 959px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.desc {
+    h3 {
+        font-size: 18px;
+        line-height: 24px;
+        letter-spacing: 0.1px;
+        font-weight: 600;
+        margin: 0 0 4px;
+    }
+
+    p {
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.1px;
+        color: rgba(255, 255, 255, 0.48);
+        margin: 0;
+    }
+}
+
+.action {
+    display: flex;
+    align-items: center;
+    grid-gap: 10px;
+    margin: 8px 0 0;
+}
+
+.input {
+    flex-grow: 1;
+}
+
+.hint {
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.2px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.48);
+    margin: 4px 0 0;
+}
+
+.balances {
+    display: flex;
+    flex-direction: column;
+    grid-gap: 8px;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    letter-spacing: 0.6px;
+}
+
+.message {
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+}
+
+.configBtn {
+    path {
+        fill: rgba(255, 255, 255, 0.48);
+        transition: 0.25s;
+    }
+
+    &:hover {
+        path {
+            fill: #fff;
+        }
+    }
+}
+
+.btnWithdraw,
+.btnDeposit {
+    display: flex;
+    align-items: center;
+    grid-gap: 8px;
+}

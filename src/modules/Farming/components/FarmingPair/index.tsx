@@ -17,6 +17,7 @@ type Props = {
     isOwner?: boolean
     isPublic?: boolean
     balanceWarning?: boolean
+    className?: string;
 }
 
 export function FarmingPair({
@@ -27,6 +28,7 @@ export function FarmingPair({
     isOwner,
     isPublic,
     balanceWarning,
+    className,
 }: Props): JSX.Element {
     const intl = useIntl()
     const userRef = React.useRef<HTMLDivElement>(null)
@@ -35,7 +37,7 @@ export function FarmingPair({
     const status = getFarmingStatus(startTime, endTime)
 
     return (
-        <div className="farming-pair">
+        <div className={classNames('farming-pair', className)}>
             <span
                 ref={waitingRef}
                 className={classNames('farming-pair__status', {

@@ -1,5 +1,7 @@
+import classNames from 'classnames'
 import * as React from 'react'
 
+import './index.scss'
 
 type Props = {
     address: string;
@@ -146,9 +148,9 @@ export function UserAvatar({ address, size, className }: Props): JSX.Element {
             viewBox="0 0 36 36"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
-            className={className}
+            className={classNames('user-avatar', className)}
         >
-            <g clipPath="url(#clip0)">
+            <g>
                 {circles.map(({ fill, ...circle }) => (
                     <circle
                         key={`${Object.values(circle).join()}${fill}`}
@@ -157,16 +159,6 @@ export function UserAvatar({ address, size, className }: Props): JSX.Element {
                     />
                 ))}
             </g>
-            <defs>
-                <clipPath id="clip0">
-                    <rect
-                        width={36}
-                        height={36}
-                        rx={18}
-                        fill="white"
-                    />
-                </clipPath>
-            </defs>
         </svg>
     )
 }

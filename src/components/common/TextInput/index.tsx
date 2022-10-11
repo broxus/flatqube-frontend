@@ -7,24 +7,36 @@ export type TextInputProps = {
     placeholder?: string;
     value?: string;
     disabled?: boolean;
+    id?: string;
     invalid?: boolean;
     inputMode?: 'none' | 'text' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
     size?: 'small' | 'medium';
+    prefix?: React.ReactNode;
+    suffix?: React.ReactNode;
+    readOnly?: boolean;
+    className?: string;
     onBlur?: React.FocusEventHandler<HTMLInputElement>;
     onChange?: (value: string) => void;
     onChangeInput?: React.ChangeEventHandler<HTMLInputElement>;
+    onFocus?: React.FocusEventHandler<HTMLInputElement>;
 }
 
 export function TextInput({
     placeholder,
     value = '',
     disabled,
+    id,
     invalid,
     inputMode,
     size,
+    prefix,
+    suffix,
+    readOnly,
+    className,
+    onBlur,
     onChange,
     onChangeInput,
-    onBlur,
+    onFocus,
 }: TextInputProps): JSX.Element {
 
     const _onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,19 +45,36 @@ export function TextInput({
     }
 
     return (
-        <input
-            type="text"
-            className={classNames('text-input', {
-                'text-input_dirty': value,
-                'text-input_invalid': invalid,
-                [`text-input_size_${size}`]: Boolean(size),
+        <div
+            className={classNames('text-input_wrapper', className, {
+                'text-input_wrapper--dirty': value,
+                'text-input_wrapper--invalid': invalid,
             })}
-            placeholder={placeholder}
-            inputMode={inputMode}
-            value={value}
-            onChange={_onChange}
-            onBlur={onBlur}
-            disabled={disabled}
-        />
+        >
+            {prefix && (
+                <div className="text-input_prefix">{prefix}</div>
+            )}
+            <div className="text-input_input">
+                <input
+                    autoComplete="off"
+                    type="text"
+                    className={classNames('text-input', {
+                        [`text-input_size_${size}`]: Boolean(size),
+                    })}
+                    placeholder={placeholder}
+                    id={id}
+                    inputMode={inputMode}
+                    value={value}
+                    disabled={disabled}
+                    readOnly={readOnly}
+                    onBlur={onBlur}
+                    onChange={_onChange}
+                    onFocus={onFocus}
+                />
+            </div>
+            {suffix && (
+                <div className="text-input_suffix">{suffix}</div>
+            )}
+        </div>
     )
 }

@@ -42,11 +42,21 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
         [counterToken, store.pair?.rightLocked],
     )
 
-    const toggleGraph = (value: PairStoreState['graph']) => () => {
+    const toggleGraph = (value: PairStoreState['graph']) => async () => {
+        store.changeData('graphData', {
+            ohlcv: null,
+            tvl: null,
+            volume: null,
+        })
         store.changeState('graph', value)
     }
 
     const toggleTimeframe = (value: PairStoreState['timeframe']) => () => {
+        store.changeData('graphData', {
+            ohlcv: null,
+            tvl: null,
+            volume: null,
+        })
         store.changeState('timeframe', value)
     }
 
@@ -294,9 +304,6 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
                                         id: 'CHART_NO_DATA',
                                     })}
                                     options={{
-                                        localization: {
-                                            priceFormatter: (value: number) => (1 / value).toFixed(2),
-                                        },
                                         rightPriceScale: {
                                             invertScale: true,
                                         },

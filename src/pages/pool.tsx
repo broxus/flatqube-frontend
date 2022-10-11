@@ -4,5 +4,9 @@ import { Pool } from '@/modules/Pool'
 
 
 export default function Page(): JSX.Element {
-    return <Pool />
+    return (
+        <div className="container container--small">
+            <Pool />
+        </div>
+    )
 }

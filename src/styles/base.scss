@@ -14,9 +14,7 @@ body {
 }
 
 body {
-    background: radial-gradient(50% 100% at 0% 0%, rgb(247 97 42 / 16%) 0%, rgb(246 97 42 / 0%) 100%),
-        radial-gradient(50% 100% at 100% 100%, rgb(197 228 243 / 16%) 0%, rgb(197 228 243 / 0%) 100%),
-        #050b2e;
+    background: #050b2e;
     color: #fff;
     font: 400 16px/1.2 'PT Root UI', sans-serif;
     -moz-font-feature-settings: 'kern';
@@ -59,7 +57,7 @@ ol li {
 }
 
 a {
-    color: #fff;
+    color: #C5E4F3;
     outline: none;
     -webkit-tap-highlight-color: rgb(0 0 0 / 0%);
     text-decoration: none;
@@ -78,8 +76,7 @@ a {
     }
 
     &:hover {
-        color: #fff;
-        text-decoration: underline;
+        color: #C5E4F3;
     }
 
     &[href^='tel:'],

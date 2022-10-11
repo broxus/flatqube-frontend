@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
+import classNames from 'classnames'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
@@ -7,6 +8,7 @@ import { Icon } from '@/components/common/Icon'
 import './index.scss'
 
 export type PaginationProps = {
+    className?: string;
     currentPage?: number;
     disabled?: boolean;
     totalPages: number;
@@ -16,6 +18,7 @@ export type PaginationProps = {
 }
 
 export const Pagination = React.memo(({
+    className,
     currentPage = 1,
     disabled,
     totalPages = 0,
@@ -52,7 +55,7 @@ export const Pagination = React.memo(({
     }, [currentPage])
 
     return (
-        <div className="pagination">
+        <div className={classNames('pagination', className)}>
             <div className="pagination__txt">
                 {intl.formatMessage({
                     id: 'PAGINATION_BEFORE_TEXT',

@@ -25,9 +25,19 @@
         min-height: 57px;
         padding: 10px 0;
         text-decoration: none !important;
+
+        &:last-child {
+            border: 0 none;
+        }
     }
 
     &__row {
+        color: #fff;
+
+        &:hover {
+            color: #fff;
+        }
+
         &--pointer {
             cursor: pointer;
         }
@@ -37,6 +47,7 @@
         color: rgb(255 255 255 / 48%);
         font-size: 14px;
         text-align: center;
+        min-height: unset;
     }
 
     &__cell {
@@ -82,7 +93,6 @@
         &--center { text-align: center; }
     }
 }
-
 
 .list-bill {
     margin: 0 auto;

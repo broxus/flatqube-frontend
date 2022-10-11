@@ -1,0 +1,11 @@
+$breakpoint-xsmall:                             480px;  // Phone portrait
+$breakpoint-small:                              640px;  // Phone landscape
+$breakpoint-medium:                             960px;  // Tablet Landscape
+$breakpoint-large:                              1200px; // Desktop
+$breakpoint-xlarge:                             1600px; // Large Screens
+
+$breakpoint-xsmall-max:                         ($breakpoint-small - 1);
+$breakpoint-small-max:                          ($breakpoint-medium - 1);
+$breakpoint-medium-max:                         ($breakpoint-large - 1);
+$breakpoint-large-max:                          ($breakpoint-xlarge - 1);
+

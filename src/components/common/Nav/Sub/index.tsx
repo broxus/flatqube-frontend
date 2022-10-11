@@ -34,6 +34,7 @@ export interface SubNavProps {
     disabled?: boolean;
     style?: React.CSSProperties;
     title?: React.ReactNode;
+    badge?: React.ReactNode;
 
     /** @private Used for rest popup. Do not use in your prod */
     internalPopupClose?: boolean;
@@ -79,6 +80,7 @@ function InternalSubNav({
     style,
     title,
     warnKey,
+    badge,
     onClick,
     onTitleClick,
     onTitleMouseEnter,
@@ -238,22 +240,12 @@ function InternalSubNav({
             onFocus={onInternalFocus}
             {...activeProps}
         >
-            {title}
-
-            {/* Only non-horizontal mode shows the icon */}
-            {/*
-            <Icon
-                icon={mode !== 'horizontal' ? mergedExpandIcon : null}
-                props={{
-                    ...props,
-                    isOpen: open,
-                    // [Legacy] Not sure why need this mark
-                    isSubNav: true,
-                }}
-            >
-                <i className={`${subNavPrefixCls}-arrow`} />
-            </Icon>
-            */}
+            {/* eslint-disable-next-line react/jsx-no-useless-fragment */}
+            <>
+                {title}
+                {mergedExpandIcon}
+                {badge}
+            </>
         </a>
     )
 

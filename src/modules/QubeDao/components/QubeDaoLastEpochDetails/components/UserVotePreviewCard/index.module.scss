@@ -1,0 +1,42 @@
+.user_vote_preview_card {
+    display: flex;
+    flex-flow: column wrap;
+    gap: 24px;
+    justify-content: space-between;
+
+    &__supheader {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 0.1px;
+        line-height: 20px;
+        margin-bottom: 4px;
+    }
+
+    &__lead {
+        color: #fff;
+        font-family: Faktum, 'PT Root Sans', sans-serif;
+        font-feature-settings: 'ss10' on;
+        font-size: 24px;
+        line-height: 28px;
+    }
+
+    &__note {
+        color: #fff;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 0.1px;
+        line-height: 20px;
+        margin-top: 24px;
+    }
+
+    &__not_voted {
+        background: radial-gradient(100% 132.2% at 100% 0%, rgb(0 56 255 / 24%) 0%, rgb(0 56 255 / 0%) 100%),
+            linear-gradient(0deg, rgb(255 255 255 / 8%), rgb(255 255 255 / 8%));
+    }
+
+    &__voted {
+        background: radial-gradient(100% 132.2% at 100% 0%, rgb(74 180 74 / 24%) 0%, rgb(74 180 74 / 0%) 100%),
+            linear-gradient(0deg, rgb(255 255 255 / 8%), rgb(255 255 255 / 8%));
+    }
+}

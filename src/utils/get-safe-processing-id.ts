@@ -1,3 +1,4 @@
 export function getSafeProcessingId(): string {
-    return (Math.floor(Math.random() * (Number.MAX_SAFE_INTEGER - 1)) + 1).toString()
+    // eslint-disable-next-line no-bitwise
+    return Math.abs(~~(Math.random() * (2 ** 32)) | 0).toString()
 }

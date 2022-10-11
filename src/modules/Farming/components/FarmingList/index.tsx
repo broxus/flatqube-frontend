@@ -1,14 +1,11 @@
 import * as React from 'react'
 import { observer } from 'mobx-react-lite'
-import { useIntl } from 'react-intl'
 
 import { SectionTitle } from '@/components/common/SectionTitle'
 import { FarmingTable } from '@/modules/Farming/components/FarmingTable'
 import { FarmingFilters } from '@/modules/Farming/components/FarmingFilters'
 import { FarmingPoolFilter, FarmingPoolsItemResponse } from '@/modules/Farming/types'
-import { useTokensCache } from '@/stores/TokensCacheService'
-import { debounce, formattedAmount, formattedTokenAmount } from '@/utils'
-import { appRoutes } from '@/routes'
+import { debounce } from '@/utils'
 
 type Props = {
     title: string;
@@ -47,82 +44,6 @@ export function FarmingListInner({
     onPrevPage,
     onSubmitPage,
 }: Props): JSX.Element {
-    const intl = useIntl()
-    const tokensCache = useTokensCache()
-    const items = React.useMemo(() => (
-        data.map((item, index) => {
-            const itemVestedRewards = vestedRewards[index]
-            const itemEntitledRewards = entitledRewards[index]
-
-            return {
-                leftToken: item.left_address && item.right_address ? {
-                    root: item.left_address,
-                    icon: tokensCache.get(item.left_address)?.icon,
-                    name: item.left_currency,
-                } : {
-                    root: item.token_root_address,
-                    icon: tokensCache.get(item.token_root_address)?.icon,
-                    name: item.token_root_currency,
-                },
-                rightToken: item.right_address ? {
-                    root: item.right_address,
-                    icon: tokensCache.get(item.right_address)?.icon,
-                    name: item.right_currency,
-                } : undefined,
-                rewardsIcons: item.reward_token_root_info.map(rewardInfo => ({
-                    address: rewardInfo.reward_root_address,
-                    root: rewardInfo.reward_root_address,
-                    name: rewardInfo.reward_currency,
-                    icon: tokensCache.get(rewardInfo.reward_root_address)?.icon,
-                })),
-                apr: item.left_address && item.right_address
-                    ? formattedAmount(item.apr, undefined, { preserve: true })
-                    : null,
-                aprChange: item.left_address && item.right_address
-                    ? item.apr_change
-                    : null,
-                vestedRewards: item.reward_token_root_info.map((rewardInfo, idx) => intl.formatMessage({
-                    id: 'POOLS_LIST_TOKEN_BALANCE',
-                }, {
-                    symbol: rewardInfo.reward_currency,
-                    value: itemVestedRewards
-                        ? formattedTokenAmount(itemVestedRewards[idx], rewardInfo.reward_scale)
-                        : '0',
-                })),
-                entitledRewards: item.reward_token_root_info.map((rewardInfo, idx) => intl.formatMessage({
-                    id: 'POOLS_LIST_TOKEN_BALANCE',
-                }, {
-                    symbol: rewardInfo.reward_currency,
-                    value: itemEntitledRewards
-                        ? formattedTokenAmount(itemEntitledRewards[idx], rewardInfo.reward_scale)
-                        : '0',
-                })),
-                share: formattedAmount(item.share, undefined, { preserve: true }),
-                tvl: item.left_address && item.right_address
-                    ? item.tvl
-                    : null,
-                tvlChange: item.left_address && item.right_address
-                    ? item.tvl_change
-                    : null,
-                startTime: item.farm_start_time,
-                endTime: item.farm_end_time,
-                poolAddress: item.pool_address,
-                link: appRoutes.farmingItem.makeUrl({
-                    address: item.pool_address,
-                }),
-                balanceWarning: item.is_low_balance,
-                rewardsLoading: rewardsLoading ? rewardsLoading[index] : undefined,
-            }
-        })
-    ), [
-        data,
-        vestedRewards,
-        entitledRewards,
-        intl,
-        tokensCache,
-        rewardsLoading,
-    ])
-
     return (
         <>
             <div className="farming-list-header">
@@ -136,11 +57,14 @@ export function FarmingListInner({
             </div>
 
             <FarmingTable
+                data={data}
+                entitledRewards={entitledRewards}
+                vestedRewards={vestedRewards}
+                rewardsLoading={rewardsLoading}
                 placeholderCount={placeholderCount}
-                loading={loading}
-                items={items}
                 totalPages={totalPages}
                 currentPage={currentPage}
+                loading={loading}
                 onNext={onNextPage}
                 onPrev={onPrevPage}
                 onSubmit={onSubmitPage}

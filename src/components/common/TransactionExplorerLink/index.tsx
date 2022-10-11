@@ -8,9 +8,10 @@ type Props = {
     children?: React.ReactChild | React.ReactChild[] | null;
     className?: string;
     id: string;
+    onClick?: React.MouseEventHandler<HTMLAnchorElement>;
 }
 
-export function TransactionExplorerLink({ children, className, id }: Props): JSX.Element {
+export function TransactionExplorerLink({ children, className, id, onClick }: Props): JSX.Element {
     const intl = useIntl()
 
     return (
@@ -20,6 +21,7 @@ export function TransactionExplorerLink({ children, className, id }: Props): JSX
             title={intl.formatMessage({ id: 'OPEN_IN_EXPLORER' })}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={onClick}
         >
             {children || sliceAddress(id)}
         </a>

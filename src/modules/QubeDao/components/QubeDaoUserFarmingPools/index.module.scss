@@ -1,0 +1,11 @@
+@import '@/styles/variables.scss';
+
+.pools_list {
+    &.list {
+        --list-grid-template: minmax(150px, 40%) minmax(80px, 160px);
+
+        @media (min-width: $breakpoint-small) {
+            --list-grid-template: minmax(30%, 50%) minmax(100px, 25%) minmax(100px, 25%);
+        }
+    }
+}

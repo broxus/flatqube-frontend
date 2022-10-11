@@ -6,43 +6,17 @@ import { Button } from '@/components/common/Button'
 import { ContentLoader } from '@/components/common/ContentLoader'
 import { Item } from '@/modules/Builder/components/BuilderTokensList/Item'
 import { useBuilderStore } from '@/modules/Builder/stores/BuilderStore'
-import { useWallet } from '@/stores/WalletService'
 
 import './index.scss'
 
 
 export function TokensList(): JSX.Element {
     const intl = useIntl()
-    const wallet = useWallet()
     const builder = useBuilderStore()
-
-    const connect = async () => {
-        await wallet.connect()
-    }
 
     switch (true) {
         case builder.isLoading:
             return <ContentLoader />
-
-        case wallet.address == null:
-            return (
-                <div className="message">
-                    <div>
-                        <Button
-                            block
-                            className="form-submit"
-                            disabled={wallet.isConnecting}
-                            size="lg"
-                            type="primary"
-                            onClick={connect}
-                        >
-                            {intl.formatMessage({
-                                id: 'EVER_WALLET_CONNECT_BTN_TEXT',
-                            })}
-                        </Button>
-                    </div>
-                </div>
-            )
 
         case builder.tokens.length === 0 && !!builder.filter:
             return (

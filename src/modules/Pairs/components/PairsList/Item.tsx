@@ -32,7 +32,7 @@ export function Item({ pair, idx }: Props): JSX.Element {
 
     return (
         <Link to={`/pairs/${pair.meta.poolAddress}`} className="list__row">
-            <div className="list__cell hide-540">{idx}</div>
+            <div className="list__cell visible@s">{idx}</div>
             <div className="list__cell">
                 <div className="list__cell-inner">
                     <div className="pairs-list__token-fave-wrapper">
@@ -62,10 +62,10 @@ export function Item({ pair, idx }: Props): JSX.Element {
             <div className="list__cell list__cell--right">
                 {volume24h}
             </div>
-            <div className="list__cell list__cell--right hide-824">
+            <div className="list__cell list__cell--right visible@s">
                 {volume7d}
             </div>
-            <div className="list__cell list__cell--right hide-540">
+            <div className="list__cell list__cell--right visible@s">
                 {tvl}
             </div>
         </Link>

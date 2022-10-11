@@ -1,11 +1,6 @@
 import { Time } from 'lightweight-charts'
 import { DateTime } from 'luxon'
-import {
-    action,
-    IReactionDisposer,
-    makeAutoObservable,
-    reaction,
-} from 'mobx'
+import { action, makeAutoObservable } from 'mobx'
 import uniqBy from 'lodash.uniqby'
 
 import { TokenListURI } from '@/config'
@@ -70,22 +65,6 @@ export class PairStore {
      */
     public changeState<K extends keyof PairStoreState>(key: K, value: PairStoreState[K]): void {
         this.state[key] = value
-    }
-
-    public init(): void {
-        this.#timeframeDisposer = reaction(() => this.timeframe, () => {
-            this.changeState('isOhlcvGraphLoading', false)
-            this.changeState('isTvlGraphLoading', false)
-            this.changeState('isVolumeGraphLoading', false)
-            this.changeData('graphData', DEFAULT_PAIR_STORE_DATA.graphData)
-        })
-    }
-
-    /**
-     *
-     */
-    public dispose(): void {
-        this.#timeframeDisposer?.()
     }
 
     /**
@@ -455,7 +434,5 @@ export class PairStore {
      * Internal reaction disposers
      * ----------------------------------------------------------------------------------
      */
-
-    #timeframeDisposer: IReactionDisposer | undefined
 
 }

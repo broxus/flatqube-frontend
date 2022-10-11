@@ -38,4 +38,53 @@
             }
         }
     }
+
+    &.size-s {
+        height: 36px;
+
+        > li {
+            a {
+                font-size: 14px;
+                letter-spacing: 0.6px;
+            }
+        }
+    }
+
+    &.type-card {
+        column-gap: unset;
+        height: unset;
+
+        > li {
+            &::after {
+                display: none;
+            }
+
+            &:last-child {
+                a {
+                    border-width: 1px;
+                }
+            }
+
+            &.active {
+                a {
+                    background: #fff;
+                    color: #000;
+                }
+
+                + li {
+                    a {
+                        border-left: none;
+                    }
+                }
+            }
+        }
+
+        a {
+            display: block;
+            padding: 0.4em 0.8em;
+            opacity: 1;
+            border: 1px solid rgba(255,255,255,0.16);
+            border-width: 1px 0 1px 1px;
+        }
+    }
 }

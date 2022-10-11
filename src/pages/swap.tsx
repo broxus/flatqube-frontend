@@ -4,5 +4,9 @@ import { Swap } from '@/modules/Swap'
 
 
 export default function Page(): JSX.Element {
-    return <Swap />
+    return (
+        <div className="container container--small">
+            <Swap />
+        </div>
+    )
 }

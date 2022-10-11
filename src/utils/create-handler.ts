@@ -12,13 +12,13 @@ export const createHandler = <P extends Params>(
         const path = route.makeUrl(routeParams)
         const url = `${baseUrl}${path}`
         const response = await fetch(url, {
-            method: 'POST',
-            mode: 'cors',
+            body: bodyData ? JSON.stringify(bodyData) : undefined,
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: bodyData ? JSON.stringify(bodyData) : undefined,
+            method: 'POST',
+            mode: 'cors',
             ...fetchParams,
         })
 

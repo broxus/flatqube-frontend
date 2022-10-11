@@ -67,7 +67,7 @@ export class FavoritePairs {
             return
         }
 
-        const newItem = { name, address }
+        const newItem = { address, name }
         this.state.data[this.wallet.address] = this.state.data[this.wallet.address]
             ? [...this.state.data[this.wallet.address], newItem]
             : [newItem]
@@ -191,8 +191,7 @@ export class FavoritePairs {
     }
 
     public get addresses(): string[] {
-        const address = this.data
-        return address.map(item => item.address)
+        return this.data.map(item => item.address)
     }
 
     public get isConnected(): boolean {

@@ -1,0 +1,42 @@
+.farm_boost_banner {
+    align-items: flex-end;
+    background-image: url('../../../../assets/CoinsBackground.png');
+    background-position: 100% 0;
+    background-repeat: no-repeat;
+    display: flex;
+    position: relative;
+
+    &_placeholder {
+        background-image: none;
+    }
+
+    &__holder {
+        display: flex;
+        flex-flow: column wrap;
+        gap: 8px;
+    }
+
+    &__title {
+        color: #fff;
+        font-family: Faktum, 'PT Root Sans', sans-serif;
+        font-feature-settings: 'ss10' on;
+        font-size: 28px;
+        font-weight: 600;
+        line-height: 32px;
+    }
+
+    &__suptitle {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.6px;
+        line-height: 20px;
+        margin-bottom: 4px;
+    }
+
+    &__lead {
+        font-size: 20px;
+        font-weight: 500;
+        letter-spacing: 0.15px;
+        line-height: 24px;
+    }
+}

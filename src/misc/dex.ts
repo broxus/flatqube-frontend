@@ -21,6 +21,12 @@ export type PairTokenRoots = {
     lp: Address;
 }
 
+export type PairTokenRootsSymbols = {
+    leftSymbol: string;
+    rightSymbol: string;
+    lpSymbol: string;
+}
+
 export type PairBalances = {
     left: string;
     right: string;
@@ -66,8 +72,8 @@ export class Dex {
     ): Promise<Address> {
         const rootContract = new staticRpc.Contract(DexAbi.Root, DexRootAddress)
         return (await rootContract.methods.getExpectedAccountAddress({
-            answerId: 0,
             account_owner: owner,
+            answerId: 0,
         }).call({ cachedState: state })).value0
     }
 
@@ -189,7 +195,20 @@ export class Dex {
         } = await pairContract.methods.getTokenRoots({
             answerId: 0,
         }).call({ cachedState: state })
-        return { left, right, lp }
+        return { left, lp, right }
+    }
+
+    public static async pairTokenRootsSymbols(
+        pair: Address,
+        state?: FullContractState,
+    ): Promise<PairTokenRootsSymbols> {
+        const { left, right, lp } = await Dex.pairTokenRoots(pair, state)
+        const [leftSymbol, rightSymbol, lpSymbol] = await Promise.all([
+            TokenWallet.getSymbol(left),
+            TokenWallet.getSymbol(right),
+            TokenWallet.getSymbol(lp),
+        ])
+        return { leftSymbol, lpSymbol, rightSymbol }
     }
 
     public static async pairBalances(
@@ -208,8 +227,8 @@ export class Dex {
         }).call({ cachedState: state })
         return {
             left: left.toString(),
-            right: right.toString(),
             lp: lp.toString(),
+            right: right.toString(),
         }
     }
 
@@ -300,17 +319,17 @@ export class Dex {
     ): Promise<TransactionId> {
         const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { id } = await accountContract.methods.withdraw({
-            token_root: root,
             amount,
             call_id: callId,
             deploy_wallet_grams: '100000000',
-            send_gas_to: owner,
             recipient_address: owner,
+            send_gas_to: owner,
+            token_root: root,
             // recipient_public_key: '0',
         }).send({
-            from: owner,
-            bounce: false,
             amount: '2100000000',
+            bounce: false,
+            from: owner,
         })
         return id
     }
@@ -328,14 +347,14 @@ export class Dex {
         const { id } = await accountContract.methods.withdrawLiquidity({
             call_id: callId,
             left_root: leftRoot,
-            right_root: rightRoot,
-            lp_root: lpRoot,
             lp_amount: amount,
+            lp_root: lpRoot,
+            right_root: rightRoot,
             send_gas_to: owner,
         }).send({
-            from: owner,
-            bounce: false,
             amount: '2700000000',
+            bounce: false,
+            from: owner,
         })
         return id
     }
@@ -349,8 +368,8 @@ export class Dex {
         payloadId?: string,
     ): Promise<TransactionId> {
         const pairAddress = await Dex.pairAddress(leftRoot, rightRoot)
-        const lpWalletPair = await TokenWallet.walletAddress({ root: lpRoot, owner: pairAddress })
-        const lpWalletUser = await TokenWallet.walletAddress({ root: lpRoot, owner })
+        const lpWalletPair = await TokenWallet.walletAddress({ owner: pairAddress, root: lpRoot })
+        const lpWalletUser = await TokenWallet.walletAddress({ owner, root: lpRoot })
         const lpWalletPairState = (
             await staticRpc.getFullContractState({ address: lpWalletPair })
         ).state
@@ -365,8 +384,8 @@ export class Dex {
         ) {
             throw Error('LP wallets not exists')
         }
-        const leftWalletUser = await TokenWallet.walletAddress({ root: leftRoot, owner })
-        const rightWalletUser = await TokenWallet.walletAddress({ root: rightRoot, owner })
+        const leftWalletUser = await TokenWallet.walletAddress({ owner, root: leftRoot })
+        const rightWalletUser = await TokenWallet.walletAddress({ owner, root: rightRoot })
         const leftWalletUserState = (
             await staticRpc.getFullContractState({ address: leftWalletUser })
         ).state
@@ -379,18 +398,18 @@ export class Dex {
             && rightWalletUserState.isDeployed
         const pairContract = new staticRpc.Contract(DexAbi.Pair, pairAddress)
         const { value0: withdrawPayload } = await pairContract.methods.buildWithdrawLiquidityPayload({
-            id: payloadId || new Date().getTime().toString(),
             deploy_wallet_grams: allDeployed ? '0' : '100000000',
+            id: payloadId || new Date().getTime().toString(),
         }).call()
         return TokenWallet.send({
-            tokens: amount,
-            owner,
             address: lpWalletUser,
-            recipient: lpWalletPair,
-            grams: '2700000000',
-            withDerive: false,
             bounce: true,
+            grams: '2700000000',
+            owner,
             payload: withdrawPayload,
+            recipient: lpWalletPair,
+            tokens: amount,
+            withDerive: false,
         })
     }
 
@@ -407,18 +426,18 @@ export class Dex {
     ): Promise<TransactionId> {
         const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { id } = await accountContract.methods.depositLiquidity({
+            auto_change: autoChange,
             call_id: callId,
-            left_root: leftRoot,
-            right_root: rightRoot,
             expected_lp_root: lpRoot,
             left_amount: leftAmount,
+            left_root: leftRoot,
             right_amount: rightAmount,
+            right_root: rightRoot,
             send_gas_to: owner,
-            auto_change: autoChange,
         }).send({
-            from: owner,
-            bounce: false,
             amount: '2600000000',
+            bounce: false,
+            from: owner,
         })
         return id
     }

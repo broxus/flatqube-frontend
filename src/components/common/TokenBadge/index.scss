@@ -1,0 +1,11 @@
+.token_badge {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 8px;
+
+    &__icon {
+        flex: 1;
+        min-width: fit-content;
+    }
+}

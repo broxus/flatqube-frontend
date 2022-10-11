@@ -1680,10 +1680,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                         this.changePoolData(
                             'currentShareLeft',
                             new BigNumber(this.lpWalletBalance || 0)
-                                .times(new BigNumber(isInverted ? pairRight : pairLeft))
-                                .dividedBy(new BigNumber(pairLp))
-                                .decimalPlaces(0, BigNumber.ROUND_DOWN)
-                                .shiftedBy(-this.leftToken.decimals)
+                                .times(isInverted ? pairRight : pairLeft)
+                                .dividedBy(pairLp)
+                                .dp(0, BigNumber.ROUND_DOWN)
+                                .shiftedBy(isInverted ? -this.rightToken.decimals : -this.leftToken.decimals)
                                 .toFixed(),
                         )
                     }
@@ -1692,10 +1692,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                         this.changePoolData(
                             'currentShareRight',
                             new BigNumber(this.lpWalletBalance || '0')
-                                .times(new BigNumber(isInverted ? pairLeft : pairRight))
-                                .dividedBy(new BigNumber(pairLp))
-                                .decimalPlaces(0, BigNumber.ROUND_DOWN)
-                                .shiftedBy(-this.rightToken.decimals)
+                                .times(isInverted ? pairLeft : pairRight)
+                                .dividedBy(pairLp)
+                                .dp(0, BigNumber.ROUND_DOWN)
+                                .shiftedBy(isInverted ? -this.leftToken.decimals : -this.rightToken.decimals)
                                 .toFixed(),
                         )
                     }
@@ -1840,10 +1840,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                         this.changePoolData(
                             'currentShareLeft',
                             new BigNumber(this.lpWalletBalance || 0)
-                                .times(new BigNumber(isInverted ? pairRight : pairLeft))
-                                .dividedBy(new BigNumber(pairLp))
-                                .decimalPlaces(0, BigNumber.ROUND_DOWN)
-                                .shiftedBy(-this.leftToken.decimals)
+                                .times(isInverted ? pairRight : pairLeft)
+                                .dividedBy(pairLp)
+                                .dp(0, BigNumber.ROUND_DOWN)
+                                .shiftedBy(isInverted ? -this.rightToken.decimals : -this.leftToken.decimals)
                                 .toFixed(),
                         )
                     }
@@ -1852,10 +1852,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                         this.changePoolData(
                             'currentShareRight',
                             new BigNumber(this.lpWalletBalance || '0')
-                                .times(new BigNumber(isInverted ? pairLeft : pairRight))
-                                .dividedBy(new BigNumber(pairLp))
-                                .decimalPlaces(0, BigNumber.ROUND_DOWN)
-                                .shiftedBy(-this.rightToken.decimals)
+                                .times(isInverted ? pairLeft : pairRight)
+                                .dividedBy(pairLp)
+                                .dp(0, BigNumber.ROUND_DOWN)
+                                .shiftedBy(isInverted ? -this.leftToken.decimals : -this.rightToken.decimals)
                                 .toFixed(),
                         )
                     }

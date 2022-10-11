@@ -1,38 +1,22 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 import classNames from 'classnames'
-import { reaction } from 'mobx'
-import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { useWallet } from '@/stores/WalletService'
-import { debounce } from '@/utils'
 
 
-function ConnectingModal(): JSX.Element | null {
+export function WalletConnectingModal(): JSX.Element | null {
     const intl = useIntl()
     const wallet = useWallet()
 
-    const [isOpen, setOpen] = React.useState(false)
-
-    React.useEffect(() => {
-        const dispose = reaction(() => wallet.isConnecting, debounce(value => {
-            setOpen(value)
-        }, 300))
-
-        return () => {
-            dispose()
-        }
-    }, [])
-
     const onClose = () => {
-        setOpen(false)
         wallet.setState('isConnecting', false)
     }
 
-    return isOpen ? ReactDOM.createPortal(
+    return ReactDOM.createPortal(
         <div className="popup">
             <div className="popup-overlay" />
             <div className="popup__wrap">
@@ -51,8 +35,8 @@ function ConnectingModal(): JSX.Element | null {
                 <div className="popup-main">
                     <div
                         className={classNames({
-                            'popup-main__loader': wallet.hasProvider,
                             'popup-main__ava': !wallet.hasProvider,
+                            'popup-main__loader': wallet.hasProvider,
                         })}
                     >
                         {wallet.hasProvider && (
@@ -94,8 +78,5 @@ function ConnectingModal(): JSX.Element | null {
             </div>
         </div>,
         document.body,
-    ) : null
+    )
 }
-
-
-export const WalletConnectingModal = observer(ConnectingModal)

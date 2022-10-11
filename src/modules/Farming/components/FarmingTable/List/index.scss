@@ -1,0 +1,49 @@
+.farming-table-list {
+    &__item {
+        margin: 0 0 16px;
+        padding: 0 0 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    &__line {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        grid-gap: 16px;
+        margin: 0 0 8px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    &__rewards {
+        display: flex;
+        align-items: center;
+        grid-gap: 11px;
+    }
+
+    &__pair {
+        font-weight: bold;
+    }
+
+    &__label {
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.1px;
+        color: rgba(255,255,255,0.48);
+    }
+
+    &__value {
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.1px;
+    }
+
+    &__apr {
+        font-size: 16px;
+        line-height: 22px;
+        letter-spacing: 0.25px;
+        font-weight: 500;
+    }
+}

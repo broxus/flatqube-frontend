@@ -1,3 +1,5 @@
+@import '@/styles/variables.scss';
+
 .footer {
     background-color: rgb(0 0 0 / 16%);
     padding: 40px 16px 60px;
@@ -52,7 +54,7 @@
         }
     }
 
-    @media only screen and (min-width: 768px) {
+    @media only screen and (min-width: $breakpoint-medium) {
         padding-bottom: 0;
 
         &__left {
@@ -205,7 +207,7 @@
             }
         }
     }
-    @media only screen and (min-width: 768px) {
+    @media only screen and (min-width: $breakpoint-medium) {
         margin-left: -30px;
         row-gap: 30px;
 
@@ -285,7 +287,7 @@
     gap: 8px;
     justify-content: flex-end;
     > * { width: 100%; }
-    @media only screen and (min-width: 768px) {
+    @media only screen and (min-width: $breakpoint-medium) {
         flex-wrap: nowrap;
         gap: 10px;
         justify-content: flex-start;

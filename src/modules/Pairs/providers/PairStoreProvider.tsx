@@ -21,13 +21,11 @@ export function PairStoreProvider({ address, children }: Props): JSX.Element {
     React.useEffect(() => {
         (async () => {
             try {
-                await store.init()
                 await store.load()
                 await store.loadTransactions()
             }
             catch (e) {}
         })()
-        return () => store.dispose()
     }, [address])
 
     return (

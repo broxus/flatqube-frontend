@@ -39,7 +39,7 @@ export function formattedTokenAmount(
 
     switch (true) {
         case fractionalPartNumber.lte(1e-8):
-            fractionalPartNumber = fractionalPartNumber.precision(4, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.precision(options.precision ?? 4, BigNumber.ROUND_DOWN)
             break
 
         case integerNumber.lt(1):

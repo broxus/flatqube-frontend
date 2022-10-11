@@ -1,0 +1,36 @@
+@import '@/styles/variables.scss';
+
+.stats {
+    &_grid {
+        display: grid;
+        flex-flow: column wrap;
+        gap: 16px;
+    }
+
+    &_grid__stat {
+        @media only screen and (min-width: $breakpoint-large) {
+            grid-template-columns: 272px calc(100% - 272px - 16px);
+        }
+    }
+
+    &_grid__sub_stat {
+        @media only screen and (min-width: $breakpoint-medium) {
+            grid-template-columns: calc(100% - 304px - 16px) 304px;
+        }
+
+        @media only screen and (min-width: $breakpoint-large) {
+            grid-template-columns: calc(100% - 272px - 16px) 272px;
+        }
+    }
+
+    &_chart_holder {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+    }
+
+    &_content_loader {
+        margin: 25px;
+        min-height: 1px;
+    }
+}

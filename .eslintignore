@@ -1,4 +1,5 @@
 /dist
+lang
 node_modules/*
 /*.js
 /webpack.config.ts

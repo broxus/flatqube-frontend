@@ -1,0 +1,20 @@
+.head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    grid-gap: 16px;
+    margin: 0 0 32px;
+
+    @media (max-width: 639px) {
+        flex-direction: column;
+        align-items: unset;
+    }
+}
+
+.title {
+    margin: 0;
+    font-size: 28px;
+    line-height: 36px;
+    font-weight: 600;
+    letter-spacing: 0.25px;
+}

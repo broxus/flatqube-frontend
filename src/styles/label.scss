@@ -1,0 +1,17 @@
+.label {
+    background-color: rgb(255 255 255 / 8%);
+    border-radius: 40px;
+    color: rgb(255 255 255 / 48%);
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+    line-height: 16px;
+    padding: 4px 8px;
+    vertical-align: middle;
+    white-space: nowrap;
+
+    &--success {
+        background-color: rgb(74 180 74 / 16%);
+        color: #4ab44a;
+    }
+}

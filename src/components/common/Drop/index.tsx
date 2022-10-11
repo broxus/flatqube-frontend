@@ -8,6 +8,7 @@ import type {
     AnimationType,
     BuildInPlacements,
 } from 'rc-trigger/lib/interface'
+import { CSSMotionProps } from 'rc-motion'
 
 import Placements from './placements'
 
@@ -38,6 +39,7 @@ export interface DropProps extends Pick<
     transitionName?: string;
     trigger?: ActionType | ActionType[];
     visible?: boolean;
+    popupMotion?: CSSMotionProps;
     onOverlayClick?: (e: Event) => void;
     onVisibleChange?: (visible: boolean) => void;
 }
@@ -63,6 +65,7 @@ export const Drop = React.forwardRef<unknown, DropProps>((props, ref) => {
         transitionName = 'motion-slide-up',
         trigger = ['hover'],
         visible,
+        popupMotion = {},
         onOverlayClick,
         onVisibleChange,
         ...restProps
@@ -112,7 +115,7 @@ export const Drop = React.forwardRef<unknown, DropProps>((props, ref) => {
     const renderChildren = () => {
         const childrenProps = children.props ? children.props : {}
         const childClassName = classNames(childrenProps.className, 'open')
-        return triggerVisible && children
+        return mergedVisible && children
             ? React.cloneElement(children, {
                 className: childClassName,
             })
@@ -137,6 +140,7 @@ export const Drop = React.forwardRef<unknown, DropProps>((props, ref) => {
             popup={getDropElementOrLambda()}
             popupAlign={align}
             popupAnimation={animation}
+            popupMotion={popupMotion}
             popupClassName={classNames(overlayClassName, {
                 [`${prefixCls}-show-arrow`]: arrow,
             })}

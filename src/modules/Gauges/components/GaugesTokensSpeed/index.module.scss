@@ -1,0 +1,46 @@
+.tokensSpeed {
+    .table {
+        --list-grid-template: minmax(300px, 1fr) minmax(300px, 2fr) minmax(300px, 2fr);
+        min-height: unset;
+
+        :global(.list__cell) {
+            min-width: 0;
+            white-space: normal;
+            word-break: break-word;
+        }
+    }
+
+    .pagination {
+        margin: 0;
+    }
+
+    .noData {
+        --list-grid-template: 1fr;
+    }
+}
+
+.tokens {
+    .token {
+        margin-left: -8px;
+
+        &:first-child {
+            margin-left: 0;
+        }
+    }
+}
+
+.body {
+    position: relative;
+}
+
+.spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}

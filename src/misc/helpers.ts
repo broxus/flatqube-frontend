@@ -1,4 +1,4 @@
-import { Address, hasEverscaleProvider } from 'everscale-inpage-provider'
+import { Address, hasEverscaleProvider, Permissions } from 'everscale-inpage-provider'
 
 import { useRpc } from '@/hooks/useRpc'
 import { useStaticRpc } from '@/hooks/useStaticRpc'
@@ -10,15 +10,16 @@ const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
-export async function connectToWallet(): Promise<void> {
+export async function connectToWallet(): Promise<Permissions['accountInteraction'] | undefined> {
     const hasProvider = await hasEverscaleProvider()
 
     if (hasProvider) {
         await rpc.ensureInitialized()
-        await rpc.requestPermissions({
+        return (await rpc.requestPermissions({
             permissions: ['basic', 'accountInteraction'],
-        })
+        })).accountInteraction
     }
+    return undefined
 }
 
 export async function checkPair(leftRoot: string, rightRoot: string): Promise<Address | undefined> {

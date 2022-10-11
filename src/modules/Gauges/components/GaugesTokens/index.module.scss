@@ -1,0 +1,58 @@
+.tokens {
+    display: flex;
+    grid-gap: 8px;
+    flex-direction: column;
+}
+
+.token {
+    display: flex;
+    align-items: center;
+    grid-gap: 6px;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    min-width: 0;
+}
+
+.main {
+    display: flex;
+    grid-gap: 4px 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.label {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.icon {
+    flex-shrink: 0;
+}
+
+.extra {
+    display: flex;
+    align-items: center;
+    grid-gap: 6px;
+    color: rgba(255, 255, 255, 0.48);
+    min-width: 0;
+
+    svg {
+        display: block;
+    }
+
+    path {
+        fill: currentColor;
+    }
+
+    .value {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.info {
+    display: flex;
+}

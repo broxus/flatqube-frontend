@@ -1,0 +1,184 @@
+.title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    letter-spacing: 0.1px;
+    font-size: 14px;
+    line-height: 20px;
+    color: rgba(255, 255, 255, 0.48);
+}
+
+.amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 24px;
+    line-height: 28px;
+    letter-spacing: 0.15px;
+    grid-gap: 8px;
+    flex-wrap: wrap;
+
+    &.small {
+        font-size: 16px;
+        line-height: 22px;
+        letter-spacing: 0.1px;
+    }
+
+    .lock {
+        font-size: 14px;
+        color: #4AB44A;
+    }
+
+    .value {
+        white-space: normal;
+        word-break: break-word;
+    }
+}
+
+.content {
+    display: grid;
+    grid-gap: 8px;
+    grid-template-columns: 190px 190px minmax(0, 1fr);
+
+    @media (max-width: 1199px) {
+        grid-template-columns: 2fr 1fr 1fr;
+    }
+
+    @media (max-width: 959px) {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 639px) {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+.tvl {
+    grid-column-start: 1;
+    grid-column-end: 3;
+    min-height: 214px;
+
+    @media (max-width: 1199px) {
+        grid-column-start: 1;
+        grid-column-end: 2;
+        grid-row-start: 1;
+        grid-row-end: 3;
+    }
+
+    @media (max-width: 959px) {
+        grid-column-start: 1;
+        grid-column-end: 3;
+        grid-row-start: 1;
+        grid-row-end: 2;
+    }
+}
+
+.aprMin {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 2;
+    grid-row-end: 3;
+
+    @media (max-width: 1199px) {
+        grid-column-start: 2;
+        grid-column-end: 3;
+        grid-row-start: 1;
+        grid-row-end: 2;
+    }
+
+    @media (max-width: 959px) {
+        grid-column-start: 1;
+        grid-column-end: 2;
+        grid-row-start: 2;
+        grid-row-end: 3;
+    }
+}
+
+.aprMax {
+    grid-column-start: 2;
+    grid-column-end: 3;
+    grid-row-start: 2;
+    grid-row-end: 3;
+
+    @media (max-width: 1199px) {
+        grid-column-start: 3;
+        grid-column-end: 4;
+        grid-row-start: 1;
+        grid-row-end: 2;
+    }
+
+    @media (max-width: 959px) {
+        grid-column-start: 2;
+        grid-column-end: 3;
+        grid-row-start: 2;
+        grid-row-end: 3;
+    }
+}
+
+.rewardBalance {
+    grid-column-start: 1;
+    grid-column-end: 2;
+    grid-row-start: 3;
+    grid-row-end: 4;
+
+    @media (max-width: 1199px) {
+        grid-column-start: 2;
+        grid-column-end: 3;
+        grid-row-start: 2;
+        grid-row-end: 3;
+    }
+
+    @media (max-width: 959px) {
+        grid-column-start: 1;
+        grid-column-end: 2;
+        grid-row-start: 3;
+        grid-row-end: 4;
+    }
+}
+
+.farmingSpeed {
+    grid-column-start: 2;
+    grid-column-end: 3;
+    grid-row-start: 3;
+    grid-row-end: 4;
+
+    @media (max-width: 1199px) {
+        grid-column-start: 3;
+        grid-column-end: 4;
+        grid-row-start: 2;
+        grid-row-end: 3;
+    }
+
+    @media (max-width: 959px) {
+        grid-column-start: 2;
+        grid-column-end: 3;
+        grid-row-start: 3;
+        grid-row-end: 4;
+    }
+}
+
+.chart {
+    grid-column-start: 3;
+    grid-column-end: 4;
+    grid-row-start: 1;
+    grid-row-end: 4;
+
+    @media (max-width: 1199px) {
+        grid-column-start: 1;
+        grid-column-end: 4;
+        grid-row-start: 3;
+        grid-row-end: 4;
+    }
+
+    @media (max-width: 959px) {
+        grid-column-start: 1;
+        grid-column-end: 3;
+        grid-row-start: 4;
+        grid-row-end: 5;
+    }
+
+    @media (max-width: 639px) {
+        display: none;
+    }
+}

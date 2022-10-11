@@ -18,6 +18,7 @@ import {
 
 import { MinWalletVersion } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
+import { useStaticRpc } from '@/hooks/useStaticRpc'
 import {
     connectToWallet,
     DexAbi,
@@ -67,6 +68,7 @@ const DEFAULT_WALLET_STATE: WalletState = {
     isUpdatingContract: false,
 }
 
+const staticRpc = useStaticRpc()
 const rpc = useRpc()
 
 
@@ -87,11 +89,14 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         })
 
         makeObservable(this, {
-            connect: action.bound,
-            disconnect: action.bound,
+            account: computed,
             address: computed,
             balance: computed,
             balanceNumber: computed,
+            coin: computed,
+            connect: action.bound,
+            contract: computed,
+            disconnect: action.bound,
             hasProvider: computed,
             isConnected: computed,
             isConnecting: computed,
@@ -100,9 +105,6 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
             isOutdated: computed,
             isReady: computed,
             isUpdatingContract: computed,
-            account: computed,
-            coin: computed,
-            contract: computed,
             walletContractCallbacks: computed,
         })
 
@@ -160,7 +162,8 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         }
 
         try {
-            await connectToWallet()
+            const account = await connectToWallet()
+            this.setData('account', account)
         }
         catch (e) {
             error('Wallet connect error', e)
@@ -363,7 +366,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      */
     public get walletContractCallbacks(): Contract<typeof DexAbi.Callbacks> | undefined {
         return this.account?.address !== undefined
-            ? new rpc.Contract(DexAbi.Callbacks, this.account.address)
+            ? new staticRpc.Contract(DexAbi.Callbacks, this.account.address)
             : undefined
     }
 
@@ -378,13 +381,6 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         let hasProvider = false
 
         try {
-            await rpc.ensureInitialized()
-        }
-        catch (e) {
-            return
-        }
-
-        try {
             hasProvider = await hasEverscaleProvider()
         }
         catch (e) {}
@@ -397,13 +393,16 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
             return
         }
 
-        this.setState('hasProvider', hasProvider)
+        try {
+            await rpc.ensureInitialized()
+        }
+        catch (e) {
+            return
+        }
 
-        this.setState('isConnecting', true)
-
-        const permissionsSubscriber = await rpc.subscribe('permissionsChanged')
-        permissionsSubscriber.on('data', event => {
-            this.setData('account', event.permissions.accountInteraction)
+        this.setState({
+            hasProvider,
+            isConnecting: true,
         })
 
         const currentProviderState = await rpc.getProviderState()
@@ -417,14 +416,22 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
             return
         }
 
-        this.setData('version', currentProviderState.version)
+        const account = await connectToWallet()
 
-        await connectToWallet()
+        this.setData({
+            account,
+            version: currentProviderState.version,
+        })
 
         this.setState({
             isConnecting: false,
             isInitialized: true,
             isInitializing: false,
+        })
+
+        const permissionsSubscriber = await rpc.subscribe('permissionsChanged')
+        permissionsSubscriber.on('data', event => {
+            this.setData('account', event.permissions.accountInteraction)
         })
     }
 
@@ -498,7 +505,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @protected
      */
     protected reset(): void {
-        this.setData(DEFAULT_WALLET_DATA)
+        this.setData(() => DEFAULT_WALLET_DATA)
     }
 
     /**
@@ -530,4 +537,3 @@ export function useWallet(): WalletService {
     }
     return wallet
 }
-

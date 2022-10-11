@@ -1,0 +1,50 @@
+.stats {
+    &_content_placeholder {
+        margin: 25px;
+    }
+
+    &_chart_holder {
+        align-items: center;
+        display: flex;
+        gap: 20px;
+        height: 100%;
+        justify-content: center;
+    }
+
+    &_legend__color {
+        height: 8px;
+        width: 8px;
+    }
+
+    &_left_legend,
+    &_right_legend {
+        align-items: flex-end;
+        display: flex;
+        flex-flow: column wrap;
+        gap: 8px;
+        text-align: right;
+        width: calc((100% - 280px) / 2);
+
+        &__item {
+            align-items: center;
+            color: rgb(255 255 255 / 48%);
+            display: flex;
+            font-size: 14px;
+            gap: 8px;
+            line-height: 20px;
+        }
+
+        &__label {
+            display: inline-block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100px;
+        }
+    }
+
+    &_right_legend {
+        align-items: flex-start;
+        text-align: left;
+    }
+}

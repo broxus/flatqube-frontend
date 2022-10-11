@@ -1,10 +1,17 @@
 import {
     AreaSeriesPartialOptions,
+    BarPrice,
+    BusinessDay,
     CandlestickSeriesPartialOptions,
     ChartOptions,
     DeepPartial,
     HistogramSeriesPartialOptions,
+    TickMarkType,
+    UTCTimestamp,
 } from 'lightweight-charts'
+import { DateTime } from 'luxon'
+
+import { formattedAmount } from '@/utils'
 
 
 export const chartOptions: DeepPartial<ChartOptions> = {
@@ -35,7 +42,29 @@ export const chartOptions: DeepPartial<ChartOptions> = {
     },
     timeScale: {
         borderColor: 'rgba(0, 0, 0, 0)',
+        fixRightEdge: true,
         secondsVisible: false,
+        tickMarkFormatter: (time: UTCTimestamp | BusinessDay, tickMarkType: TickMarkType) => {
+            let datetime = typeof time === 'number' ? DateTime.fromSeconds(time) : undefined
+
+            if (typeof time === 'object' && !Array.isArray(time)) {
+                datetime = DateTime.fromObject(time)
+            }
+
+            if (tickMarkType === TickMarkType.Year) {
+                return datetime?.toFormat('LLL, yyyy')
+            }
+            if (tickMarkType === TickMarkType.DayOfMonth) {
+                return datetime?.toFormat('ccc, dd')
+            }
+            if (tickMarkType === TickMarkType.Month) {
+                return datetime?.toFormat('LLL, yyyy')
+            }
+            if (tickMarkType === TickMarkType.Time) {
+                return datetime?.toFormat('HH:mm')
+            }
+            return datetime?.toFormat('ccc, dd')
+        },
         timeVisible: true,
     },
 }
@@ -62,6 +91,14 @@ export const areaStyles: AreaSeriesPartialOptions = {
         type: 'volume',
     },
     topColor: 'rgba(197, 228, 243, 0.16)',
+}
+
+export const candlestickOptions: DeepPartial<ChartOptions> = {
+    localization: {
+        priceFormatter: (price: BarPrice) => formattedAmount(price, undefined, {
+            precision: 1,
+        }).toLowerCase(),
+    },
 }
 
 export const candlesticksStyles: CandlestickSeriesPartialOptions = {

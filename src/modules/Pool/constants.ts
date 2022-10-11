@@ -8,8 +8,6 @@ import {
 export const DEFAULT_POOL_STORE_DATA: PoolStoreData = {
     leftAmount: '',
     rightAmount: '',
-    leftToken: undefined,
-    rightToken: undefined,
 }
 
 export const DEFAULT_POOL_STORE_STATE: PoolStoreState = {

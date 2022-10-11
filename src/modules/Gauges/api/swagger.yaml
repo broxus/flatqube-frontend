@@ -1,0 +1,732 @@
+openapi: 3.0.3
+info:
+  title: QUBE Farming API
+  version: 1.0.0
+tags:
+- name: deposits
+- name: gauges
+- name: reward_rounds
+- name: transactions
+servers:
+- url: https://qube-farming-test.flatqube.io
+- url: https://qube-farming.flatqube.io
+paths:
+  /reward-rounds/qube:
+    post:
+      tags:
+      - reward_round
+      summary: Get qube reward rounds
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewardRoundRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardRoundResponse'
+  /reward-rounds/tokens:
+    post:
+      tags:
+      - reward_round
+      summary: Get token reward rounds
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RewardRoundRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardRoundResponse'
+  /transactions:
+    post:
+      tags:
+      - transactions
+      summary: Get gauge transactions
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+  /deposits:
+    post:
+      tags:
+      - deposits
+      summary: Get user deposits
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepositRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepositResponse'
+  /gauges:
+    post:
+      tags:
+      - gauges
+      summary: Get gauge list
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GaugeListRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaugeResponse'
+  /gauges/batch:
+    post:
+      tags:
+      - gauges
+      summary: Get gauge list batched
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GaugeBatchRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaugeBatchResponse'
+  /gauges/starred:
+    post:
+      tags:
+      - gauges
+      summary: Get starred gauges
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StarredGaugeRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaugeResponse'
+  /gauges/get:
+    post:
+      tags:
+      - gauges
+      summary: Get gauge by address
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SingleGaugeRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SingleGaugeResponse'
+  /gauges/tvl:
+    post:
+      tags:
+      - gauges
+      summary: Get gauge tvl
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatResponse'
+  /gauges/min-apr:
+    post:
+      tags:
+      - gauges
+      summary: Get gauge min-apr
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatResponse'
+  /gauges/max-apr:
+    post:
+      tags:
+      - gauges
+      summary: Get gauge max-apr
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatResponse'
+  /gauges/user-history-balance:
+    post:
+      tags:
+      - gauges
+      summary: Get user history balance with lb breakdown
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserBalanceRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserBalancesResponse'
+components:
+  schemas:
+    Deposit:
+      type: object
+      properties:
+        boost:
+          description: Decimal value
+          type: string
+        endLock:
+          nullable: true
+          type: integer
+          format: uint32
+        lockPeriod:
+          nullable: true
+          type: integer
+          format: uint32
+        lpAmount:
+          description: Decimal value
+          type: string
+        state:
+          $ref: '#/components/schemas/DepositState'
+        timestamp:
+          type: integer
+          format: uint32
+      required:
+      - lpAmount
+      - state
+      - timestamp
+      - boost
+      - lockPeriod
+      - endLock
+    DepositRequest:
+      type: object
+      properties:
+        gaugeAddress:
+          type: string
+        limit:
+          type: integer
+          format: uint32
+        offset:
+          type: integer
+          format: uint32
+        userAddress:
+          type: string
+      required:
+      - gaugeAddress
+      - userAddress
+      - limit
+      - offset
+    DepositResponse:
+      type: object
+      properties:
+        deposits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deposit'
+        total:
+          type: integer
+          format: uint32
+      required:
+      - deposits
+      - total
+    DepositState:
+      type: string
+      enum:
+      - locked
+      - unlocked
+      - noBoost
+      example: locked
+    EventType:
+      type: string
+      enum:
+      - claim
+      - deposit
+      - withdraw
+      - rewardDeposit
+      example: claim
+    FromTo:
+      nullable: true
+      type: object
+      properties:
+        from:
+          description: Decimal value
+          type: string
+        to:
+          description: Decimal value
+          type: string
+    GaugeBatchRequest:
+      type: object
+      properties:
+        gauges:
+          type: array
+          items:
+            type: string
+      required:
+      - gauges
+    GaugeBatchResponse:
+      type: object
+      properties:
+        gauges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GaugeItem'
+      required:
+      - gauges
+    GaugeItem:
+      type: object
+      properties:
+        address:
+          type: string
+        depositTokenRoot:
+          type: string
+        endTime:
+          nullable: true
+          type: integer
+          format: uint32
+        isLowBalance:
+          type: boolean
+        maxApr:
+          description: Decimal value
+          type: string
+        maxAprChange:
+          description: Decimal value
+          type: string
+        minApr:
+          description: Decimal value
+          type: string
+        minAprChange:
+          description: Decimal value
+          type: string
+        poolTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoolTokenInfo'
+        rewardTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardTokenInfo'
+        startTime:
+          nullable: true
+          type: integer
+          format: uint32
+        tvl:
+          description: Decimal value
+          type: string
+        tvlChange:
+          description: Decimal value
+          type: string
+      required:
+      - address
+      - depositTokenRoot
+      - poolTokens
+      - rewardTokens
+      - tvl
+      - tvlChange
+      - minApr
+      - minAprChange
+      - maxApr
+      - maxAprChange
+      - isLowBalance
+      - startTime
+      - endTime
+    GaugeListRequest:
+      type: object
+      properties:
+        additionalTokenRoots:
+          type: array
+          items:
+            type: string
+        limit:
+          type: integer
+          format: uint32
+        maxApr:
+          $ref: '#/components/schemas/FromTo'
+        minApr:
+          $ref: '#/components/schemas/FromTo'
+        offset:
+          type: integer
+          format: uint32
+        showLowBalance:
+          nullable: true
+          type: boolean
+        starredGauges:
+          nullable: true
+          type: array
+          items:
+            type: string
+        tvl:
+          $ref: '#/components/schemas/FromTo'
+        whitelistUri:
+          type: string
+      required:
+      - whitelistUri
+      - limit
+      - offset
+    GaugeResponse:
+      type: object
+      properties:
+        gauges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GaugeItem'
+        total:
+          type: integer
+          format: uint32
+      required:
+      - gauges
+      - total
+    HistoryBalance:
+      type: object
+      properties:
+        balance:
+          description: Decimal value
+          type: string
+        lastUpdated:
+          nullable: true
+          type: integer
+          format: int64
+        lpBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoolTokenInfo'
+      required:
+      - balance
+      - lpBreakdown
+      - lastUpdated
+    PoolTokenInfo:
+      type: object
+      properties:
+        amount:
+          description: Decimal value
+          type: string
+        tokenRoot:
+          type: string
+        tokenSymbol:
+          type: string
+      required:
+      - tokenRoot
+      - tokenSymbol
+      - amount
+    RewardRound:
+      type: object
+      properties:
+        endDate:
+          nullable: true
+          type: integer
+          format: uint64
+        id:
+          type: integer
+          format: uint32
+        rewardTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardToken'
+        startDate:
+          type: integer
+          format: uint64
+      required:
+      - id
+      - rewardTokens
+      - startDate
+      - endDate
+    RewardRoundRequest:
+      type: object
+      properties:
+        gaugeAddress:
+          type: string
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+      required:
+      - gaugeAddress
+      - limit
+      - offset
+    RewardRoundResponse:
+      type: object
+      properties:
+        rewardRounds:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardRound'
+        total:
+          type: integer
+          format: uint32
+      required:
+      - rewardRounds
+      - total
+    RewardToken:
+      type: object
+      properties:
+        budget:
+          description: Decimal value
+          type: string
+        farmingSpeed:
+          description: Decimal value
+          type: string
+        tokenRoot:
+          type: string
+        tokenSymbol:
+          type: string
+      required:
+      - budget
+      - farmingSpeed
+      - tokenRoot
+      - tokenSymbol
+    RewardTokenInfo:
+      type: object
+      properties:
+        tokenRoot:
+          type: string
+        tokenSymbol:
+          type: string
+      required:
+      - tokenRoot
+      - tokenSymbol
+    SingleGaugeRequest:
+      type: object
+      properties:
+        gaugeAddress:
+          type: string
+      required:
+      - gaugeAddress
+    SingleGaugeResponse:
+      type: object
+      properties:
+        gauge:
+          $ref: '#/components/schemas/GaugeItem'
+      required:
+      - gauge
+    StarredGaugeRequest:
+      type: object
+      properties:
+        gaugeAddresses:
+          type: array
+          items:
+            type: string
+        limit:
+          type: integer
+          format: uint32
+        offset:
+          type: integer
+          format: uint32
+      required:
+      - gaugeAddresses
+      - offset
+      - limit
+    StatRequest:
+      type: object
+      properties:
+        from:
+          type: integer
+          format: uint64
+        gaugeAddress:
+          type: string
+        timeframe:
+          $ref: '#/components/schemas/Timeframe'
+        to:
+          type: integer
+          format: uint64
+      required:
+      - gaugeAddress
+      - from
+      - to
+      - timeframe
+    StatResponse:
+      type: object
+      properties:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatValue'
+      required:
+      - stats
+    StatValue:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          format: uint64
+        value:
+          description: Decimal value
+          type: string
+      required:
+      - value
+      - timestamp
+    Timeframe:
+      type: string
+      enum:
+      - H1
+      - D1
+      example: H1
+    Token:
+      type: object
+      properties:
+        amount:
+          description: Decimal value
+          type: string
+        tokenRoot:
+          type: string
+        tokenSymbol:
+          type: string
+        value:
+          description: Decimal value
+          type: string
+      required:
+      - tokenRoot
+      - tokenSymbol
+      - value
+      - amount
+    Transaction:
+      type: object
+      properties:
+        gaugeAddress:
+          type: string
+        kind:
+          $ref: '#/components/schemas/EventType'
+        timestamp:
+          type: integer
+          format: uint64
+        tokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/Token'
+        txHash:
+          type: string
+        userAddress:
+          type: string
+      required:
+      - kind
+      - gaugeAddress
+      - txHash
+      - userAddress
+      - timestamp
+      - tokens
+    TransactionRequest:
+      type: object
+      properties:
+        eventTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventType'
+        gaugeAddress:
+          type: string
+        limit:
+          type: integer
+          format: uint32
+        offset:
+          type: integer
+          format: uint32
+        userAddress:
+          nullable: true
+          type: string
+      required:
+      - eventTypes
+      - limit
+      - offset
+      - userAddress
+      - gaugeAddress
+    TransactionResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: uint32
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+      required:
+      - transactions
+      - total
+    UserBalanceRequest:
+      type: object
+      properties:
+        gaugeAddress:
+          type: string
+        userAddress:
+          type: string
+      required:
+      - gaugeAddress
+      - userAddress
+    UserBalancesResponse:
+      type: object
+      properties:
+        historyBalance:
+          $ref: '#/components/schemas/HistoryBalance'
+      required:
+      - historyBalance
