@@ -1,0 +1,90 @@
+@import '@/styles/mix';
+
+.item {
+    @include btn-reset;
+}
+
+.trigger {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 20px;
+    letter-spacing: 0.6px;
+    display: flex;
+    align-items: center;
+    grid-gap: 4px;
+    cursor: pointer;
+
+    .arrow {
+        path {
+            fill: currentColor;
+        }
+        svg {
+            transition: transform 0.25s ease;
+        }
+    }
+
+    &.gray {
+        color: rgba(255, 255, 255, 0.48);
+
+        &:hover {
+            color: #fff;
+        }
+    }
+
+    &.light {
+        color: #C5E4F3;
+    }
+
+    &:global(.open) {
+        .arrow {
+            svg {
+                transform: rotate(180deg);
+            }
+        }
+
+        &.gray {
+            color: #fff;
+        }
+    }
+}
+
+.dropdown {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.inner {
+    background: #313551;
+
+    @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+        background: linear-gradient(0deg, rgb(5 11 46 / 12%), rgb(5 11 46 / 12%)), rgb(255 255 255 / 12%);
+        -webkit-backdrop-filter: blur(64px);
+        backdrop-filter: blur(64px);
+    }
+}
+
+.item {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.48);
+    transition: 0.25s;
+
+    &:hover,
+    &.active {
+        color: #fff;
+    }
+
+    &:first-child {
+        padding-top: 15px;
+    }
+
+    &:last-child {
+        padding-bottom: 15px;
+    }
+}

@@ -1,0 +1,28 @@
+.favoriteBtn {
+    display: flex;
+    align-items: center;
+    grid-gap: 4px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.48);
+    transition: color 0.25s ease;
+
+    &:hover {
+        color: #fff;
+    }
+}
+
+.icon {
+    svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    &.active {
+        path {
+            fill: #E6AC00;
+            stroke: #E6AC00;
+        }
+    }
+}

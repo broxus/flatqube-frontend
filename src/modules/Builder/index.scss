@@ -1,3 +1,5 @@
+@import '@/styles/variables.scss';
+
 .builder {
     header {
         > * {
@@ -34,7 +36,7 @@
             width: 100%;
         }
 
-        @media only screen and (min-width: 768px) {
+        @media only screen and (min-width: $breakpoint-medium) {
             flex-direction: row;
 
             &__part:first-child {

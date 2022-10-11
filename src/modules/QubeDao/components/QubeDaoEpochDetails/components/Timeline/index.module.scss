@@ -1,0 +1,115 @@
+.timeline {
+    align-items: center;
+    display: grid;
+    flex-flow: row nowrap;
+
+    &_content_loader {
+        min-height: 96px;
+    }
+
+    &_epoch {
+        align-items: flex-start;
+        display: flex;
+        flex: 1;
+        flex-flow: column wrap;
+    }
+
+    &_calendar {
+        align-items: flex-start;
+        display: flex;
+        flex-flow: row nowrap;
+        width: 100%;
+    }
+
+    &_item {
+        flex: auto;
+        min-width: 60px;
+        position: relative;
+
+        &__today {
+            background-image: linear-gradient(180deg, rgb(255 255 255 / 0%) 0%, rgb(255 255 255 / 16%) 100%);
+        }
+
+        &_date {
+            box-sizing: border-box;
+            padding: 8px 10px 10px;
+            position: relative;
+            text-align: center;
+
+            &_week,
+            &_day {
+                color: rgb(255 255 255 / 48%);
+                font-size: 12px;
+                line-height: 16px;
+            }
+
+            &_week {
+                margin-bottom: 6px;
+            }
+
+            &_day__epoch {
+                color: #fff;
+            }
+        }
+
+        &_scale {
+            align-items: center;
+            background-image: linear-gradient(180deg, rgb(255 255 255 / 8%) 0%, rgb(255 255 255 / 0%) 100%);
+            border-top: 2px solid rgb(255 255 255 / 48%);
+            display: flex;
+            height: 40px;
+            overflow: hidden;
+            white-space: nowrap;
+            width: 100%;
+
+            &__awaiting,
+            &__queued {
+                background-image: linear-gradient(180deg, rgb(255 255 255 / 16%) 0%, rgb(255 255 255 / 0%) 100%);
+                border-top-color: #fff;
+            }
+
+            &__voting {
+                background-image: linear-gradient(180deg, rgb(74 180 74 / 16%) 0%, rgb(74 180 74 / 0%) 100%);
+                border-top-color: #4ab44a;
+            }
+
+            &_text {
+                box-sizing: border-box;
+                color: rgb(255 255 255 / 48%);
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: 0.75px;
+                padding: 0 0 0 16px;
+
+                &__epoch { color: #fff; }
+                &__voting { color: #4ab44a; }
+            }
+
+            &_wrapper {
+                align-items: flex-start;
+                display: flex;
+                flex: 1;
+                width: 100%;
+            }
+        }
+    }
+
+    &_cursor {
+        background-color: #fff;
+        bottom: -56px;
+        height: 56px;
+        position: absolute;
+        width: 1px;
+
+        &::before {
+            background-color: #fff;
+            border-radius: 50%;
+            content: '';
+            height: 7px;
+            left: -3px;
+            position: absolute;
+            top: -7px;
+            width: 7px;
+        }
+    }
+}

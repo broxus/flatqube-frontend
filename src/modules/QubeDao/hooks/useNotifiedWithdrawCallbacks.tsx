@@ -1,0 +1,146 @@
+import * as React from 'react'
+import type { DelayedMessageExecution } from 'everscale-inpage-provider'
+import { useIntl } from 'react-intl'
+import { toast } from 'react-toastify'
+
+import { TransactionExplorerLink } from '@/components/common/TransactionExplorerLink'
+import { notify, NotifyType } from '@/modules/Notification'
+import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
+import type {
+    QubeDaoWithdrawCallbacks,
+    QubeDaoWithdrawSendCallbackParams,
+    QubeDaoWithdrawSuccessResult,
+} from '@/modules/QubeDao/stores/QubeDaoStore'
+import type {
+    SendMessageCallbackParams,
+    TransactionFailureReason,
+    TransactionSuccessResult,
+} from '@/modules/QubeDao/types'
+import { formattedTokenAmount, isMobile } from '@/utils'
+
+export function useNotifiedWithdrawCallbacks(props: QubeDaoWithdrawCallbacks): QubeDaoWithdrawCallbacks {
+    const intl = useIntl()
+
+    const daoContext = useQubeDaoContext()
+
+    const {
+        onSend: onSendCallback,
+        onTransactionFailure: onTransactionFailureCallback,
+        onTransactionSuccess: onTransactionSuccessCallback,
+    } = props
+
+    const onClickActionButton = (event: React.MouseEvent<HTMLAnchorElement>) => {
+        event.stopPropagation()
+    }
+
+    const onSend = React.useCallback((
+        message: DelayedMessageExecution,
+        params: SendMessageCallbackParams<QubeDaoWithdrawSendCallbackParams>,
+    ) => {
+        onSendCallback?.(message, params)
+        notify(
+            <div className="notification-body">
+                {intl.formatMessage({ id: 'QUBE_DAO_NOTIFICATION_PENDING_WITHDRAW_NOTE' })}
+            </div>,
+            intl.formatMessage(
+                { id: 'QUBE_DAO_NOTIFICATION_PENDING_WITHDRAW_TITLE' },
+                {
+                    amount: formattedTokenAmount(params.amount, daoContext.tokenDecimals),
+                    symbol: daoContext.tokenSymbol,
+                },
+            ),
+            {
+                autoClose: false,
+                closeOnClick: false,
+                isLoading: true,
+                toastId: `toast__${params.callId}`,
+                type: NotifyType.INFO,
+            },
+        )
+    }, [onSendCallback])
+
+    const onTransactionSuccess = React.useCallback((
+        result: TransactionSuccessResult<QubeDaoWithdrawSuccessResult>,
+    ) => {
+        onTransactionSuccessCallback?.(result)
+        notify(
+            <>
+                <div className="notification-body">
+                    {intl.formatMessage(
+                        { id: 'QUBE_DAO_NOTIFICATION_SUCCESS_WITHDRAW_NOTE' },
+                        {
+                            amount: formattedTokenAmount(result.input.amount, daoContext.tokenDecimals),
+                            symbol: daoContext.tokenSymbol,
+                        },
+                    )}
+                </div>
+                <div className="notification-actions">
+                    <TransactionExplorerLink
+                        className={!isMobile(navigator.userAgent) ? 'btn btn-secondary' : undefined}
+                        id={result.transaction.id.hash}
+                        onClick={onClickActionButton}
+                    >
+                        {intl.formatMessage({ id: 'QUBE_DAO_NOTIFICATION_TRANSACTION_DETAILS_LINK_TXT' })}
+                    </TransactionExplorerLink>
+                </div>
+            </>,
+            intl.formatMessage({ id: 'QUBE_DAO_NOTIFICATION_SUCCESS_WITHDRAW_TITLE' }),
+            {
+                autoClose: 10000,
+                closeOnClick: true,
+                isLoading: false,
+                toastId: `toast__${result.callId}`,
+                type: NotifyType.SUCCESS,
+                update: toast.isActive(`toast__${result.callId}`),
+
+            },
+        )
+    }, [onTransactionSuccessCallback])
+
+    const onTransactionFailure = React.useCallback((reason: TransactionFailureReason) => {
+        onTransactionFailureCallback?.(reason)
+        const isReverted = reason.message === 'WithdrawRevert'
+        notify(
+            <>
+                <div className="notification-body">
+                    {isReverted ? intl.formatMessage(
+                        { id: 'QUBE_DAO_NOTIFICATION_FAILURE_WITHDRAW_REVERT_NOTE' },
+                    ) : reason.message}
+                </div>
+                {reason.transaction?.id.hash !== undefined && (
+                    <div className="notification-actions">
+                        <TransactionExplorerLink
+                            className={!isMobile(navigator.userAgent) ? 'btn btn-secondary' : undefined}
+                            id={reason.transaction.id.hash}
+                            onClick={onClickActionButton}
+                        >
+                            {intl.formatMessage({
+                                id: 'QUBE_DAO_NOTIFICATION_TRANSACTION_DETAILS_LINK_TXT',
+                            })}
+                        </TransactionExplorerLink>
+                    </div>
+                )}
+            </>,
+            intl.formatMessage({
+                id: isReverted
+                    ? 'QUBE_DAO_NOTIFICATION_FAILURE_WITHDRAW_REVERT_TITLE'
+                    : 'QUBE_DAO_NOTIFICATION_FAILURE_WITHDRAW_TITLE',
+            }),
+            {
+                autoClose: 10000,
+                closeOnClick: true,
+                isLoading: false,
+                toastId: `toast__${reason.callId}`,
+                type: isReverted ? NotifyType.WARNING : NotifyType.ERROR,
+                update: toast.isActive(`toast__${reason.callId}`),
+
+            },
+        )
+    }, [onTransactionFailureCallback])
+
+    return {
+        onSend,
+        onTransactionFailure,
+        onTransactionSuccess,
+    }
+}

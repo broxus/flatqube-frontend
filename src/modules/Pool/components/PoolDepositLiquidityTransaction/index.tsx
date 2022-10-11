@@ -154,7 +154,7 @@ export function PoolDepositLiquidityTransaction({ onDismiss }: Props): JSX.Eleme
                                             </div>
                                         </div>
                                     )}
-                                    <hr className="divider" />
+                                    <hr className="divider divider-dashed" />
                                     <div
                                         className="popup-txt"
                                         dangerouslySetInnerHTML={{

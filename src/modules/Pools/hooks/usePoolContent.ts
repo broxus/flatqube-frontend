@@ -2,16 +2,15 @@ import * as React from 'react'
 import { useParams } from 'react-router-dom'
 import { Address } from 'everscale-inpage-provider'
 import BigNumber from 'bignumber.js'
-import { useIntl } from 'react-intl'
 
 import { PairResponse } from '@/modules/Pairs/types'
 import { FarmingPoolsItemResponse, RewardTokenRootInfo } from '@/modules/Farming/types'
 import { useWallet } from '@/stores/WalletService'
 import { TokenCache, useTokensCache } from '@/stores/TokensCacheService'
 import { useApi } from '@/modules/Pools/hooks/useApi'
-import { FarmingTableProps } from '@/modules/Farming/components/FarmingTable'
 import {
-    error, formattedAmount, formattedTokenAmount,
+    error,
+    formattedTokenAmount,
     getPrice,
     shareAmount,
 } from '@/utils'
@@ -21,7 +20,6 @@ import {
     PoolData,
     UserPendingReward,
 } from '@/misc'
-import { appRoutes } from '@/routes'
 
 type RewardInfo = {
     vested: string;
@@ -49,15 +47,15 @@ export type PoolContent = {
     totalLp?: string;
     totalLeft?: string;
     totalRight?: string;
-    farmItems?: FarmingTableProps['items'];
     pool?: PoolData;
     pairAddress?: string;
     ownerAddress?: string;
     leftToken?: TokenCache;
     rightToken?: TokenCache;
     totalShare?: string;
-    farmLoading?: boolean;
+    farmingLoading?: boolean;
     notFounded?: boolean;
+    farming?: FarmInfo[];
 }
 
 type Params = {
@@ -65,15 +63,14 @@ type Params = {
 }
 
 export function usePoolContent(): PoolContent {
-    const intl = useIntl()
     const api = useApi()
     const params = useParams<Params>()
     const wallet = useWallet()
     const tokensCache = useTokensCache()
     const [pool, setPool] = React.useState<PoolData | undefined>()
     const [pair, setPair] = React.useState<PairResponse | undefined>()
-    const [farm, setFarm] = React.useState<FarmInfo[]>([])
-    const [farmLoading, setFarmLoading] = React.useState(true)
+    const [farming, setFarming] = React.useState<FarmInfo[]>([])
+    const [farmingLoading, setFarmingLoading] = React.useState(true)
     const [notFounded, setNotFounded] = React.useState(false)
 
     if (!wallet.address) {
@@ -115,10 +112,10 @@ export function usePoolContent(): PoolContent {
     }, [pair, pool])
 
     const lockedLp = React.useMemo(() => (
-        pool && farm.reduce((acc, item) => (
+        pool && farming.reduce((acc, item) => (
             acc.plus(item.info.user_token_balance)
         ), new BigNumber(0)).shiftedBy(pool.lp.decimals).toFixed()
-    ), [pool, farm])
+    ), [pool, farming])
 
     const lockedLeft = React.useMemo(() => (
         pool && lockedLp && shareAmount(
@@ -183,53 +180,6 @@ export function usePoolContent(): PoolContent {
                 .toFixed()
             : undefined
     ), [pool, totalLp])
-
-    const farmItems = React.useMemo(() => (
-        farm.map(({ info, balance: { reward }}) => ({
-            tvl: info.tvl,
-            tvlChange: info.tvl_change,
-            apr: formattedAmount(info.apr, undefined, { preserve: true }),
-            aprChange: info.apr_change,
-            share: formattedAmount(info.share, undefined, { preserve: true }),
-            startTime: info.farm_start_time,
-            endTime: info.farm_end_time,
-            leftToken: {
-                address: info.left_address as string,
-                name: info.left_currency as string,
-                icon: tokensCache.get(info.left_address)?.icon,
-            },
-            rightToken: {
-                address: info.right_address as string,
-                name: info.right_currency as string,
-                icon: tokensCache.get(info.right_address)?.icon,
-            },
-            rewardsIcons: info.reward_token_root_info.map(rewardToken => ({
-                address: rewardToken.reward_root_address,
-                icon: tokensCache.get(rewardToken.reward_root_address)?.icon,
-            })),
-            vestedRewards: reward.map(({ vested, symbol }) => (
-                intl.formatMessage({
-                    id: 'POOLS_LIST_TOKEN_BALANCE',
-                }, {
-                    symbol,
-                    value: formattedTokenAmount(vested),
-                })
-            )),
-            entitledRewards: reward.map(({ entitled, symbol }) => (
-                intl.formatMessage({
-                    id: 'POOLS_LIST_TOKEN_BALANCE',
-                }, {
-                    symbol,
-                    value: formattedTokenAmount(entitled),
-                })
-            )),
-            poolAddress: info.pool_address,
-            link: appRoutes.farmingItem.makeUrl({
-                address: info.pool_address,
-            }),
-            balanceWarning: info.is_low_balance,
-        }))
-    ), [farm])
 
     const getFarmingPools = async (
         root: Address,
@@ -365,23 +315,22 @@ export function usePoolContent(): PoolContent {
 
     const syncFarmData = async () => {
         if (pool && wallet.address) {
-            setFarmLoading(true)
+            setFarmingLoading(true)
             try {
-                const farmData = await getFarmData(
+                setFarming(await getFarmData(
                     new Address(pool.lp.address),
                     new Address(wallet.address),
-                )
-                setFarm(farmData)
+                ))
             }
             catch (e) {
                 error(e)
             }
             finally {
-                setFarmLoading(false)
+                setFarmingLoading(false)
             }
         }
         else {
-            setFarm([])
+            setFarming([])
         }
     }
 
@@ -398,6 +347,8 @@ export function usePoolContent(): PoolContent {
     }, [pool])
 
     return {
+        farming,
+        farmingLoading,
         priceLeftToRight,
         priceRightToLeft,
         lockedLp,
@@ -408,12 +359,10 @@ export function usePoolContent(): PoolContent {
         totalLp,
         totalLeft,
         totalRight,
-        farmItems,
         pool,
         leftToken,
         rightToken,
         totalShare,
-        farmLoading,
         notFounded,
         pairAddress: params.address,
         ownerAddress: wallet.address,

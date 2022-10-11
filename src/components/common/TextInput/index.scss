@@ -3,9 +3,10 @@
 .text-input {
     @include input-reset;
 
-    border: 1px solid rgb(255 255 255 / 16%);
+    box-sizing: border-box;
     color: #fff;
     cursor: text;
+    flex: 1;
     font-size: 14px;
     height: 36px;
     padding: 0 12px;
@@ -15,15 +16,58 @@
     }
 
     &:disabled {
-        color: rgb(255 255 255 / 72%);
+        color: rgba(255, 255, 255, 0.32);
+        background: rgba(0, 0, 0, 0.08);
+        cursor: not-allowed;
     }
 
-    &_dirty {
-        border-color: rgb(255 255 255 / 24%);
+    &_wrapper {
+        align-items: center;
+        border: 1px solid rgb(255 255 255 / 16%);
+        box-sizing: border-box;
+        display: flex;
+        flex-flow: row nowrap;
+        gap: 4px;
+
+        &--dirty {
+            border-color: rgb(255 255 255 / 24%);
+        }
+
+        &--invalid {
+            border-color: #eb4361;
+        }
     }
 
-    &_invalid {
-        border-color: #eb4361;
+    &_input,
+    &_prefix,
+    &_suffix {
+        box-sizing: border-box;
+        display: inline-flex;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    &_input {
+        flex: 1;
+        min-width: 1px;
+
+        &:not(:last-child) {
+            > .text-input { padding-right: 4px }
+        }
+    }
+
+    &_prefix {
+        padding-left: 12px;
+        width: auto;
+
+        + .text-input_input .text-input {
+            padding-left: 4px;
+        }
+    }
+
+    &_suffix {
+        padding-right: 4px;
+        width: auto;
     }
 
     &_size {

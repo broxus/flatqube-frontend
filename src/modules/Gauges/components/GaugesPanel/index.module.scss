@@ -1,0 +1,27 @@
+.panel {
+    display: flex;
+    flex-direction: column;
+    grid-gap: 16px;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.08);
+
+    @media (max-width: 959px) {
+        padding: 16px;
+    }
+
+    &.red {
+        background: radial-gradient(100% 100% at 100% 0%, rgba(235, 67, 97, 0.32) 0%, rgba(235, 67, 97, 0) 100%), rgba(255, 255, 255, 0.08);
+    }
+
+    &.yellow {
+        background: radial-gradient(100% 100% at 100% 0%, rgba(230, 172, 0, 0.32) 0%, rgba(230, 172, 0, 0) 100%), rgba(255, 255, 255, 0.08);
+    }
+
+    &.green {
+        background: radial-gradient(100% 100% at 100% 0%, rgba(74, 180, 74, 0.32) 0%, rgba(74, 180, 74, 0) 100%), rgba(255, 255, 255, 0.08);
+    }
+
+    &.blue {
+        background: radial-gradient(100% 100% at 100% 0%, rgba(0, 56, 255, 0.2) 0%, rgba(0, 56, 255, 0) 100%), rgba(255, 255, 255, 0.08);
+    }
+}

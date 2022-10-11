@@ -7,6 +7,7 @@ import {
     BrowserRouter as Router,
     Switch,
 } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
 import { Observer } from 'mobx-react-lite'
 
 import { ScrollManager } from '@/components/layout/ScrollManager'
@@ -22,6 +23,9 @@ import CustomToken from '@/pages/builder/token'
 import Farming from '@/pages/farming'
 import FarmingItem from '@/pages/farming/item'
 import CreateFarmPool from '@/pages/farming/create'
+import DAO from '@/pages/dao'
+import Balance from '@/pages/dao/balance'
+import Epoch from '@/pages/dao/epoch'
 import Pairs from '@/pages/pairs'
 import Pair from '@/pages/pairs/item'
 import AddLiquidityPool from '@/pages/pool'
@@ -30,6 +34,9 @@ import Tokens from '@/pages/tokens'
 import Token from '@/pages/tokens/item'
 import Pools from '@/pages/pools'
 import Pool from '@/pages/pools/item'
+import GaugesCreate from '@/pages/gauges/create'
+import GaugesList from '@/pages/gauges/index'
+import GaugesItem from '@/pages/gauges/item'
 import BurnLiquidity from '@/pages/pools/burn-liquidity'
 import { appRoutes } from '@/routes'
 import { useUpgradeTokens } from '@/stores/UpgradeTokens'
@@ -111,6 +118,26 @@ export function App(): JSX.Element {
                                     <FarmingItem />
                                 </Route>
 
+                                <Route exact path={appRoutes.dao.path}>
+                                    <DAO />
+                                </Route>
+                                <Route exact path={appRoutes.daoEpoch.path}>
+                                    <Epoch />
+                                </Route>
+                                <Route exact path={appRoutes.daoBalance.path}>
+                                    <Balance />
+                                </Route>
+
+                                <Route exact path={appRoutes.gauges.path}>
+                                    <GaugesList />
+                                </Route>
+                                <Route exact path={appRoutes.gaugesCreate.path}>
+                                    <GaugesCreate />
+                                </Route>
+                                <Route exact path={appRoutes.gaugesItem.path}>
+                                    <GaugesItem />
+                                </Route>
+
                                 <Route exact path={appRoutes.builder.path}>
                                     <Builder />
                                 </Route>
@@ -125,21 +152,24 @@ export function App(): JSX.Element {
                         <Footer key="footer" />
                     </div>
                 </ScrollManager>
-                <WalletConnectingModal />
-                <Observer>
-                    {() => (
-                        <>
-                            {wallet.isInitialized && wallet.isOutdated ? (
-                                <WalletUpdateModal />
-                            ) : null}
-
-                            {upgradeTokens.hasTokensToUpgrade ? (
-                                <TokensUpgradeModal />
-                            ) : null}
-                        </>
-                    )}
-                </Observer>
             </Router>
+            <ToastContainer />
+            <Observer>
+                {() => (
+                    <>
+                        {wallet.isConnecting && (
+                            <WalletConnectingModal />
+                        )}
+                        {wallet.isInitialized && wallet.isOutdated ? (
+                            <WalletUpdateModal />
+                        ) : null}
+
+                        {upgradeTokens.hasTokensToUpgrade ? (
+                            <TokensUpgradeModal />
+                        ) : null}
+                    </>
+                )}
+            </Observer>
         </IntlProvider>
     )
 }

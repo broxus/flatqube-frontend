@@ -13,22 +13,24 @@ type Props = {
 export function PoolFarmings({
     poolContent,
 }: Props): JSX.Element | null {
-    const { farmItems, farmLoading } = poolContent
+    const { farming, farmingLoading } = poolContent
 
     const pagination = usePagination()
-    const totalPages = farmItems ? Math.ceil(farmItems.length / PAGE_SIZE) : 0
+    const totalPages = farming ? Math.ceil(farming.length / PAGE_SIZE) : 0
     const startIndex = PAGE_SIZE * (pagination.currentPage - 1)
     const endIndex = startIndex + PAGE_SIZE
-    const visibleItems = farmItems ? farmItems.slice(startIndex, endIndex) : []
+    const visibleItems = farming ? farming.slice(startIndex, endIndex) : []
 
     return (
         <FarmingTable
-            loading={farmLoading}
-            items={visibleItems}
+            data={visibleItems.map(item => item.info)}
+            entitledRewards={visibleItems.map(item => item.balance.reward.map(i => i.entitled))}
+            vestedRewards={visibleItems.map(item => item.balance.reward.map(i => i.vested))}
             totalPages={totalPages}
+            currentPage={pagination.currentPage}
+            loading={farmingLoading}
             onNext={pagination.onNext}
             onPrev={pagination.onPrev}
-            currentPage={pagination.currentPage}
             onSubmit={pagination.onSubmit}
             placeholderCount={1}
         />

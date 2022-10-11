@@ -8,8 +8,8 @@ type Props = {
     children: React.ReactNode;
 }
 
-
-export const Context = React.createContext<CurrencyStore>(new CurrencyStore(''))
+// @ts-ignore
+export const Context = React.createContext<CurrencyStore>()
 
 export function useCurrencyStore(): CurrencyStore {
     return React.useContext(Context)

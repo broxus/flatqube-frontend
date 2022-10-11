@@ -1,0 +1,7 @@
+.epochs_list {
+    &.list {
+        --list-grid-template: minmax(80px, 40%) minmax(150px, 200px) minmax(150px, 200px) minmax(150px, 200px) minmax(150px, 200px);
+
+        min-height: 1px;
+    }
+}

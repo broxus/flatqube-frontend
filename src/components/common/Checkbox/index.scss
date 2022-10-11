@@ -7,6 +7,14 @@
     line-height: 20px;
     vertical-align: top;
 
+    &_disabled {
+        cursor: not-allowed;
+
+        .checkbox__icon {
+            opacity: 0.3;
+        }
+    }
+
     input {
         display: none;
 

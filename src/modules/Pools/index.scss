@@ -1,3 +1,5 @@
+@import '@/styles/variables.scss';
+
 .pools {
     &-sub-header {
         display: flex;
@@ -35,7 +37,7 @@
             width: 100%;
         }
 
-        @media only screen and (min-width: 768px) {
+        @media only screen and (min-width: $breakpoint-medium) {
             align-items: flex-start;
             flex-flow: row nowrap;
 
@@ -63,7 +65,7 @@
             align-items: center;
             display: flex;
             flex-flow: column wrap;
-            @media only screen and (min-width: 768px) {
+            @media only screen and (min-width: $breakpoint-medium) {
                 flex-flow: row nowrap;
                 gap: 10px;
             }

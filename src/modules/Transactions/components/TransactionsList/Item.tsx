@@ -58,18 +58,18 @@ export function Item({ transaction }: Props): JSX.Element {
             <div className="list__cell list__cell--right">
                 {totalValue}
             </div>
-            <div className="list__cell list__cell--right hide-824">
+            <div className="list__cell list__cell--right visible@m">
                 {leftValue}
             </div>
-            <div className="list__cell list__cell--right hide-824">
+            <div className="list__cell list__cell--right visible@m">
                 {rightValue}
             </div>
-            <div className="list__cell list__cell--right hide-824">
+            <div className="list__cell list__cell--right visible@m">
                 <AccountExplorerLink address={transaction.userAddress} />
             </div>
-            <div className="list__cell list__cell--right hide-540">
+            <div className="list__cell list__cell--right visible@s">
                 <TransactionExplorerLink id={transaction.transactionHash}>
-                    {DateTime.fromSeconds(transaction.timestampBlock).toRelative()}
+                    {DateTime.fromSeconds(transaction.timestampBlock, { locale: intl.locale }).toRelative()}
                 </TransactionExplorerLink>
             </div>
         </div>

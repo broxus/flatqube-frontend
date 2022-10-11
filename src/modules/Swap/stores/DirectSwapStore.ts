@@ -36,6 +36,7 @@ export class DirectSwapStore extends BaseSwapStore<DirectSwapStoreData, BaseSwap
         })
 
         this.setData({
+            // @ts-ignore
             coin: initialData?.coin,
         })
     }

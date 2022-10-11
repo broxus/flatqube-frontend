@@ -6,7 +6,11 @@ import { splitAmount } from './split-amount'
 export type FormattedAmountOptions = {
     /** Truncate fractional part to this value */
     truncate?: number;
-    /** Preserve all decimals after dot */
+    /**
+     *  Precision of the values below than `1e-3` (currency) or `1e-8` (token)
+     */
+    precision?: number;
+    /** Preserve all decimals after point */
     preserve?: boolean;
     /**
      * Round the amount if the value is greater than or equal
@@ -65,7 +69,7 @@ export function formattedAmount(
             break
 
         case integerNumber.isZero() && fractionalPartNumber.lte(1e-3):
-            fractionalPartNumber = fractionalPartNumber.precision(4, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.precision(options.precision ?? 4, BigNumber.ROUND_DOWN)
             break
 
         case integerNumber.gt(0) && roundOn && integerNumber.lt(roundOn):

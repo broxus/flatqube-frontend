@@ -14,7 +14,7 @@ export function PoolShareData(): JSX.Element {
         <Observer>
             {() => (
                 <>
-                    <hr className="divider" />
+                    <hr className="divider divider-dashed" />
                     <div className="form-rows">
                         <div className="form-row">
                             <div>

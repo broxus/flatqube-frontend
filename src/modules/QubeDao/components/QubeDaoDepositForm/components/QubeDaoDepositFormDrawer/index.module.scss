@@ -1,0 +1,17 @@
+.deposit_form_drawer {
+    &__grid {
+        align-items: center;
+        display: flex;
+        flex-flow: row nowrap;
+        gap: 12px;
+        justify-content: space-between;
+    }
+
+    &_body :global(.drawer-body),
+    &_body :global(.device-drawer-content-inner) {
+        overflow: visible;
+    }
+    &_body :global(.drawer-body) {
+        padding: 24px;
+    }
+}

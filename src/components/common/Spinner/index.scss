@@ -1,0 +1,27 @@
+.spinner {
+    svg {
+        animation: rotate 1s linear infinite;
+        fill: #fff;
+    }
+
+    &.xs {
+        svg {
+            height: 12px;
+            width: 12px;
+        }
+    }
+
+    &.s {
+        svg {
+            height: 16px;
+            width: 16px;
+        }
+    }
+
+    &.l {
+        svg {
+            height: 46px;
+            width: 46px;
+        }
+    }
+}

@@ -5,14 +5,20 @@
     letter-spacing: 0.6px;
     line-height: 16px;
     margin-top: 8px;
-    padding: 12px;
+    padding: 10px 12px;
     position: fixed;
-    z-index: 100;
+    z-index: 1030;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 
     @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
         -webkit-backdrop-filter: blur(64px);
         backdrop-filter: blur(64px);
         background: linear-gradient(0deg, rgb(5 11 46 / 12%), rgb(5 11 46 / 12%)), rgb(255 255 255 / 12%);
+    }
+
+    &_active {
+        opacity: 1;
     }
 
     &_align_top-left {

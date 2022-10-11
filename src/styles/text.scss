@@ -3,6 +3,14 @@
     color: rgb(255 255 255 / 64%);
 }
 
+.text-success {
+    color: #4ab44a;
+}
+
+.text-warning {
+    color: #e6ac00;
+}
+
 .text-danger {
     color: #eb4361ff;
 }
@@ -16,6 +24,10 @@
 .text-sm {
     font-size: 12px;
     line-height: 18px;
+}
+
+.text-bold {
+    font-weight: 700;
 }
 
 .text-nowrap {
@@ -36,3 +48,21 @@
 .text-right {
     text-align: right;
 }
+
+.text-center {
+    text-align: center;
+}
+
+.text-heading {
+    margin-bottom: 8px;
+}
+
+[class*='truncate'] {
+    display: inline-block;
+    overflow: hidden;
+    padding: 0 5px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.truncate-name { max-width: 120px; }

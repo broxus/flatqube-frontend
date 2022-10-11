@@ -9,14 +9,11 @@ import { HeaderDrawer } from '@/components/layout/Header/HeaderDrawer'
 import { LangSwitcher } from '@/components/layout/LangSwitcher'
 import { Logo } from '@/components/layout/Logo'
 import { EverWallet } from '@/modules/Accounts'
-import { useWallet } from '@/stores/WalletService'
 
 import './index.scss'
 
 
 export function Header(): JSX.Element {
-    const wallet = useWallet()
-
     return (
         <header className="header">
             <Navbar className="width-expand">
@@ -51,7 +48,6 @@ export function Header(): JSX.Element {
                                         style={{
                                             justifyContent: 'space-between',
                                             paddingRight: 0,
-                                            width: '100%',
                                         }}
                                     >
                                         <EverWallet showDisconnectButton={false} />

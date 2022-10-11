@@ -4,6 +4,11 @@ import classNames from 'classnames'
 
 import './index.scss'
 
+type Position = {
+    top: number;
+    left: number;
+}
+
 type Props = {
     children: React.ReactNode;
     target: React.RefObject<HTMLElement>;
@@ -25,10 +30,7 @@ export function Tooltip({
 }: Props): JSX.Element | null {
     const [visible, setVisible] = React.useState(Boolean(forceShow))
     const tooltipRef = React.createRef<HTMLDivElement>()
-    const [position, setPosition] = React.useState({
-        top: 0,
-        left: 0,
-    })
+    const [position, setPosition] = React.useState<Position>()
 
     React.useEffect(() => {
         if (visible && target.current && tooltipRef.current) {
@@ -93,6 +95,7 @@ export function Tooltip({
             <div
                 ref={tooltipRef}
                 className={classNames('tooltip', {
+                    tooltip_active: !!position,
                     'tooltip_align_top-left': alignX === 'left' && alignY === 'top',
                     'tooltip_align_top-right': alignX === 'right' && alignY === 'top',
                     'tooltip_align_top-center': alignX === 'center' && alignY === 'top',
@@ -101,8 +104,8 @@ export function Tooltip({
                     [`tooltip_size_${size}`]: Boolean(size),
                 })}
                 style={{
-                    top: `${position.top}px`,
-                    left: `${position.left}px`,
+                    top: position ? `${position.top}px` : undefined,
+                    left: position ? `${position.left}px` : undefined,
                     width: width && `${width}px`,
                 }}
             >

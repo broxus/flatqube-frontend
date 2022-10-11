@@ -1,3 +1,5 @@
+@import 'variables';
+
 *,
 *::before,
 *::after {
@@ -349,7 +351,7 @@ legend {
     width: 100%;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: $breakpoint-large) {
     legend {
         font-size: 1.5rem;
     }

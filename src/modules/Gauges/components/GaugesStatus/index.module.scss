@@ -1,0 +1,25 @@
+.status {
+    display: inline-block;
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.2px;
+    padding: 4px 8px;
+    border-radius: 27px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.48);
+
+    &.yellow {
+        color: #E6AC00;
+        background: rgba(230, 172, 0, 0.16);
+    }
+
+    &.red {
+        color: #EB4361;
+        background: rgba(235, 67, 97, 0.16);
+    }
+
+    &.green {
+        color: #4AB44A;
+        background: rgba(74, 180, 74, 0.16);
+    }
+}

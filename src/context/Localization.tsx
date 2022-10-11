@@ -35,6 +35,10 @@ export const LocalizationContext = React.createContext<LocalizationContextProps>
     setLocale() {},
 })
 
+export function useLocalizationContext(): LocalizationContextProps {
+    return React.useContext(LocalizationContext)
+}
+
 type Props = {
     children: React.ReactNode | React.ReactNode[]
 }

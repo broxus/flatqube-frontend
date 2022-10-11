@@ -16,6 +16,7 @@ export class Route<P extends Params> {
 
 }
 
+/* eslint-disable sort-keys */
 export const apiRoutes = {
     pairs: new Route(
         '/pairs',
@@ -56,6 +57,9 @@ export const apiRoutes = {
     currencyTvl: new Route<{ address: string }>(
         '/currencies/:address/tvl',
     ),
+    currenciesUsdtPrices: new Route(
+        '/currencies_usdt_prices',
+    ),
 }
 
 export const farmingApiRoutes = {
@@ -73,6 +77,65 @@ export const farmingApiRoutes = {
     ),
     graphicApr: new Route(
         '/graphic/apr',
+    ),
+}
+
+export const qubeDaoApiRoutes = {
+    balance: new Route('/balances/:address'),
+    balancesSearch: new Route('/balances/search'),
+    balancesStatsSearch: new Route('/balances/statistics/search'),
+    depositsSearch: new Route('/deposits/search'),
+    depositsStatsSearch: new Route('/deposits/statistics/search'),
+    epochsDistributionsSearch: new Route('/epochs/distributions/search'),
+    epochsSearch: new Route('/epochs/search'),
+    epochsVotesSearch: new Route('/epochs/votes/search'),
+    epochsVotesSum: new Route('/epochs/:epochNum/votes/sum'),
+    epochsLast: new Route('/epochs/last'),
+    gaugesBatch: new Route('/gauges/batch'),
+    gaugesSearch: new Route('/gauges/search'),
+    mainPage: new Route('/main_page'),
+    transactionsSearch: new Route('/transactions/search'),
+}
+
+export const gaugesApiRoutes = {
+    deposits: new Route(
+        '/deposits',
+    ),
+    gauge: new Route(
+        '/gauges/get',
+    ),
+    gaugeMaxApr: new Route(
+        '/gauges/max-apr',
+    ),
+    gaugeMinApr: new Route(
+        '/gauges/min-apr',
+    ),
+    gauges: new Route(
+        '/gauges',
+    ),
+    batch: new Route(
+        '/gauges/batch',
+    ),
+    gaugeTvl: new Route(
+        '/gauges/tvl',
+    ),
+    qubeRewardRounds: new Route(
+        '/reward-rounds/qube',
+    ),
+    tokenRewardRounds: new Route(
+        '/reward-rounds/tokens',
+    ),
+    transactions: new Route(
+        '/transactions',
+    ),
+    historyBalance: new Route(
+        '/gauges/user-history-balance',
+    ),
+}
+
+export const tokensApiRoutes = {
+    token: new Route<{address: string}>(
+        '/root_contract/root_address/:address',
     ),
 }
 
@@ -116,6 +179,15 @@ export const appRoutes = {
     farmingCreate: new Route(
         '/farming/create',
     ),
+    dao: new Route(
+        '/dao',
+    ),
+    daoBalance: new Route(
+        '/dao/balance',
+    ),
+    daoEpoch: new Route<{ epochNum: string }>(
+        '/dao/epochs/:epochNum',
+    ),
     builder: new Route(
         '/builder',
     ),
@@ -124,5 +196,14 @@ export const appRoutes = {
     ),
     builderItem: new Route<{ tokenRoot: string }>(
         '/builder/:tokenRoot',
+    ),
+    gauges: new Route(
+        '/gauges',
+    ),
+    gaugesCreate: new Route(
+        '/gauges/create',
+    ),
+    gaugesItem: new Route<{ address: string }>(
+        '/gauges/:address',
     ),
 }

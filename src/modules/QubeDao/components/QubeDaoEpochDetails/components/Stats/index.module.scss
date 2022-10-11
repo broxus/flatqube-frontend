@@ -1,0 +1,42 @@
+@import '@/styles/variables.scss';
+
+.stats {
+    &_grid {
+        display: grid;
+        flex-flow: column wrap;
+        gap: 8px;
+
+        @media only screen and (min-width: $breakpoint-small) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media only screen and (min-width: $breakpoint-large) {
+            grid-template-columns: unset;
+        }
+    }
+
+    &_stat_term {
+        color: rgb(255 255 255 / 48%);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.6px;
+        line-height: 16px;
+        margin-bottom: 4px;
+    }
+
+    &_stat_value {
+        align-items: flex-end;
+        color: #fff;
+        display: flex;
+        font-size: 16px;
+        font-weight: 400;
+        justify-content: space-between;
+        line-height: 22px;
+    }
+
+    &_stat_weight_grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

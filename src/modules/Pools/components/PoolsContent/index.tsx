@@ -30,51 +30,47 @@ export const PoolsContent = observer((): JSX.Element => {
     } = usePoolsContent()
 
     if (favoritePairs.data.length === 0 || (!loading && items.length === 0)) {
-        return (
-            <EmptyMessage />
-        )
+        return <EmptyMessage />
     }
 
     return (
-        <>
-            <div className="card card--small card--flat">
-                <div className="list pools-list">
-                    <div className="list__header">
-                        <div className="list__cell list__cell--left">
-                            {intl.formatMessage({ id: 'POOLS_LIST_TABLE_PAIR' })}
-                        </div>
-                        <div className="list__cell list__cell--right">
-                            {intl.formatMessage({ id: 'POOLS_LIST_TABLE_LP_TOKENS' })}
-                        </div>
-                        <div className="list__cell list__cell--right">
-                            {intl.formatMessage({ id: 'POOLS_LIST_TABLE_LEFT_TOKEN' })}
-                        </div>
-                        <div className="list__cell list__cell--right">
-                            {intl.formatMessage({ id: 'POOLS_LIST_TABLE_RIGHT_TOKEN' })}
-                        </div>
+        <div className="card card--small card--flat">
+            <div className="list pools-list">
+                <div className="list__header">
+                    <div className="list__cell list__cell--left">
+                        {intl.formatMessage({ id: 'POOLS_LIST_TABLE_PAIR' })}
                     </div>
-
-                    {loading && items.length === 0 ? (
-                        [...Array(placeholderCount).keys()].map(item => (
-                            <Placeholder key={item} />
-                        ))
-                    ) : (
-                        <PanelLoader loading={loading && items.length > 0}>
-                            {items.map(item => (
-                                <Item key={item.pair.pairLabel} {...item} />
-                            ))}
-                        </PanelLoader>
-                    )}
+                    <div className="list__cell list__cell--right">
+                        {intl.formatMessage({ id: 'POOLS_LIST_TABLE_LP_TOKENS' })}
+                    </div>
+                    <div className="list__cell list__cell--right">
+                        {intl.formatMessage({ id: 'POOLS_LIST_TABLE_LEFT_TOKEN' })}
+                    </div>
+                    <div className="list__cell list__cell--right">
+                        {intl.formatMessage({ id: 'POOLS_LIST_TABLE_RIGHT_TOKEN' })}
+                    </div>
                 </div>
 
-                <Pagination
-                    totalPages={totalPages}
-                    currentPage={currentPage}
-                    onNext={onNext}
-                    onPrev={onPrev}
-                    onSubmit={onSubmit}
-                />
+                {loading && items.length === 0 ? (
+                    [...Array(placeholderCount).keys()].map(item => (
+                        <Placeholder key={item} />
+                    ))
+                ) : (
+                    <PanelLoader loading={loading && items.length > 0}>
+                        {items.map(item => (
+                            <Item key={item.pair.pairLabel} {...item} />
+                        ))}
+                    </PanelLoader>
+                )}
             </div>
-        </>
+
+            <Pagination
+                totalPages={totalPages}
+                currentPage={currentPage}
+                onNext={onNext}
+                onPrev={onPrev}
+                onSubmit={onSubmit}
+            />
+        </div>
     )
 })

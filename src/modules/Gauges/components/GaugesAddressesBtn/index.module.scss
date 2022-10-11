@@ -1,0 +1,44 @@
+.icon {
+    svg {
+        width: 17px;
+        height: 17px;
+    }
+}
+
+.title {
+    display: flex;
+    align-items: center;
+    grid-gap: 4px;
+}
+
+.items {
+    width: 370px;
+    padding: 15px 20px;
+    box-sizing: border-box;
+}
+
+.item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    grid-gap: 20px;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.1px;
+    margin: 0 0 8px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.address {
+    display: flex;
+    align-items: center;
+    grid-gap: 6px;
+
+    :global(.copy-to-clipboard) {
+        opacity: 1;
+        color: #C5E4F3;
+    }
+}

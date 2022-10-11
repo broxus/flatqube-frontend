@@ -78,14 +78,15 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
             _byRoot: computed,
             _verifiedByRoot: computed,
             add: action.bound,
-            tokens: computed,
-            verifiedBroxusTokens: computed,
-            roots: computed,
+            currentImportingToken: computed,
             isFetching: computed,
             isImporting: computed,
             isReady: computed,
             queue: computed,
-            currentImportingToken: computed,
+            roots: computed,
+            tokens: computed,
+            verifiedBroxusTokens: computed,
+            // eslint-disable-next-line sort-keys
             onImportConfirm: action.bound,
             onImportDismiss: action.bound,
         })
@@ -93,17 +94,23 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         // When the Tokens List Service has loaded the list of
         // available tokens, we will start creating a token map
         reaction(
-            () => [this.tokensList.time, this.tokensList.tokens, this.wallet.address],
+            () => [this.tokensList.time, this.tokensList.tokens],
             async (
-                [time, tokens, address],
-                [prevTime, prevTokens, prevAddress],
+                [time, tokens],
+                [prevTime, prevTokens],
             ) => {
-                if (time !== prevTime || tokens !== prevTokens || address !== prevAddress) {
+                if (time !== prevTime || tokens !== prevTokens) {
                     await this.build()
                 }
             },
             { delay: 100 },
         )
+
+        reaction(() => this.wallet.address, (address, prevAddress) => {
+            if (address !== prevAddress) {
+                this.setData('tokens', this.tokens.map(token => ({ ...token, balance: undefined, wallet: undefined })))
+            }
+        })
 
         this.#tokensBalancesSubscribers = new Map<string, Subscription<'contractStateChanged'>>()
         this.#tokensBalancesSubscribersMutex = new Mutex();

@@ -1,0 +1,18 @@
+.badge {
+    display: inline-block;
+    padding: 1px 6px;
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.2px;
+    border-radius: 16px;
+
+    &.blue {
+        background: #2B63F1;
+        color: #fff;
+    }
+
+    &.yellow {
+        background: #E6AC00;
+        color: #000;
+    }
+}

@@ -5,7 +5,7 @@
     justify-content: space-between;
 
     .navbar {
-        justify-content: center;
+        justify-content: space-between;
 
         .navbar-item,
         .navbar-toggle {
@@ -23,39 +23,4 @@
         gap: 24px;
         justify-content: space-between;
     }
-}
-
-.device-drawer-content-inner {
-    flex-flow: column wrap;
-    overflow: hidden auto;
-    width: 100%;
-}
-
-.device-drawer-header {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    height: 36px;
-    justify-content: space-between;
-
-    .btn-close-drawer {
-        margin-right: -14px;
-        padding: 8px;
-    }
-}
-
-.device-drawer-header-inner {
-    align-items: center;
-    display: flex;
-    flex-direction: row;
-    height: 36px;
-}
-
-.device-drawer-footer {
-    background: #1b213f;
-    bottom: 16px;
-    left: 16px;
-    position: absolute;
-    right: 16px;
-    z-index: 20;
 }

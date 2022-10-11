@@ -24,7 +24,7 @@ export function Item({ currency, idx }: Props): JSX.Element {
 
     return (
         <Link to={`/tokens/${currency.address}`} className="list__row">
-            <div className="list__cell hide-540">{idx}</div>
+            <div className="list__cell visible@m">{idx}</div>
             <div className="list__cell">
                 <div className="list__cell-inner">
                     <div className="currencies-list__token-icon-wrapper">
@@ -48,14 +48,13 @@ export function Item({ currency, idx }: Props): JSX.Element {
             </div>
             <div className="list__cell list__cell--right">
                 {price}
+                <br />
+                <RateChange value={currency.priceChange} size="sm" />
             </div>
-            <div className="list__cell list__cell--right hide-824">
-                <RateChange value={currency.priceChange} />
-            </div>
-            <div className="list__cell list__cell--right">
+            <div className="list__cell list__cell--right visible@s">
                 {volume24h}
             </div>
-            <div className="list__cell list__cell--right hide-824">
+            <div className="list__cell list__cell--right visible@s">
                 {tvl}
             </div>
         </Link>

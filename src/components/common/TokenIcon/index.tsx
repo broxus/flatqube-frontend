@@ -35,6 +35,10 @@ export function TokenIcon({
     }
 
     return address !== undefined ? (
-        <UserAvatar address={address} size={size} />
+        <UserAvatar
+            address={address}
+            size={size}
+            className={className}
+        />
     ) : null
 }

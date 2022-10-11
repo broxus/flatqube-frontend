@@ -173,7 +173,7 @@ export function PoolDexAccountData(): JSX.Element {
                                         id: 'POOL_DEX_DATA_RESULT_CURRENT_SHARE_LEFT',
                                     }, {
                                         symbol: pool.leftToken?.symbol,
-                                        value: formattedTokenAmount(pool.currentShareLeft, pool.leftToken?.decimals),
+                                        value: formattedTokenAmount(pool.currentShareLeft),
                                     })}
                                 </div>
                             </div>
@@ -187,7 +187,7 @@ export function PoolDexAccountData(): JSX.Element {
                                         id: 'POOL_DEX_DATA_RESULT_CURRENT_SHARE_RIGHT',
                                     }, {
                                         symbol: pool.rightToken?.symbol,
-                                        value: formattedTokenAmount(pool.currentShareRight, pool.rightToken?.decimals),
+                                        value: formattedTokenAmount(pool.currentShareRight),
                                     })}
                                 </div>
                             </div>

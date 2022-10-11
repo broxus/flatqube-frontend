@@ -35,7 +35,7 @@ export function Pool(): JSX.Element {
     const tokensCache = useTokensCache()
 
     return (
-        <div className="container container--small">
+        <>
             <div className="card">
                 <div className="card__wrap">
                     <header className="card__header">
@@ -259,6 +259,6 @@ export function Pool(): JSX.Element {
                     </>
                 )}
             </Observer>
-        </div>
+        </>
     )
 }

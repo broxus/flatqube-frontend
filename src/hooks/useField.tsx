@@ -11,12 +11,14 @@ type FieldShape = {
 type Props = {
     decimals?: number;
     value?: string;
+    onBlur?: React.FocusEventHandler<HTMLInputElement>;
     onChange?: (value: string) => void;
 }
 
 
 export function useField({ decimals, ...props }: Props): FieldShape {
     const onBlur: React.FocusEventHandler<HTMLInputElement> = event => {
+        props.onBlur?.(event)
         const { value } = event.target
         if (value.length === 0) {
             return

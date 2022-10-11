@@ -1,0 +1,18 @@
+.candidate_compact_item {
+    display: flex;
+    flex-flow: column wrap;
+    gap: 8px;
+
+    + .candidate_compact_item {
+        border-top: 1px solid rgb(255 255 255 / 8%);
+        margin-top: 16px;
+        padding-top: 24px;
+    }
+}
+
+.candidate_compact_item__header {
+    align-items: center;
+    display: flex;
+    font-weight: 500;
+    justify-content: space-between;
+}

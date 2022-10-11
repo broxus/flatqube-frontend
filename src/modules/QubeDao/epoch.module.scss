@@ -1,0 +1,14 @@
+.epoch {
+    &__page_header_grid {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+    }
+
+    &__page_header_grid__actions {
+        > * {
+            justify-content: center;
+            width: 100%;
+        }
+    }
+}

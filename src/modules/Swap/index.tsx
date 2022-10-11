@@ -35,7 +35,7 @@ export function Swap(): JSX.Element {
     const form = useSwapForm()
 
     return (
-        <div className="container container--small">
+        <>
             <div className="swap-container">
                 <SwapNotation />
                 <div className="card swap-card">
@@ -268,6 +268,6 @@ export function Swap(): JSX.Element {
                     </>
                 )}
             </Observer>
-        </div>
+        </>
     )
 }

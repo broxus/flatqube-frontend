@@ -1,3 +1,5 @@
+@import '@/styles/variables.scss';
+
 .swap-icon {
     cursor: pointer;
     margin: 8px auto;
@@ -21,7 +23,7 @@
     max-width: 205px;
     padding: 0 !important;
     white-space: nowrap;
-    @media only screen and (min-width: 768px) {
+    @media only screen and (min-width: $breakpoint-medium) {
         max-width: unset;
     }
 }

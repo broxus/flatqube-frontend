@@ -1,0 +1,67 @@
+@import '@/styles/_mix.scss';
+
+.deposit_form {
+    &__fieldset {
+        display: flex;
+        flex-flow: column wrap;
+    }
+
+    &__fieldset + &__fieldset {
+        margin-top: 16px;
+    }
+
+    &__field_label {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.6px;
+        line-height: 20px;
+        margin-bottom: 4px;
+
+    }
+
+    &__field_control + &__field_control {
+        margin-top: 6px;
+    }
+
+    .token_amount_badge__label {
+        color: rgb(255 255 255 / 72%);
+        font-weight: 400;
+        letter-spacing: 0.5px;
+        line-height: 20px;
+    }
+
+    &__field_meta {
+        color: rgb(255 255 255 / 48%);
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.2px;
+        line-height: 16px;
+        margin-top: 4px;
+    }
+
+    &__labeled_buttons {
+        align-items: center;
+        display: inline-flex;
+        gap: 6px;
+    }
+
+    &__labeled_button {
+        @include btn-reset;
+
+        background: rgb(255 255 255 / 16%);
+        border-radius: 13px;
+        box-sizing: border-box;
+        color: rgb(255 255 255 / 48%);
+        font-size: 12px;
+        font-weight: 500;
+        height: 24px;
+        letter-spacing: 0.2px;
+        line-height: 16px;
+        padding: 4px 8px;
+
+        &__active {
+            background: rgb(255 255 255 / 32%);
+            color: #fff;
+        }
+    }
+}
