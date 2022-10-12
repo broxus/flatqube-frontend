@@ -175,22 +175,6 @@ export function QubeDaoDepositForm(): JSX.Element {
                                     disabled={daoContext.isDepositing}
                                     className={classNames(styles.deposit_form__labeled_button, {
                                         [styles.deposit_form__labeled_button__active]: (
-                                            depositForm.lockPeriod === 365
-                                        ),
-                                    })}
-                                    type="button"
-                                    value={365}
-                                    onClick={onSelectLockPeriod(365)}
-                                >
-                                    {intl.formatMessage(
-                                        { id: 'QUBE_DAO_DEPOSIT_FORM_LABEL_YEARS_PREDEFINED' },
-                                        { value: 1 },
-                                    )}
-                                </button>
-                                <button
-                                    disabled={daoContext.isDepositing}
-                                    className={classNames(styles.deposit_form__labeled_button, {
-                                        [styles.deposit_form__labeled_button__active]: (
                                             depositForm.lockPeriod === 365 * 2
                                         ),
                                     })}
@@ -201,6 +185,22 @@ export function QubeDaoDepositForm(): JSX.Element {
                                     {intl.formatMessage(
                                         { id: 'QUBE_DAO_DEPOSIT_FORM_LABEL_YEARS_PREDEFINED' },
                                         { value: 2 },
+                                    )}
+                                </button>
+                                <button
+                                    disabled={daoContext.isDepositing}
+                                    className={classNames(styles.deposit_form__labeled_button, {
+                                        [styles.deposit_form__labeled_button__active]: (
+                                            depositForm.lockPeriod === 365 * 4
+                                        ),
+                                    })}
+                                    type="button"
+                                    value={365 * 4}
+                                    onClick={onSelectLockPeriod(365 * 4)}
+                                >
+                                    {intl.formatMessage(
+                                        { id: 'QUBE_DAO_DEPOSIT_FORM_LABEL_YEARS_PREDEFINED' },
+                                        { value: 4 },
                                     )}
                                 </button>
                             </div>
