@@ -311,7 +311,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
                     .methods.encodeDepositPayload({
                         call_id: callId,
                         deposit_owner: this.wallet.account.address,
-                        lock_time: 3600, // params.lockPeriod,
+                        lock_time: params.lockPeriod,
                         nonce: '0',
                     })
                     .call({ cachedState: this.veContractCachedState }))
