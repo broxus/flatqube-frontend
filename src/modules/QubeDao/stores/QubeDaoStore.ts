@@ -932,8 +932,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
     }
 
     public get tokenSymbol(): string {
-        // return this.token?.symbol ?? this.options.tokenSymbol
-        return this.options.tokenSymbol
+        return this.token?.symbol ?? this.options.tokenSymbol
     }
 
     public get veAccountContract(): Contract<typeof VoteEscrowAbi.Account> | undefined {
