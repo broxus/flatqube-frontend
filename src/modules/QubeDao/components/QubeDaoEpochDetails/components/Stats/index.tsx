@@ -43,7 +43,7 @@ export function Stats(): JSX.Element {
                                     <TokenAmountBadge
                                         address={daoContext.tokenAddress.toString()}
                                         amount={formattedTokenAmount(
-                                            epochStore.totalDistribution,
+                                            epochStore.normalizedTotalDistribution,
                                             daoContext.tokenDecimals,
                                         )}
                                         icon={daoContext.token?.icon}

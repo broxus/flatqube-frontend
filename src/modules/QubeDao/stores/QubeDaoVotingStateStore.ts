@@ -35,7 +35,6 @@ export type Candidate = {
 export type QubeDaoVotingStateStoreData = {
     /** Selected candidates in voting form */
     candidates: Candidate[];
-    distributionScheme: string[];
     /** Whitelist of the gauges */
     gauges: GaugeShape[];
     /** Limit of the gauges per one vote */
@@ -74,10 +73,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
                     key: uniqueId(),
                 },
             ],
-            distributionScheme: [],
-            epochVotes: [],
             gauges: [],
-            gaugesData: {},
             limit: 0,
             userVotes: [],
         }))
@@ -115,10 +111,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
 
         this.setState('isInitializing', true)
 
-        await Promise.allSettled([
-            this.syncGauges(),
-            this.syncDistributionScheme(),
-        ])
+        await this.syncGauges()
 
         this.#initDisposer = reaction(() => this.dao.wallet.address, async (address, prevAddress) => {
             if (address !== undefined && address !== prevAddress) {
@@ -179,21 +172,6 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         }
         catch (e) {
 
-        }
-    }
-
-    protected async syncDistributionScheme(): Promise<void> {
-        try {
-            this.setData(
-                'distributionScheme',
-                (await this.dao.veContract
-                    .methods.distributionScheme({})
-                    .call({ cachedState: this.dao.veContractCachedState }))
-                    .distributionScheme,
-            )
-        }
-        catch (e) {
-            error('Sync distribution scheme error', e)
         }
     }
 
@@ -310,7 +288,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         }
         const gaugeVoteShare = this.currentGaugeVoteShare(gauge)
         const distribution = new BigNumber(this.epoch.totalDistribution || 0)
-            .times(this.data.distributionScheme[0] ?? 1)
+            .times(this.epoch.distributionScheme[0] ?? 1)
             .div(10000)
         return distribution
             .div(100)

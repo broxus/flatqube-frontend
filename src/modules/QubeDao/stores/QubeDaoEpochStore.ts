@@ -10,6 +10,7 @@ import { BaseStore } from '@/stores/BaseStore'
 import { error, isGoodBignumber } from '@/utils'
 
 export type QubeDaoEpochStoreData = {
+    distributionScheme: string[];
     epochEnd: number | null;
     epochNum?: number;
     epochStart: number | null;
@@ -53,6 +54,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         super()
 
         this.setData(() => ({
+            distributionScheme: [],
             epochNum: options?.epochNum,
             epochVotesSummary: [],
             gaugesDetails: {},
@@ -66,6 +68,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
 
         makeObservable(this, {
             distributionPrice: computed,
+            distributionScheme: computed,
             epochEnd: computed,
             epochNum: computed,
             epochStart: computed,
@@ -94,6 +97,8 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         }
 
         this.setState('isInitializing', true)
+
+        await this.syncDistributionScheme()
 
         if (this.data.epochNum) {
             await this.fetchEpoch()
@@ -282,7 +287,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         }
     }
 
-    public async fetchUserVoteState(force?: boolean, silence: boolean = false): Promise<void> {
+    protected async fetchUserVoteState(force?: boolean, silence: boolean = false): Promise<void> {
         if (this.data.epochNum === undefined) {
             return
         }
@@ -314,7 +319,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         }
     }
 
-    public async fetchVotesSummary(force?: boolean, silence: boolean = false): Promise<void> {
+    protected async fetchVotesSummary(force?: boolean, silence: boolean = false): Promise<void> {
         if (this.data.epochNum === undefined) {
             return
         }
@@ -340,7 +345,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         }
     }
 
-    public async fetchGaugesDetails(force?: boolean, silence: boolean = false): Promise<void> {
+    protected async fetchGaugesDetails(force?: boolean, silence: boolean = false): Promise<void> {
         if (!force && this.isFetchingGaugesDetails) {
             return
         }
@@ -376,7 +381,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         }
     }
 
-    public async syncVotingDetails(): Promise<void> {
+    protected async syncVotingDetails(): Promise<void> {
         try {
             const details = await this.dao.veContract
                 .methods.getVotingDetails({})
@@ -391,6 +396,25 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         catch (e) {
             error(e)
         }
+    }
+
+    protected async syncDistributionScheme(): Promise<void> {
+        try {
+            this.setData(
+                'distributionScheme',
+                (await this.dao.veContract
+                    .methods.distributionScheme({})
+                    .call({ cachedState: this.dao.veContractCachedState }))
+                    .distributionScheme,
+            )
+        }
+        catch (e) {
+            error('Sync distribution scheme error', e)
+        }
+    }
+
+    public get distributionScheme(): QubeDaoEpochStoreData['distributionScheme'] {
+        return this.data.distributionScheme
     }
 
     public get epochEnd(): QubeDaoEpochStoreData['epochEnd'] {
@@ -466,9 +490,16 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
     }
 
     public get distributionPrice(): string {
-        return new BigNumber(this.totalDistribution || 0)
+        return new BigNumber(this.normalizedTotalDistribution || 0)
             .shiftedBy(-this.dao.tokenDecimals)
             .times(this.dao.tokenPrice ?? 0)
+            .toFixed()
+    }
+
+    public get normalizedTotalDistribution(): string {
+        return new BigNumber(this.totalDistribution || 0)
+            .times(this.distributionScheme[0] ?? 1)
+            .div(10000)
             .toFixed()
     }
 
