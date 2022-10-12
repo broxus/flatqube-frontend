@@ -26,7 +26,7 @@ function UserPerformanceStartBannerInner(): JSX.Element {
                     [styles.withIcons]: leftToken && rightToken,
                 })}
             >
-                {leftToken.icon && rightToken.icon && (
+                {leftToken?.icon && rightToken?.icon && (
                     <div className={styles.bannerIcons}>
                         <img
                             alt=""
@@ -102,14 +102,14 @@ function UserPerformanceStartBannerInner(): JSX.Element {
                         })}
                     </Button>
 
-                    <Button
+                    {/* <Button
                         size="md"
                         type="secondary"
                     >
                         {intl.formatMessage({
                             id: 'GAUGE_SEE_GUIDE',
                         })}
-                    </Button>
+                    </Button> */}
                 </div>
             </div>
         )
