@@ -2,6 +2,7 @@ import * as React from 'react'
 import classNames from 'classnames'
 import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
+import { BarPrice } from 'lightweight-charts'
 
 import { NativeScrollArea } from '@/components/common/NativeScrollArea'
 import { TokenIcon } from '@/components/common/TokenIcon'
@@ -10,7 +11,7 @@ import { Chart } from '@/modules/Chart'
 import { usePairStore } from '@/modules/Pairs/providers/PairStoreProvider'
 import { PairStoreState } from '@/modules/Pairs/types'
 import { TokenCache } from '@/stores/TokensCacheService'
-import { concatSymbols, formattedTokenAmount } from '@/utils'
+import { concatSymbols, formattedAmount, formattedTokenAmount } from '@/utils'
 import { Placeholder } from '@/components/common/Placeholder'
 
 import './index.scss'
@@ -304,6 +305,13 @@ export function Stats({ baseToken, counterToken }: Props): JSX.Element {
                                         id: 'CHART_NO_DATA',
                                     })}
                                     options={{
+                                        localization: {
+                                            priceFormatter: (price: BarPrice) => formattedAmount(
+                                                (1 / price),
+                                                undefined,
+                                                { precision: 1 },
+                                            ).toLowerCase(),
+                                        },
                                         rightPriceScale: {
                                             invertScale: true,
                                         },
