@@ -263,7 +263,7 @@ export class GaugesDataStore {
     }
 
     public async syncApi(): Promise<void> {
-        let gaugeItem: GaugeItem
+        let { gaugeItem } = this.data
 
         if (!this.data.id) {
             return
