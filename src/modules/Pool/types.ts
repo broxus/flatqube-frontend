@@ -9,10 +9,13 @@ import {
 
 
 export type PoolStoreData = {
+    depositLiquidityReceipt?: DepositLiquidityReceipt;
     leftAmount: string;
     leftToken?: string;
+    pool: PoolData;
     rightAmount: string;
     rightToken?: string;
+
 }
 
 export type PoolStoreState = {
@@ -42,9 +45,7 @@ export type PoolData = {
     currentShareLeft?: string;
     currentSharePercent?: string;
     currentShareRight?: string;
-    isPoolEmpty: boolean | undefined;
     leftDeposit?: string;
-    leftPrice?: string;
     lpBalance?: string;
     lpDecimals?: number;
     lpRoot?: string;
@@ -56,7 +57,6 @@ export type PoolData = {
     newRightPrice?: string;
     pair?: PoolPair;
     rightDeposit?: string;
-    rightPrice?: string;
     share?: string;
     sharePercent?: string;
     shareChangePercent?: string;

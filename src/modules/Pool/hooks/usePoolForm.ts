@@ -161,7 +161,7 @@ export function usePoolForm(): PoolFormShape {
                     }
                 }
             },
-            { fireImmediately: true, delay: 50 },
+            { delay: 50, fireImmediately: true },
         )
 
         return () => {
@@ -171,16 +171,17 @@ export function usePoolForm(): PoolFormShape {
     }, [])
 
     return {
-        isTokenListShown,
-        tokenSide,
         debouncedSyncPoolShare,
         hideTokensList,
+        isTokenListShown,
         showTokensList,
-        onSelectRightToken,
+        tokenSide,
+        // eslint-disable-next-line sort-keys
         onChangeData,
-        onSelectLeftToken,
         onDismissTransactionReceipt,
         onLeftImportConfirm,
         onRightImportConfirm,
+        onSelectLeftToken,
+        onSelectRightToken,
     }
 }

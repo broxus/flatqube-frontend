@@ -1,12 +1,11 @@
 import {
-    PoolData,
     PoolStoreData,
     PoolStoreState,
 } from '@/modules/Pool/types'
 
-
 export const DEFAULT_POOL_STORE_DATA: PoolStoreData = {
     leftAmount: '',
+    pool: {},
     rightAmount: '',
 }
 
@@ -23,8 +22,4 @@ export const DEFAULT_POOL_STORE_STATE: PoolStoreState = {
     isWithdrawingLeft: false,
     isWithdrawingLiquidity: false,
     isWithdrawingRight: false,
-}
-
-export const DEFAULT_POOL_DATA: PoolData = {
-    isPoolEmpty: undefined,
 }
