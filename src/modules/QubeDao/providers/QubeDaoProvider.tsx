@@ -1,7 +1,9 @@
 import * as React from 'react'
 import type { Address } from 'everscale-inpage-provider'
 
-import { QubeDaoTokenAddress, VoteEscrowAddress } from '@/config'
+import {
+    OldFarmAllocatorAddress, QUBEOwnerAddress, QUBERootAddress, VoteEscrowAddress,
+} from '@/config'
 import { TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
 import { useWallet, WalletService } from '@/stores/WalletService'
 import veIcon from '@/modules/QubeDao/assets/veQUBE.svg'
@@ -10,8 +12,10 @@ import { error } from '@/utils'
 
 
 export type QubeDaoProviderProps = React.PropsWithChildren<{
+    farmingAllocatorAddress?: Address;
     tokenAddress?: Address;
     tokenDecimals?: number;
+    tokenOwnerAddress?: Address;
     tokensCache?: TokensCacheService,
     tokenSymbol?: string;
     veAddress?: Address;
@@ -34,8 +38,10 @@ export function QubeDaoProvider(props: QubeDaoProviderProps): JSX.Element {
         wallet ?? useWallet(),
         tokensCache ?? useTokensCache(),
         {
-            tokenAddress: QubeDaoTokenAddress,
+            farmingAllocatorAddress: OldFarmAllocatorAddress,
+            tokenAddress: QUBERootAddress,
             tokenDecimals: 9,
+            tokenOwnerAddress: QUBEOwnerAddress,
             tokenSymbol: 'QUBE',
             veAddress: VoteEscrowAddress,
             veDecimals: 9,

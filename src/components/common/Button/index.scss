@@ -307,6 +307,11 @@
     &:hover {
         color: darken(#fff, 10%);
     }
+
+    &[disabled],
+    &:disabled {
+        color: rgb(197 228 243 / 56%);
+    }
 }
 
 .btn-icon {

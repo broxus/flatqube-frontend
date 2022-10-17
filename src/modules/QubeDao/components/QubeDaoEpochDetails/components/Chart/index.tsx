@@ -6,7 +6,7 @@ import { useIntl } from 'react-intl'
 import { Placeholder } from '@/components/common/Placeholder'
 import { PieChart } from '@/components/common/PieChart'
 import { colors } from '@/modules/QubeDao/constants'
-import { QubeDaoCandidateItem } from '@/modules/QubeDao/components/QubeDaoCandidateItem'
+import { QubeDaoCandidateItem } from '@/modules/QubeDao/components/QubeDaoCommon'
 import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { formattedTokenAmount, isGoodBignumber, sliceAddress } from '@/utils'
@@ -36,7 +36,7 @@ export function Chart(): JSX.Element {
                 )
                 const data = epochStore.epochVotesSummary.map(
                     (summary, idx) => ({
-                        color: `${colors[idx]}9f` ?? `#${summary.gauge.split(':')[1].slice(0, 6)}9f`,
+                        color: `${colors[idx]}e6` ?? `#${summary.gauge.split(':')[1].slice(0, 6)}e6`,
                         value: summary.totalAmount,
                     }),
                 )
@@ -76,8 +76,8 @@ export function Chart(): JSX.Element {
                                                 <div
                                                     className={styles.stats_legend__color}
                                                     style={{
-                                                        background: `${colors[idx]}9f`
-                                                            ?? `#${summary.gauge.split(':')[1].slice(0, 6)}9f`,
+                                                        background: `${colors[idx]}e6`
+                                                            ?? `#${summary.gauge.split(':')[1].slice(0, 6)}e6`,
                                                     }}
                                                 />
                                             </div>
@@ -133,8 +133,8 @@ export function Chart(): JSX.Element {
                                                 <div
                                                     className={styles.stats_legend__color}
                                                     style={{
-                                                        background: `${colors[halfCount + idx]}9f`
-                                                            ?? `#${summary.gauge.split(':')[1].slice(0, 6)}9f`,
+                                                        background: `${colors[halfCount + idx]}e6`
+                                                            ?? `#${summary.gauge.split(':')[1].slice(0, 6)}e6`,
                                                     }}
                                                 />
                                                 <div className={styles.stats_right_legend__label}>

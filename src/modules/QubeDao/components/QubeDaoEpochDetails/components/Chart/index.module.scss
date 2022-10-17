@@ -13,6 +13,7 @@
 
     &_legend__color {
         height: 8px;
+        min-width: 8px;
         width: 8px;
     }
 
@@ -29,17 +30,18 @@
             align-items: center;
             color: rgb(255 255 255 / 48%);
             display: flex;
-            font-size: 14px;
+            font-size: 12px;
             gap: 8px;
-            line-height: 20px;
+            line-height: 18px;
         }
 
         &__label {
             display: inline-block;
+            max-width: 130px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            width: 100px;
+            width: 100%;
         }
     }
 

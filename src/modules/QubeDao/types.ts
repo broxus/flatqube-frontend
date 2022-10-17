@@ -366,3 +366,34 @@ export type QubeDaoTransactionsResponse = {
     totalCount: number;
     transactions: QubeDaoTransactionResponse[];
 }
+
+
+export type QubeDaoWhitelistColumn = 'averageAmount' | 'createdAt'
+
+export type QubeDaoWhitelistOrdering = {
+    column: QubeDaoWhitelistColumn;
+    direction: Direction;
+}
+
+export type QubeDaoWhitelistRequest = {
+    gaugeAddress?: string | null;
+    isActive?: boolean | null;
+    limit: number;
+    offset: number;
+    ordering?: QubeDaoWhitelistOrdering | null;
+}
+
+export type QubeDaoWhitelistGaugeResponse = {
+    activeEpochs?: number | null;
+    address: string;
+    averageAmount: string;
+    averagePercentage: string;
+    isActive: boolean;
+    lastEpochAmount: string;
+    lastEpochPercentage: string;
+}
+
+export type QubeDaoWhitelistResponse = {
+    gauges: QubeDaoWhitelistGaugeResponse[];
+    totalCount: number;
+}

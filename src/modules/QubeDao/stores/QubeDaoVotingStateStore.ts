@@ -111,7 +111,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
 
         this.setState('isInitializing', true)
 
-        await this.syncGauges()
+        await this.syncWhitelistGauges()
 
         this.#initDisposer = reaction(() => this.dao.wallet.address, async (address, prevAddress) => {
             if (address !== undefined && address !== prevAddress) {
@@ -124,55 +124,6 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
 
     public dispose(): void {
         this.#initDisposer?.()
-    }
-
-    public async fetchUserVotes(force?: boolean, silence: boolean = false): Promise<void> {
-        if (this.dao.wallet.address === undefined || this.epoch.epochNum === undefined) {
-            return
-        }
-
-        if (!force && this.isFetchingUserVotes) {
-            return
-        }
-
-        this.setState('isFetchingUserVotes', !silence)
-
-        try {
-            const response = (await this.api.epochsVotesSearch({}, { method: 'POST' }, {
-                epochNum: this.epoch.epochNum,
-                limit: this.limit,
-                offset: 0,
-                userAddress: this.dao.wallet.address,
-            })).epochVotes
-
-            this.setData('userVotes', response)
-        }
-        catch (e) {
-            error('Fetch epoch user votes error', e)
-        }
-        finally {
-            this.setState('isFetchingUserVotes', false)
-        }
-    }
-
-    protected async syncGauges(): Promise<void> {
-        try {
-            const [details, gauges] = await Promise.all([
-                this.dao.veContract.methods.getVotingDetails({}).call({ cachedState: this.dao.veContractCachedState }),
-                this.dao.veContract.methods.gaugeWhitelist({}).call({ cachedState: this.dao.veContractCachedState }),
-            ])
-
-            this.setData({
-                gauges: gauges.gaugeWhitelist.filter(([, enabled]) => enabled).map(([address, enabled]) => ({
-                    address: address.toString(),
-                    enabled,
-                })),
-                limit: Number(details._maxGaugesPerVote),
-            })
-        }
-        catch (e) {
-
-        }
     }
 
     public async voteEpoch(params: Partial<QubeDaoVoteEpochParams>): Promise<void> {
@@ -241,6 +192,56 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
                 await this.options.endVotingCallbacks?.onTransactionSuccess?.(result)
             },
         })
+    }
+
+    protected async fetchUserVotes(force?: boolean, silence: boolean = false): Promise<void> {
+        if (this.dao.wallet.address === undefined || this.epoch.epochNum === undefined) {
+            return
+        }
+
+        if (!force && this.isFetchingUserVotes) {
+            return
+        }
+
+        this.setState('isFetchingUserVotes', !silence)
+
+        try {
+            const response = (await this.api.epochsVotesSearch({}, { method: 'POST' }, {
+                epochNum: this.epoch.epochNum,
+                limit: this.limit,
+                offset: 0,
+                userAddress: this.dao.wallet.address,
+            })).epochVotes
+
+            this.setData('userVotes', response)
+        }
+        catch (e) {
+            error('Fetch epoch user votes error', e)
+        }
+        finally {
+            this.setState('isFetchingUserVotes', false)
+        }
+    }
+
+    protected async syncWhitelistGauges(): Promise<void> {
+        try {
+            const whitelist = await this.dao.veContract
+                .methods.gaugeWhitelist({})
+                .call({ cachedState: this.dao.veContractCachedState })
+
+            const gauges = whitelist.gaugeWhitelist.filter(([, enabled]) => enabled).map(([address, enabled]) => ({
+                address: address.toString(),
+                enabled,
+            }))
+
+            this.setData({
+                gauges,
+                limit: gauges.length,
+            })
+        }
+        catch (e) {
+
+        }
     }
 
     public get candidates(): QubeDaoVotingStateStoreData['candidates'] {

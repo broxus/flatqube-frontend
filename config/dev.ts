@@ -25,9 +25,13 @@ export const WEVERRootAddress = new AddressLiteral('0:a49cd4e158a9a15555e624759e
 
 export const USDTRootAddress = new AddressLiteral('0:a519f99bb5d6d51ef958ed24d337ad75a1c770885dcd42d51d6663f9fcdacfb2')
 
-export const TokenFactoryAddress = new AddressLiteral('0:d291ab784f3ce6958fad0e473bcd61891b303cfe7a96e2c7074f20eadd500f44')
+export const QUBERootAddress = new AddressLiteral('0:9f20666ce123602fd7a995508aeaa0ece4f92133503c0dfbd609b3239f3901e2')
 
-export const QubeDaoTokenAddress = new AddressLiteral('0:9f20666ce123602fd7a995508aeaa0ece4f92133503c0dfbd609b3239f3901e2')
+export const QUBEOwnerAddress = new AddressLiteral('0:ea09ee65b328dc3d68df3382c1651c204a13f0ca4d8bf86e6fdd65be71d78f40')
+
+export const OldFarmAllocatorAddress = new AddressLiteral('0:a2b489a30c88648ab4bf98c2ba9d07c363c9d93e72a43a0625ff4644524582c6')
+
+export const TokenFactoryAddress = new AddressLiteral('0:d291ab784f3ce6958fad0e473bcd61891b303cfe7a96e2c7074f20eadd500f44')
 
 export const VoteEscrowAddress = new AddressLiteral('0:8317ae7ee92d748500e179843b587d7fbd98d6bb37402e2b44566f9f6f3cdd90')
 

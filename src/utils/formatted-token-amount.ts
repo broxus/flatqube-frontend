@@ -7,7 +7,7 @@ import type { FormattedAmountOptions } from './formatted-amount'
 export function formattedTokenAmount(
     value?: string | number,
     decimals?: number,
-    options: FormattedAmountOptions = { roundOn: true },
+    options: FormattedAmountOptions = { roundingMode: BigNumber.ROUND_DOWN, roundOn: true },
 ): string {
     const parts = splitAmount(value, decimals)
     const digits = [formatDigits(parts[0], options.digitsSeparator)]
@@ -28,30 +28,36 @@ export function formattedTokenAmount(
         if (roundOn && integerNumber.gte(roundOn)) {
             return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
         }
-        fractionalPartNumber = fractionalPartNumber.dp(options?.truncate, BigNumber.ROUND_DOWN)
+        fractionalPartNumber = fractionalPartNumber.dp(options?.truncate, options.roundingMode)
         digits.push(fractionalPartNumber.toFixed().split('.')[1])
         return digits.filter(Boolean).join('.')
     }
 
     if (roundOn && integerNumber.gte(roundOn)) {
-        return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
+        return formatDigits(
+            integerNumber
+                .plus(fractionalPartNumber)
+                .dp(0, BigNumber.ROUND_HALF_CEIL)
+                .toFixed(),
+            options.digitsSeparator,
+        ) ?? ''
     }
 
     switch (true) {
         case fractionalPartNumber.lte(1e-8):
-            fractionalPartNumber = fractionalPartNumber.precision(options.precision ?? 4, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.precision(options.precision ?? 4, options.roundingMode)
             break
 
         case integerNumber.lt(1):
-            fractionalPartNumber = fractionalPartNumber.dp(8, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.dp(8, options.roundingMode)
             break
 
         case integerNumber.lt(1e3):
-            fractionalPartNumber = fractionalPartNumber.dp(4, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.dp(4, options.roundingMode)
             break
 
         default:
-            fractionalPartNumber = fractionalPartNumber.dp(0, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.dp(0, options.roundingMode)
     }
 
     digits.push(fractionalPartNumber.toFixed().split('.')[1])
