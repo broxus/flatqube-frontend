@@ -4,14 +4,22 @@ import { formatDigits } from './format-digits'
 import { splitAmount } from './split-amount'
 
 export type FormattedAmountOptions = {
-    /** Truncate fractional part to this value */
-    truncate?: number;
+    /**
+     * Which symbol should be placed between digits. By default, is space.
+     */
+    digitsSeparator?: string;
     /**
      *  Precision of the values below than `1e-3` (currency) or `1e-8` (token)
      */
     precision?: number;
     /** Preserve all decimals after point */
     preserve?: boolean;
+    /**
+     * Rounding mode, integer, 0 to 8.
+     *
+     * Default: BigNumber.ROUND_DOWN
+     */
+    roundingMode?: BigNumber.RoundingMode;
     /**
      * Round the amount if the value is greater than or equal
      * to the value passed in this option (`1e3`, `1e6`, `1e9` etc.).
@@ -24,16 +32,14 @@ export type FormattedAmountOptions = {
      * Default: true
      */
     roundOn?: number | boolean;
-    /**
-     * Which symbol should be placed between digits. By default, is space.
-     */
-    digitsSeparator?: string;
+    /** Truncate fractional part to this value */
+    truncate?: number;
 }
 
 export function formattedAmount(
     value?: string | number,
     decimals?: number,
-    options: FormattedAmountOptions = { roundOn: true },
+    options: FormattedAmountOptions = { roundingMode: BigNumber.ROUND_DOWN, roundOn: true },
 ): string {
     const parts = splitAmount(value, decimals)
     const digits = [formatDigits(parts[0], options.digitsSeparator)]
@@ -54,34 +60,40 @@ export function formattedAmount(
         if (roundOn && integerNumber.gte(roundOn)) {
             return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
         }
-        fractionalPartNumber = fractionalPartNumber.dp(options?.truncate, BigNumber.ROUND_DOWN)
+        fractionalPartNumber = fractionalPartNumber.dp(options?.truncate, options.roundingMode)
         digits.push(fractionalPartNumber.toFixed().split('.')[1])
         return digits.filter(Boolean).join('.')
     }
 
     if (roundOn && integerNumber.gte(roundOn)) {
-        return formatDigits(integerNumber.toFixed(), options.digitsSeparator) ?? ''
+        return formatDigits(
+            integerNumber
+                .plus(fractionalPartNumber)
+                .dp(0, BigNumber.ROUND_HALF_CEIL)
+                .toFixed(),
+            options.digitsSeparator,
+        ) ?? ''
     }
 
     switch (true) {
         case roundOn && integerNumber.gte(roundOn):
-            fractionalPartNumber = fractionalPartNumber.dp(0, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.dp(0, options.roundingMode)
             break
 
         case integerNumber.isZero() && fractionalPartNumber.lte(1e-3):
-            fractionalPartNumber = fractionalPartNumber.precision(options.precision ?? 4, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.precision(options.precision ?? 4, options.roundingMode)
             break
 
         case integerNumber.gt(0) && roundOn && integerNumber.lt(roundOn):
-            fractionalPartNumber = fractionalPartNumber.dp(2, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.dp(2, options.roundingMode)
             break
 
         case integerNumber.isZero() && fractionalPartNumber.lte(1e-2):
-            fractionalPartNumber = fractionalPartNumber.dp(3, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.dp(3, options.roundingMode)
             break
 
         default:
-            fractionalPartNumber = fractionalPartNumber.dp(4, BigNumber.ROUND_DOWN)
+            fractionalPartNumber = fractionalPartNumber.dp(4, options.roundingMode)
     }
 
     digits.push(fractionalPartNumber.toFixed().split('.')[1] ?? '')

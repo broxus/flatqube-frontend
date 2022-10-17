@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js'
 import type {
-    Address, Contract, DecodedEvent, FullContractState, Transaction,
+    Address, Contract, DecodedAbiFunctionOutputs, DecodedEvent, FullContractState, Transaction,
 } from 'everscale-inpage-provider'
 import { computed, makeObservable, reaction } from 'mobx'
 import type { IReactionDisposer } from 'mobx'
@@ -11,6 +11,7 @@ import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { TokenAbi, TokenWallet, VoteEscrowAbi } from '@/misc'
 import { useQubeDaoApi } from '@/modules/QubeDao/hooks/useApi'
 import type {
+    QubeDaoMainPageResponse,
     SendMessageCallback,
     TransactionCallbacks,
     TransactionFailureReason,
@@ -21,7 +22,10 @@ import { BaseStore } from '@/stores/BaseStore'
 import { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
 import { WalletService } from '@/stores/WalletService'
 import {
-    debug, error, getSafeProcessingId, isGoodBignumber,
+    debug,
+    error,
+    getSafeProcessingId,
+    isGoodBignumber,
 } from '@/utils'
 
 
@@ -101,6 +105,10 @@ export type QubeDaoStoreData = {
     accountAddress?: Address;
     averageLockTime: number;
     currentEpochNum: number;
+    farmingAllocatorTokenBalance?: string;
+    maxVotesRatio?: string;
+    minVotesRatio?: string;
+    tokenOwnerTokenBalance?: string;
     tokenPrice?: string;
     tokenTotalSupply?: string;
     totalLockedAmount?: string;
@@ -124,8 +132,10 @@ export type QubeDaoStoreState = {
 }
 
 export type QubeDaoStoreCtorOptions = {
+    farmingAllocatorAddress?: Address;
     tokenAddress: Address;
     tokenDecimals: number;
+    tokenOwnerAddress?: Address;
     tokenSymbol: string;
     veAddress: Address;
     veDecimals: number;
@@ -155,6 +165,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         makeObservable(this, {
             averageLockTime: computed,
             currentEpochNum: computed,
+            farmingAllocatorTokenBalance: computed,
             hasUnlockedAmount: computed,
             isDepositing: computed,
             isFetchingDetails: computed,
@@ -167,6 +178,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
             token: computed,
             tokenAddress: computed,
             tokenDecimals: computed,
+            tokenOwnerTokenBalance: computed,
             tokenPrice: computed,
             tokenSymbol: computed,
             tokenTotalSupply: computed,
@@ -191,7 +203,8 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
 
         this.setState('isInitializing', true)
 
-        await this.syncVeAccountContractState()
+        await this.syncVeContractState()
+        await this.syncVotingDetails()
 
         this.#initDisposer = reaction(
             () => [this.wallet.address, this.tokensCache.isReady],
@@ -212,10 +225,11 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
                         userBalance: undefined,
                         userVeBalance: undefined,
                     })
+                    this.setState('isSyncingBalances', false)
                     await this.tokensCache.unwatch(this.options.tokenAddress.toString(), 'qube-dao')
                 }
             },
-            { delay: 50, fireImmediately: true },
+            { fireImmediately: true },
         )
 
         await Promise.all([
@@ -394,32 +408,49 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         try {
             this.setState('isFetchingDetails', true)
 
-            const response = await this.api.mainPage({}, { method: 'GET' })
+            type ResponseTuple = [
+                QubeDaoMainPageResponse,
+                string,
+                DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Root, 'getCurrentEpochDetails'>,
+                string,
+                string,
+            ]
+
+            const [
+                response,
+                tokenTotalSupply,
+                details,
+                farmingAllocatorTokenBalance,
+                tokenOwnerTokenBalance,
+            ] = await Promise.allSettled([
+                this.api.mainPage({}, { method: 'GET' }),
+                TokenWallet.totalSupply(this.tokenAddress),
+                this.veContract
+                    .methods.getCurrentEpochDetails({})
+                    .call({ cachedState: this.veContractCachedState }),
+                this.options.farmingAllocatorAddress && TokenWallet.balance({
+                    owner: this.options.farmingAllocatorAddress,
+                    root: this.tokenAddress,
+                }),
+                this.options.tokenOwnerAddress && TokenWallet.balance({
+                    owner: this.options.tokenOwnerAddress,
+                    root: this.tokenAddress,
+                }),
+            ]).then(res => res.map(
+                r => (r.status === 'fulfilled' ? r.value : undefined),
+            )) as ResponseTuple
 
             this.setData({
-                averageLockTime: response.averageLockTime ?? 0,
+                averageLockTime: response?.averageLockTime ?? 0,
+                currentEpochNum: parseInt(details._currentEpoch, 10),
+                farmingAllocatorTokenBalance,
+                tokenOwnerTokenBalance,
+                tokenTotalSupply,
                 totalLockedAmount: response.totalAmount ?? 0,
                 totalLockedVeAmount: response.totalVeAmount ?? 0,
             })
 
-            try {
-                const totalTokenSupply = await TokenWallet.totalSupply(this.tokenAddress)
-                this.setData('tokenTotalSupply', totalTokenSupply ?? '0')
-            }
-            catch (e) {
-                this.setData('tokenTotalSupply', '0')
-            }
-
-            try {
-                const details = await this.veContract
-                    .methods.getCurrentEpochDetails({})
-                    .call({ cachedState: this.veContractCachedState })
-
-                this.setData('currentEpochNum', parseInt(details._currentEpoch, 10))
-            }
-            catch (e) {
-
-            }
+            console.log(this.toJSON())
         }
         catch (e) {
             //
@@ -489,6 +520,22 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         }
         finally {
             this.setState('isSyncingTokenBalance', false)
+        }
+    }
+
+    protected async syncVotingDetails(): Promise<void> {
+        try {
+            const details = await this.veContract
+                .methods.getVotingDetails({})
+                .call({ cachedState: this.veContractCachedState })
+
+            this.setData({
+                maxVotesRatio: details._gaugeMaxVotesRatio,
+                minVotesRatio: details._gaugeMinVotesRatio,
+            })
+        }
+        catch (e) {
+            error(e)
         }
     }
 
@@ -851,6 +898,22 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         return this.data.currentEpochNum
     }
 
+    public get farmingAllocatorTokenBalance(): QubeDaoStoreData['farmingAllocatorTokenBalance'] {
+        return this.data.farmingAllocatorTokenBalance
+    }
+
+    public get maxVotesRatio(): QubeDaoStoreData['maxVotesRatio'] {
+        return this.data.maxVotesRatio
+    }
+
+    public get minVotesRatio(): QubeDaoStoreData['minVotesRatio'] {
+        return this.data.minVotesRatio
+    }
+
+    public get tokenOwnerTokenBalance(): QubeDaoStoreData['tokenOwnerTokenBalance'] {
+        return this.data.tokenOwnerTokenBalance
+    }
+
     public get tokenPrice(): QubeDaoStoreData['tokenPrice'] {
         return this.data.tokenPrice
     }
@@ -959,7 +1022,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         return this.options.veSymbol
     }
 
-    protected async syncVeAccountContractState(): Promise<void> {
+    protected async syncVeContractState(): Promise<void> {
         try {
             this.setState(
                 'veContractCachedState',
@@ -976,11 +1039,11 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
     protected async subscribe(): Promise<void> {
         try {
             await this.unsubscribe()
-            this.#veContractStateSubscriber = await staticRpc.subscribe('contractStateChanged', {
+            this.#veContractStateSubscription = await staticRpc.subscribe('contractStateChanged', {
                 address: this.veAddress,
             })
-            this.#veContractStateSubscriber.on('data', async () => {
-                await this.syncVeAccountContractState()
+            this.#veContractStateSubscription.on('data', async () => {
+                await this.syncVeContractState()
                 await Promise.all([
                     this.fetchDetails(),
                     this.fetchTokenPrice(true),
@@ -995,15 +1058,15 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
 
     protected async unsubscribe(): Promise<void> {
         try {
-            await this.#veContractStateSubscriber?.unsubscribe()
-            this.#veContractStateSubscriber = undefined
+            await this.#veContractStateSubscription?.unsubscribe()
+            this.#veContractStateSubscription = undefined
         }
         catch (e) {
             error('Unsubscribe from Vote Escrow contract state error: ', e)
         }
     }
 
-    #veContractStateSubscriber: Subscription<'contractStateChanged'> | undefined
+    #veContractStateSubscription: Subscription<'contractStateChanged'> | undefined
 
     #initDisposer: IReactionDisposer | undefined
 

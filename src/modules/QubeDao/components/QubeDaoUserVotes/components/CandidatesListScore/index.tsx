@@ -48,7 +48,10 @@ function CandidatesListScoreInternal(): JSX.Element {
                     { id: 'QUBE_DAO_VOTE_STATE_LIST_FUTURE_SPEED_VALUE' },
                     {
                         symbol: daoContext.tokenSymbol,
-                        value: formattedAmount(votesStore.scoredUserFarmSpeed, daoContext.tokenDecimals),
+                        value: formattedAmount(votesStore.scoredUserFarmSpeed, daoContext.tokenDecimals, {
+                            precision: 2,
+                            roundingMode: BigNumber.ROUND_HALF_UP,
+                        }),
                     },
                 )}
                 <div className="text-sm text-muted">

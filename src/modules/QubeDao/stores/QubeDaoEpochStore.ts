@@ -16,9 +16,6 @@ export type QubeDaoEpochStoreData = {
     epochStart: number | null;
     epochVotesSummary: QubeDaoEpochVotesSumResponse[];
     gaugesDetails: { [gaugeAddress: string]: GaugeItem['poolTokens'] };
-    maxGaugesPerVote: number;
-    maxVotesRatio?: string;
-    minVotesRatio?: string;
     normalizedDistribution: { [gaugeAddress: string]: string };
     totalDistribution: string;
     totalVeAmount: string;
@@ -78,8 +75,6 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
             isFetchingEpoch: computed,
             isFetchingGaugesDetails: computed,
             isFetchingVotesSummary: computed,
-            maxVotesRatio: computed,
-            minVotesRatio: computed,
             normalizedDistribution: computed,
             totalDistribution: computed,
             totalVeAmount: computed,
@@ -98,7 +93,10 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
 
         this.setState('isInitializing', true)
 
-        await this.syncDistributionScheme()
+        await Promise.all([
+            this.syncDistributionScheme(),
+            this.fetchGaugesDetails(),
+        ])
 
         if (this.data.epochNum) {
             await this.fetchEpoch()
@@ -106,41 +104,39 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         else {
             await this.fetchLastEpoch()
         }
-        await this.syncVotingDetails()
         await this.fetchVotesSummary()
-        await this.fetchGaugesDetails()
 
         this.#initDisposer = reaction(() => this.dao.wallet.address, async (address, prevAddress) => {
             if (address !== undefined && address !== prevAddress) {
                 await this.fetchUserVoteState()
             }
-        }, { delay: 100, fireImmediately: true })
+        }, { fireImmediately: true })
 
         this.#veContractDisposer = reaction(() => this.dao.veContractCachedState, async () => {
             try {
-                const [
-                    currentEpochDetails,
-                    votingDetails,
-                    currentVotingEntities,
-                    distribution,
-                ] = await Promise.all([
-                    this.dao.veContract
-                        .methods.getCurrentEpochDetails({})
-                        .call({ cachedState: this.dao.veContractCachedState }),
-                    this.dao.veContract
-                        .methods.getVotingDetails({})
-                        .call({ cachedState: this.dao.veContractCachedState }),
-                    (await this.dao.veContract
-                        .methods.currentVotingVotes({})
-                        .call({ cachedState: this.dao.veContractCachedState }))
-                        .currentVotingVotes,
-                    (await this.dao.veContract
-                        .methods.getNormalizedVoting({})
-                        .call({ cachedState: this.dao.veContractCachedState }))
-                        ._distribution,
-                ])
+                if (this.epochNum === this.dao.currentEpochNum) {
+                    const [
+                        currentEpochDetails,
+                        votingDetails,
+                        currentVotingEntities,
+                        distribution,
+                    ] = await Promise.all([
+                        this.dao.veContract
+                            .methods.getCurrentEpochDetails({})
+                            .call({ cachedState: this.dao.veContractCachedState }),
+                        this.dao.veContract
+                            .methods.getVotingDetails({})
+                            .call({ cachedState: this.dao.veContractCachedState }),
+                        (await this.dao.veContract
+                            .methods.currentVotingVotes({})
+                            .call({ cachedState: this.dao.veContractCachedState }))
+                            .currentVotingVotes,
+                        (await this.dao.veContract
+                            .methods.getNormalizedVoting({})
+                            .call({ cachedState: this.dao.veContractCachedState }))
+                            ._distribution,
+                    ])
 
-                if (this.epochNum === parseInt(currentEpochDetails._currentEpoch, 10)) {
                     const now = DateTime.local().toSeconds()
                     const votingEndTime = parseInt(currentEpochDetails._currentVotingEndTime, 10)
                     const votingStartTime = parseInt(currentEpochDetails._currentVotingStartTime, 10)
@@ -167,7 +163,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
                             return acc
                         },
                         [],
-                    )
+                    ).sort((a, b) => Number(b.totalAmount) - Number(a.totalAmount))
 
                     const normalizedDistribution = distribution.reduce<
                         { [gaugeAddress: string]: string }
@@ -299,9 +295,15 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         this.setState('isFetchingUserVoteState', !silence)
 
         try {
+            const limit = (await this.dao.veContract
+                .methods.gaugeWhitelist({})
+                .call({ cachedState: this.dao.veContractCachedState }))
+                .gaugeWhitelist
+                .length
+
             const response = (await this.api.epochsVotesSearch({}, { method: 'POST' }, {
                 epochNum: this.data.epochNum,
-                limit: this.data.maxGaugesPerVote,
+                limit,
                 offset: 0,
                 userAddress: this.dao.wallet.address,
             })).epochVotes
@@ -335,7 +337,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
                 epochNum: this.data.epochNum.toString(),
             }, { method: 'GET' })
 
-            this.setData('epochVotesSummary', response)
+            this.setData('epochVotesSummary', response.sort((a, b) => Number(b.totalAmount) - Number(a.totalAmount)))
         }
         catch (e) {
             error('Fetch votes sum error', e)
@@ -381,23 +383,6 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         }
     }
 
-    protected async syncVotingDetails(): Promise<void> {
-        try {
-            const details = await this.dao.veContract
-                .methods.getVotingDetails({})
-                .call({ cachedState: this.dao.veContractCachedState })
-
-            this.setData({
-                maxGaugesPerVote: parseInt(details._maxGaugesPerVote, 10),
-                maxVotesRatio: details._gaugeMaxVotesRatio,
-                minVotesRatio: details._gaugeMinVotesRatio,
-            })
-        }
-        catch (e) {
-            error(e)
-        }
-    }
-
     protected async syncDistributionScheme(): Promise<void> {
         try {
             this.setData(
@@ -431,14 +416,6 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
 
     public get epochVotesSummary(): QubeDaoEpochStoreData['epochVotesSummary'] {
         return this.data.epochVotesSummary
-    }
-
-    public get maxVotesRatio(): QubeDaoEpochStoreData['maxVotesRatio'] {
-        return this.data.maxVotesRatio
-    }
-
-    public get minVotesRatio(): QubeDaoEpochStoreData['minVotesRatio'] {
-        return this.data.minVotesRatio
     }
 
     public get normalizedDistribution(): QubeDaoEpochStoreData['normalizedDistribution'] {

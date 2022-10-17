@@ -295,7 +295,11 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
 
     public get totalSupplyShare(): string | undefined {
         return new BigNumber(this.dao.totalLockedAmount || 0)
-            .div(this.dao.tokenTotalSupply || 0)
+            .div(
+                new BigNumber(this.dao.tokenTotalSupply || 0)
+                    .minus(this.dao.farmingAllocatorTokenBalance || 0)
+                    .minus(this.dao.tokenOwnerTokenBalance || 0),
+            )
             .times(100)
             .precision(2, BigNumber.ROUND_DOWN)
             .toFixed()
@@ -309,6 +313,8 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
         const yesterday = this.balancesStats.slice(0, this.balancesStats.length - 1).pop()
         const numerator = new BigNumber(today?.amount || 0).minus(yesterday?.amount || 0)
         const denominator = new BigNumber(this.dao.tokenTotalSupply || 0)
+            .minus(this.dao.farmingAllocatorTokenBalance || 0)
+            .minus(this.dao.tokenOwnerTokenBalance || 0)
         const value = new BigNumber(numerator.div(denominator))
             .times(100)
             .precision(2, BigNumber.ROUND_DOWN)

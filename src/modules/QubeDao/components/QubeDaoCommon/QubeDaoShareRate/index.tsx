@@ -7,14 +7,15 @@ import { formattedAmount } from '@/utils'
 type Props = {
     maxValue: string;
     minValue: string;
+    onlyValues?: boolean;
     value: string;
 }
 
-export function QubeDaoShareRate({ maxValue, minValue, value }: Props): JSX.Element {
+export function QubeDaoShareRate({ maxValue, minValue, onlyValues, value }: Props): JSX.Element {
     const intl = useIntl()
 
     switch (true) {
-        case new BigNumber(value).eq(0):
+        case new BigNumber(value || 0).isZero():
             return (
                 <span className="text-muted">
                     {`${formattedAmount(value)}%`}
@@ -24,7 +25,7 @@ export function QubeDaoShareRate({ maxValue, minValue, value }: Props): JSX.Elem
         case new BigNumber(value).lt(minValue):
             return (
                 <span className="text-danger">
-                    {intl.formatMessage(
+                    {onlyValues ? `${formattedAmount(value)}%` : intl.formatMessage(
                         { id: 'QUBE_DAO_VOTE_TOO_FEW_VOTES_HINT' },
                         { value: `${formattedAmount(value)}%` },
                     )}

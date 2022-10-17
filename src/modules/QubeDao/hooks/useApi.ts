@@ -1,6 +1,7 @@
 import { GAUGES_API_URL, QUBE_API_URL } from '@/config'
 import type { CurrencyResponse } from '@/modules/Currencies/types'
 import type {
+    GaugeBatchResponse,
     QubeDaoBalanceResponse,
     QubeDaoBalancesRequest,
     QubeDaoBalancesResponse,
@@ -18,15 +19,17 @@ import type {
     QubeDaoEpochVotesRequest,
     QubeDaoEpochVotesResponse,
     QubeDaoEpochVotesSumResponse,
+    QubeDaoGaugeBatchRequest,
     QubeDaoGaugesRequest,
     QubeDaoGaugesResponse,
     QubeDaoMainPageResponse,
     QubeDaoTransactionsRequest,
     QubeDaoTransactionsResponse,
+    QubeDaoWhitelistRequest,
+    QubeDaoWhitelistResponse,
 } from '@/modules/QubeDao/types'
 import { apiRoutes, qubeDaoApiRoutes } from '@/routes'
 import { createHandler } from '@/utils'
-import { GaugeBatchResponse, QubeDaoGaugeBatchRequest } from '@/modules/QubeDao/types'
 
 
 const qubeDaoApi = {
@@ -81,6 +84,10 @@ const qubeDaoApi = {
         qubeDaoApiRoutes.transactionsSearch,
         QUBE_API_URL,
     )<QubeDaoTransactionsResponse, QubeDaoTransactionsRequest>(),
+    whitelistSearch: createHandler(
+        qubeDaoApiRoutes.whitelistSearch,
+        QUBE_API_URL,
+    )<QubeDaoWhitelistResponse, QubeDaoWhitelistRequest>(),
 }
 
 export type QubeDaoApi = typeof qubeDaoApi

@@ -47,7 +47,12 @@ function VotingStateListScoreInternal(): JSX.Element {
                 <div className="text-sm text-muted">
                     {intl.formatMessage(
                         { id: 'QUBE_DAO_VOTE_STATE_LIST_FUTURE_SPEED_CURRENCY_VALUE' },
-                        { value: `$${formattedAmount(scoredGaugesFarmSpeedPrice)}` },
+                        {
+                            value: `$${formattedAmount(scoredGaugesFarmSpeedPrice, daoContext.tokenDecimals, {
+                                precision: 2,
+                                roundingMode: BigNumber.ROUND_HALF_UP,
+                            })}`,
+                        },
                     )}
                 </div>
             </div>

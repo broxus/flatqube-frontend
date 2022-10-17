@@ -95,6 +95,7 @@ export const qubeDaoApiRoutes = {
     gaugesSearch: new Route('/gauges/search'),
     mainPage: new Route('/main_page'),
     transactionsSearch: new Route('/transactions/search'),
+    whitelistSearch: new Route('/whitelist/search'),
 }
 
 export const gaugesApiRoutes = {

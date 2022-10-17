@@ -1,0 +1,7 @@
+.candidates_list {
+    &.list {
+        --list-grid-template: minmax(160px, 20%) 60px minmax(90px, 20%) minmax(130px, 20%) minmax(180px, 30%) minmax(100px, 10%);
+
+        min-height: 1px;
+    }
+}

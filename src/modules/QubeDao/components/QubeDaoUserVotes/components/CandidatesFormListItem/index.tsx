@@ -9,13 +9,12 @@ import { AmountInput } from '@/components/common/AmountInput'
 import { Icon } from '@/components/common/Icon'
 import { Select } from '@/components/common/Select'
 import { TokenIcon } from '@/components/common/TokenIcon'
-import { QubeDaoCandidateItem } from '@/modules/QubeDao/components/QubeDaoCandidateItem'
+import { QubeDaoCandidateItem, QubeDaoShareRate } from '@/modules/QubeDao/components/QubeDaoCommon'
 import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import type { Candidate } from '@/modules/QubeDao/stores/QubeDaoVotingStateStore'
 import { formattedTokenAmount, isGoodBignumber } from '@/utils'
-import { QubeDaoShareRate } from '@/modules/QubeDao/components/QubeDaoShareRate'
 
 import styles from './index.module.scss'
 
@@ -100,8 +99,8 @@ function CandidatesFormListItemInternal({ candidate, idx }: Props): JSX.Element 
 
     const candidatesAddresses = votesStore.candidates.map(({ address }) => address)
     const disabled = daoContext.isVotingEpoch || !isGoodBignumber(daoContext.userVeBalance ?? 0)
-    const maxVotesRatio = new BigNumber(epochStore.maxVotesRatio || 0).shiftedBy(-2).toFixed()
-    const minVotesRatio = new BigNumber(epochStore.minVotesRatio || 0).shiftedBy(-2).toFixed()
+    const maxVotesRatio = new BigNumber(daoContext.maxVotesRatio || 0).shiftedBy(-2).toFixed()
+    const minVotesRatio = new BigNumber(daoContext.minVotesRatio || 0).shiftedBy(-2).toFixed()
 
     const gaugeCurrentTotalAmount = votesStore.currentGaugeTotalAmount(candidate.address)
     const gaugeCurrentVoteShare = votesStore.currentGaugeVoteShare(candidate.address)
@@ -246,7 +245,7 @@ function CandidatesFormListItemInternal({ candidate, idx }: Props): JSX.Element 
                             &mdash;
                         </div>
                     )}
-                    <div className="list__cell list__cell--center visible@s">
+                    <div className="list__cell list__cell--right visible@s">
                         {removeButton}
                     </div>
                 </div>

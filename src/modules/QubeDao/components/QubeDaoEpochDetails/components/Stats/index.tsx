@@ -115,7 +115,7 @@ export function Stats(): JSX.Element {
                                 <div className={styles.stats_stat_value}>
                                     {isFetchingVotesSummary ? (
                                         <Placeholder height={22} width={30} />
-                                    ) : `${formattedAmount(epochStore.minVotesRatio, 2)}%`}
+                                    ) : `${formattedAmount(daoContext.minVotesRatio, 2)}%`}
                                 </div>
                             </div>
 
@@ -128,7 +128,7 @@ export function Stats(): JSX.Element {
                                 <div className={styles.stats_stat_value}>
                                     {isFetchingVotesSummary ? (
                                         <Placeholder height={22} width={30} />
-                                    ) : `${formattedAmount(epochStore.maxVotesRatio, 2)}%`}
+                                    ) : `${formattedAmount(daoContext.maxVotesRatio, 2)}%`}
                                 </div>
                             </div>
                         </div>

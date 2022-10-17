@@ -3,8 +3,7 @@ import BigNumber from 'bignumber.js'
 import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
-import { QubeDaoCandidateItem } from '@/modules/QubeDao/components/QubeDaoCandidateItem'
-import { QubeDaoShareRate } from '@/modules/QubeDao/components/QubeDaoShareRate'
+import { QubeDaoCandidateItem, QubeDaoShareRate } from '@/modules/QubeDao/components/QubeDaoCommon'
 import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
@@ -22,8 +21,8 @@ function CandidatesListItemInternal({ vote }: Props): JSX.Element {
     const epochStore = useQubeDaoEpochStore()
     const votesStore = useQubeDaoVotingStateStore()
 
-    const maxVotesRatio = new BigNumber(epochStore.maxVotesRatio || 0).shiftedBy(-2).toFixed()
-    const minVotesRatio = new BigNumber(epochStore.minVotesRatio || 0).shiftedBy(-2).toFixed()
+    const maxVotesRatio = new BigNumber(daoContext.maxVotesRatio || 0).shiftedBy(-2).toFixed()
+    const minVotesRatio = new BigNumber(daoContext.minVotesRatio || 0).shiftedBy(-2).toFixed()
 
     const currentGaugeDistribution = votesStore.currentGaugeDistribution(vote.gauge)
     const currentGaugeFarmingSpeed = votesStore.currentGaugeFarmingSpeed(vote.gauge)
@@ -69,7 +68,10 @@ function CandidatesListItemInternal({ vote }: Props): JSX.Element {
                     { id: 'QUBE_DAO_VOTE_STATE_LIST_FUTURE_SPEED_VALUE' },
                     {
                         symbol: daoContext.tokenSymbol,
-                        value: formattedAmount(currentGaugeFarmingSpeed, daoContext.tokenDecimals),
+                        value: formattedAmount(currentGaugeFarmingSpeed, daoContext.tokenDecimals, {
+                            precision: 2,
+                            roundingMode: BigNumber.ROUND_HALF_UP,
+                        }),
                     },
                 )}
             </div>
