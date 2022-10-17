@@ -92,6 +92,7 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             isDexAccountDataAvailable: computed,
             isDexLeftBalanceValid: computed,
             isDexRightBalanceValid: computed,
+            isInverted: computed,
             isLeftAmountValid: computed,
             isLeftTokenWithdrawAvailable: computed,
             isPoolDataAvailable: computed,
@@ -734,7 +735,6 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             this.favoritePairs.add(this.pairAddress, name)
         }
 
-        const isInverted = this.pairRoots.left.toString() !== this.leftToken.root
 
         const leftDecimals = this.leftToken.decimals
         const rightDecimals = this.rightToken.decimals
@@ -813,8 +813,8 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                 leftBN = leftBN.minus(input.result.step_2_received)
             }
 
-            const leftDeposit = isInverted ? rightBN.toFixed() : leftBN.toFixed()
-            const rightDeposit = isInverted ? leftBN.toFixed() : rightBN.toFixed()
+            const leftDeposit = this.isInverted ? rightBN.toFixed() : leftBN.toFixed()
+            const rightDeposit = this.isInverted ? leftBN.toFixed() : rightBN.toFixed()
 
             const newLeftBN = new BigNumber(pairLeftBalance).plus(leftDeposit)
             const newRightBN = new BigNumber(pairRightBalance).plus(rightDeposit)
@@ -1274,14 +1274,13 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
 
         try {
             const { left, lp, right } = await Dex.pairBalances(new Address(this.pairAddress))
-            const isInverted = this.pairRoots?.left.toString() !== this.leftToken?.root
 
             this.changePoolData('pair', {
                 ...this.pool.pair,
                 balances: {
-                    left: isInverted ? right : left,
+                    left: this.isInverted ? right : left,
                     lp,
-                    right: isInverted ? left : right,
+                    right: this.isInverted ? left : right,
                 },
             })
         }
@@ -1415,7 +1414,6 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
         //     .decimalPlaces(0)
         //     .toFixed()
         //
-        // const isInverted = this.pairRoots.left.toString() !== this.leftToken.root
         // const left = isInverted ? rightAmount : leftAmount
         // const right = isInverted ? leftAmount : rightAmount
         //
@@ -1594,9 +1592,8 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
             .decimalPlaces(0)
             .toFixed()
 
-        const isInverted = this.pairRoots.left.toString() !== this.leftToken.root
-        const left = isInverted ? rightAmount : leftAmount
-        const right = isInverted ? leftAmount : rightAmount
+        const left = this.isInverted ? rightAmount : leftAmount
+        const right = this.isInverted ? leftAmount : rightAmount
 
         try {
             const result = await Dex.pairExpectedDepositLiquidityV2(
@@ -1645,10 +1642,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                         this.changePoolData(
                             'currentShareLeft',
                             new BigNumber(this.lpWalletBalance || 0)
-                                .times(isInverted ? pairRight : pairLeft)
+                                .times(this.isInverted ? pairRight : pairLeft)
                                 .dividedBy(pairLp)
                                 .dp(0, BigNumber.ROUND_DOWN)
-                                .shiftedBy(isInverted ? -this.rightToken.decimals : -this.leftToken.decimals)
+                                .shiftedBy(this.isInverted ? -this.rightToken.decimals : -this.leftToken.decimals)
                                 .toFixed(),
                         )
                     }
@@ -1657,10 +1654,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                         this.changePoolData(
                             'currentShareRight',
                             new BigNumber(this.lpWalletBalance || '0')
-                                .times(isInverted ? pairLeft : pairRight)
+                                .times(this.isInverted ? pairLeft : pairRight)
                                 .dividedBy(pairLp)
                                 .dp(0, BigNumber.ROUND_DOWN)
-                                .shiftedBy(isInverted ? -this.leftToken.decimals : -this.rightToken.decimals)
+                                .shiftedBy(this.isInverted ? -this.leftToken.decimals : -this.rightToken.decimals)
                                 .toFixed(),
                         )
                     }
@@ -1677,8 +1674,8 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                 const leftNumber = new BigNumber(result.result_balances[0] || 0)
                 const rightNumber = new BigNumber(result.result_balances[1] || 0)
 
-                this.changePoolData('leftDeposit', isInverted ? rightNumber?.toFixed() : leftNumber?.toFixed())
-                this.changePoolData('rightDeposit', isInverted ? leftNumber?.toFixed() : rightNumber?.toFixed())
+                this.changePoolData('leftDeposit', this.isInverted ? rightNumber?.toFixed() : leftNumber?.toFixed())
+                this.changePoolData('rightDeposit', this.isInverted ? leftNumber?.toFixed() : rightNumber?.toFixed())
 
                 const newLeftBN = new BigNumber(pairLeft).plus(this.leftDeposit || 0)
                 const newRightBN = new BigNumber(pairRight).plus(this.rightDeposit || 0)
@@ -1742,9 +1739,8 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                 .decimalPlaces(0)
                 .toFixed()
 
-            const isInverted = this.pairRoots.left.toString() !== this.leftToken.root
-            const left = isInverted ? rightAmount : leftAmount
-            const right = isInverted ? leftAmount : rightAmount
+            const left = this.isInverted ? rightAmount : leftAmount
+            const right = this.isInverted ? leftAmount : rightAmount
 
             const result = await Dex.pairExpectedDepositLiquidity(
                 new Address(this.pairAddress),
@@ -1805,10 +1801,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                         this.changePoolData(
                             'currentShareLeft',
                             new BigNumber(this.lpWalletBalance || 0)
-                                .times(isInverted ? pairRight : pairLeft)
+                                .times(this.isInverted ? pairRight : pairLeft)
                                 .dividedBy(pairLp)
                                 .dp(0, BigNumber.ROUND_DOWN)
-                                .shiftedBy(isInverted ? -this.rightToken.decimals : -this.leftToken.decimals)
+                                .shiftedBy(this.isInverted ? -this.rightToken.decimals : -this.leftToken.decimals)
                                 .toFixed(),
                         )
                     }
@@ -1817,10 +1813,10 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                         this.changePoolData(
                             'currentShareRight',
                             new BigNumber(this.lpWalletBalance || '0')
-                                .times(isInverted ? pairLeft : pairRight)
+                                .times(this.isInverted ? pairLeft : pairRight)
                                 .dividedBy(pairLp)
                                 .dp(0, BigNumber.ROUND_DOWN)
-                                .shiftedBy(isInverted ? -this.leftToken.decimals : -this.rightToken.decimals)
+                                .shiftedBy(this.isInverted ? -this.leftToken.decimals : -this.rightToken.decimals)
                                 .toFixed(),
                         )
                     }
@@ -1834,8 +1830,8 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                     )
                 }
 
-                this.changePoolData('leftDeposit', isInverted ? rightNumber?.toFixed() : leftNumber?.toFixed())
-                this.changePoolData('rightDeposit', isInverted ? leftNumber?.toFixed() : rightNumber?.toFixed())
+                this.changePoolData('leftDeposit', this.isInverted ? rightNumber?.toFixed() : leftNumber?.toFixed())
+                this.changePoolData('rightDeposit', this.isInverted ? leftNumber?.toFixed() : rightNumber?.toFixed())
 
                 const newLeftBN = new BigNumber(pairLeft).plus(this.leftDeposit || 0)
                 const newRightBN = new BigNumber(pairRight).plus(this.rightDeposit || 0)
@@ -1987,6 +1983,13 @@ export class PoolStore extends BaseStore<PoolStoreData, PoolStoreState> {
                 && this.isDexLeftBalanceValid
                 && this.isDexRightBalanceValid
             )
+    }
+
+    public get isInverted(): boolean {
+        if (this.pairRoots?.left !== undefined && this.leftToken?.root !== undefined) {
+            return this.pairRoots.left.toString().toLowerCase() !== this.leftToken.root.toLowerCase()
+        }
+        return false
     }
 
     /*

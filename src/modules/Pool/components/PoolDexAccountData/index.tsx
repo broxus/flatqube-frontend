@@ -172,7 +172,7 @@ export function PoolDexAccountData(): JSX.Element {
                                     {intl.formatMessage({
                                         id: 'POOL_DEX_DATA_RESULT_CURRENT_SHARE_LEFT',
                                     }, {
-                                        symbol: pool.leftToken?.symbol,
+                                        symbol: pool.isInverted ? pool.rightToken?.symbol : pool.leftToken?.symbol,
                                         value: formattedTokenAmount(pool.currentShareLeft),
                                     })}
                                 </div>
@@ -186,7 +186,7 @@ export function PoolDexAccountData(): JSX.Element {
                                     {intl.formatMessage({
                                         id: 'POOL_DEX_DATA_RESULT_CURRENT_SHARE_RIGHT',
                                     }, {
-                                        symbol: pool.rightToken?.symbol,
+                                        symbol: pool.isInverted ? pool.leftToken?.symbol : pool.rightToken?.symbol,
                                         value: formattedTokenAmount(pool.currentShareRight),
                                     })}
                                 </div>
