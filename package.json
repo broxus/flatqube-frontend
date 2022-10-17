@@ -38,7 +38,7 @@
         "luxon": "^3.0.1",
         "mobx": "^6.6.1",
         "mobx-react-lite": "^3.4.0",
-        "nekoton-wasm": "^1.0.8",
+        "nekoton-wasm": "^1.0.9",
         "normalize.css": "^8.0.1",
         "rc-drawer": "^4.4.3",
         "rc-motion": "^2.6.2",
