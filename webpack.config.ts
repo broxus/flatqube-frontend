@@ -189,6 +189,10 @@ export default (_: any, options: any): WebpackConfig => {
 
         extensions: ['.js', '.jsx', '.ts', '.tsx', '.d.ts', '.scss', '.css'],
 
+        fallback: {
+            buffer: require.resolve('buffer'),
+        },
+
         modules: [
             path.resolve(__dirname, 'src'),
             'node_modules',

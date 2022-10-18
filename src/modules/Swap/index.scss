@@ -43,3 +43,14 @@
 .card.swap-card {
     min-width: 100%;
 }
+
+.notification_token-badge {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 8px;
+
+    &:not(:first-child) {
+        margin-top: 8px;
+    }
+}

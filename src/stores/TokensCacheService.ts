@@ -8,7 +8,6 @@ import {
 } from 'mobx'
 import { Address, Subscription } from 'everscale-inpage-provider'
 
-import { TokenListURI } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
 import { isAddressValid, Token, TokenWallet } from '@/misc'
 import { BaseStore } from '@/stores/BaseStore'
@@ -57,8 +56,8 @@ export function getImportedTokens(): string[] {
 export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheState> {
 
     constructor(
-        protected readonly wallet: WalletService,
-        protected readonly tokensList: TokensListService,
+        public readonly wallet: WalletService,
+        public readonly tokensList: TokensListService,
         protected readonly options?: TokensCacheCtorConfig,
     ) {
         super()
@@ -116,7 +115,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         this.#tokensBalancesSubscribersMutex = new Mutex();
 
         (async () => {
-            await tokensList.fetch(TokenListURI)
+            await tokensList.fetch()
         })()
     }
 

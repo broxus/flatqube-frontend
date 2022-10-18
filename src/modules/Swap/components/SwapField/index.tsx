@@ -6,12 +6,11 @@ import { useIntl } from 'react-intl'
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { TokenIcon } from '@/components/common/TokenIcon'
-import { useTokenBalanceWatcher } from '@/hooks/useTokenBalanceWatcher'
 import { TokenIcons } from '@/components/common/TokenIcons'
 import { useField } from '@/hooks/useField'
 import { WalletNativeCoin } from '@/stores/WalletService'
 import type { TokenCache } from '@/stores/TokensCacheService'
-import { useSwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
+import { useSwapFormStoreContext } from '@/modules/Swap/context'
 
 
 type Props = {
@@ -45,21 +44,17 @@ function Field({
     const field = useField({
         decimals: nativeCoin !== undefined ? nativeCoin.decimals : token?.decimals,
         value: props.value,
+        // eslint-disable-next-line sort-keys
         onChange: props.onChange,
     })
-    const formStore = useSwapFormStore()
-    const tokensCache = formStore.useTokensCache
-
-    useTokenBalanceWatcher(token, {
-        subscriberPrefix: 'swap-filed',
-    })
+    const formStore = useSwapFormStoreContext()
 
     return (
         <label className="form-label" htmlFor={props.id}>
             <fieldset
                 className={classNames('form-fieldset', {
+                    checking: formStore.tokensCache.isTokenUpdatingBalance(token?.root) && !props.disabled,
                     invalid: !isValid,
-                    checking: tokensCache.isTokenUpdatingBalance(token?.root) && !props.disabled,
                 })}
             >
                 <div className="form-fieldset__main">

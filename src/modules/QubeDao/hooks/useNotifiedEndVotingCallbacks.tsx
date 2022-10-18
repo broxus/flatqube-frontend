@@ -1,4 +1,5 @@
 import * as React from 'react'
+import classNames from 'classnames'
 import { useIntl } from 'react-intl'
 import { toast } from 'react-toastify'
 
@@ -30,9 +31,13 @@ export function useNotifiedEndVotingCallbacks(props: QubeDaoEndVotingCallbacks):
                 <div className="notification-body">
                     {intl.formatMessage({ id: 'QUBE_DAO_NOTIFICATION_SUCCESS_VOTING_END_NOTE' })}
                 </div>
-                <div className="notification-actions">
+                <div
+                    className={classNames('notification-actions', {
+                        'notification-actions--large': isMobile(navigator.userAgent),
+                    })}
+                >
                     <TransactionExplorerLink
-                        className={!isMobile(navigator.userAgent) ? 'btn btn-secondary' : undefined}
+                        className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
                         id={result.transaction.id.hash}
                         onClick={onClickActionButton}
                     >
@@ -42,7 +47,6 @@ export function useNotifiedEndVotingCallbacks(props: QubeDaoEndVotingCallbacks):
             </>,
             intl.formatMessage({ id: 'QUBE_DAO_NOTIFICATION_SUCCESS_VOTING_END_TITLE' }),
             {
-                autoClose: 10000,
                 closeOnClick: true,
                 isLoading: false,
                 toastId: `toast__${result.callId}`,
@@ -64,9 +68,13 @@ export function useNotifiedEndVotingCallbacks(props: QubeDaoEndVotingCallbacks):
                     ) : reason.message}
                 </div>
                 {reason.transaction?.id.hash !== undefined && (
-                    <div className="notification-actions">
+                    <div
+                        className={classNames('notification-actions', {
+                            'notification-actions--large': isMobile(navigator.userAgent),
+                        })}
+                    >
                         <TransactionExplorerLink
-                            className={!isMobile(navigator.userAgent) ? 'btn btn-secondary' : undefined}
+                            className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
                             id={reason.transaction.id.hash}
                             onClick={onClickActionButton}
                         >
@@ -83,7 +91,6 @@ export function useNotifiedEndVotingCallbacks(props: QubeDaoEndVotingCallbacks):
                     : 'QUBE_DAO_NOTIFICATION_FAILURE_VOTING_END_TITLE',
             }),
             {
-                autoClose: 10000,
                 closeOnClick: true,
                 isLoading: false,
                 toastId: `toast__${reason.callId}`,

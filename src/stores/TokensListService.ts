@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 
+import { TokenListURI } from '@/config'
 import { error } from '@/utils'
 
 
@@ -34,7 +35,6 @@ export type TokensListData = {
 export type TokensListState = {
     isFetching: boolean;
     time?: number;
-    uri?: string;
 }
 
 
@@ -58,22 +58,21 @@ export class TokensListService {
         isFetching: false,
     }
 
-    constructor() {
+    constructor(public readonly uri: string) {
         makeAutoObservable(this)
     }
 
     /**
      * Fetch tokens list manifest by the given URI
-     * @param {string} uri
      */
-    public fetch(uri: string): void {
+    public fetch(): void {
         if (this.isFetching) {
             return
         }
 
         this.state.isFetching = true
 
-        fetch(uri, {
+        fetch(this.uri, {
             method: 'GET',
         }).then(
             value => value.json(),
@@ -83,7 +82,6 @@ export class TokensListService {
                 this.state = {
                     isFetching: false,
                     time: new Date().getTime(),
-                    uri,
                 }
             })
         }).catch(reason => {
@@ -92,17 +90,6 @@ export class TokensListService {
                 this.state.isFetching = false
             })
         })
-    }
-
-    /**
-     * @deprecated - use token.icon from TokenCache instead
-     * @param {string} address
-     * @returns {string | undefined}
-     */
-    public getUri(address: string): string | undefined {
-        return this.data.tokens.find(
-            token => token.address === address,
-        )?.logoURI
     }
 
     /**
@@ -129,7 +116,7 @@ export class TokensListService {
 }
 
 
-const TokensList = new TokensListService()
+const TokensList = new TokensListService(TokenListURI)
 
 export function useTokensList(): TokensListService {
     return TokensList

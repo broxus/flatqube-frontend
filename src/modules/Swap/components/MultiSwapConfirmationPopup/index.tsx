@@ -9,14 +9,14 @@ import { Icon } from '@/components/common/Icon'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { TokenIcons } from '@/components/common/TokenIcons'
 import { SwapBill } from '@/modules/Swap/components/SwapBill'
-import { useSwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
+import { useSwapFormStoreContext } from '@/modules/Swap/context'
 
 import './index.scss'
 
 
 function ConfirmationPopup(): JSX.Element {
     const intl = useIntl()
-    const formStore = useSwapFormStore()
+    const formStore = useSwapFormStoreContext()
 
     const [minExpectedAmount, setMinExpectedAmount] = React.useState(formStore.swap.minExpectedAmount)
     const [leftAmount, setLeftAmount] = React.useState(formStore.swap.leftAmount)
@@ -111,13 +111,13 @@ function ConfirmationPopup(): JSX.Element {
                             <div key="coin-swap" className="btn form-drop form-drop-extra">
                                 <span className="form-drop__logo">
                                     <TokenIcon
-                                        icon={formStore.coin.icon}
-                                        name={formStore.coin.symbol}
+                                        icon={formStore.wallet.coin.icon}
+                                        name={formStore.wallet.coin.symbol}
                                         size="small"
                                     />
                                 </span>
                                 <span className="form-drop__name">
-                                    {formStore.coin.symbol}
+                                    {formStore.wallet.coin.symbol}
                                 </span>
                             </div>
                         )}
@@ -131,8 +131,8 @@ function ConfirmationPopup(): JSX.Element {
                                     <TokenIcons
                                         icons={[
                                             {
-                                                icon: formStore.coin.icon,
-                                                name: formStore.coin.name,
+                                                icon: formStore.wallet.coin.icon,
+                                                name: formStore.wallet.coin.name,
                                             },
                                             {
                                                 address: formStore.leftToken?.root,
@@ -143,7 +143,7 @@ function ConfirmationPopup(): JSX.Element {
                                     />
                                 </span>
                                 <span className="form-drop__name">
-                                    {`${formStore.coin.symbol} + ${formStore.leftToken?.symbol}`}
+                                    {`${formStore.wallet.coin.symbol} + ${formStore.leftToken?.symbol}`}
                                 </span>
                             </div>
                         )}

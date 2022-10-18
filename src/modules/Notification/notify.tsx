@@ -8,7 +8,6 @@ import {
 } from 'react-toastify'
 
 import { Messages } from '@/modules/Notification/components'
-import { isMobile } from '@/utils'
 
 import '@/modules/Notification/index.scss'
 
@@ -23,12 +22,11 @@ export type NotifyOptions = ToastOptions & {
 }
 
 const defaults: ToastOptions = {
-    autoClose: 10000,
+    autoClose: 15000,
     closeOnClick: true,
     draggable: true,
     hideProgressBar: true,
     pauseOnHover: true,
-    position: isMobile(navigator.userAgent) ? toast.POSITION.TOP_CENTER : toast.POSITION.BOTTOM_RIGHT,
 }
 
 export function notify(

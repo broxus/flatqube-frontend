@@ -24,7 +24,11 @@ module.exports = {
         },
     ],
 
-    rules: {},
+    rules: {
+        'no-await-in-loop': 'off',
+        'no-restricted-syntax': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
+    },
 
     settings: {
         'import/resolver': {

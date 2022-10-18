@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom/client'
 
 import { App } from '@/components/App'
 import { LocalizationProvider } from '@/context/Localization'
+import '@/polyfills'
 
 const container = document.getElementById('root')
 if (container != null) {

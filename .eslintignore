@@ -1,4 +1,4 @@
-/dist
+dist
 lang
 node_modules/*
 /*.js

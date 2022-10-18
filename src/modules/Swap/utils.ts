@@ -1,21 +1,41 @@
 import BigNumber from 'bignumber.js'
-import {
-    Address,
+import type {
     Contract,
-    DecodedAbiFunctionInputs,
     DecodedAbiFunctionOutputs,
     FullContractState,
+    Subscriber,
     Transaction,
 } from 'everscale-inpage-provider'
+import { Address } from 'everscale-inpage-provider'
 import { toJS } from 'mobx'
 
 import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { DexAbi, PairType } from '@/misc'
-import { SwapRouteResult, SwapRouteStep } from '@/modules/Swap/types'
+import { SUBSCRIBERS } from '@/modules/Swap/constants'
+import type { DexPairExchangeSuccess, SwapRouteResult, SwapRouteStep } from '@/modules/Swap/types'
 import { error } from '@/utils'
 
 const staticRpc = useStaticRpc()
 
+
+export function createTransactionSubscriber(key: string): Subscriber {
+    const subscriber = new staticRpc.Subscriber()
+    SUBSCRIBERS.set(key, subscriber)
+    return subscriber
+}
+
+export async function unsubscribeTransactionSubscriber(key: string): Promise<void> {
+    if (SUBSCRIBERS.has(key)) {
+        try {
+            await SUBSCRIBERS.get(key)?.unsubscribe()
+        }
+        catch (e) {
+            error('Transaction unsubscribe error', e)
+        }
+
+        SUBSCRIBERS.delete(key)
+    }
+}
 
 export function fillStepResult(
     result: SwapRouteResult,
@@ -23,7 +43,7 @@ export function fillStepResult(
     src?: Address,
     amount?: SwapRouteResult['amount'],
     status?: SwapRouteResult['status'],
-    input?: DecodedAbiFunctionInputs<typeof DexAbi.Callbacks, 'dexPairExchangeSuccess'>,
+    input?: DexPairExchangeSuccess,
 ): SwapRouteResult {
     if (
         result.step.pair.address?.toString() === src?.toString()
@@ -47,8 +67,8 @@ export async function getExpectedExchange(
     pairContractState?: FullContractState,
 ): Promise<DecodedAbiFunctionOutputs<typeof DexAbi.Pair, 'expectedExchange'>> {
     return pairContract.methods.expectedExchange({
-        answerId: 0,
         amount,
+        answerId: 0,
         spent_token_root: spentTokenAddress,
     }).call({
         cachedState: pairContractState,
@@ -70,23 +90,20 @@ export async function getExpectedSpendAmount(
     })
 }
 
-export function getDefaultPerPrice(
-    value: BigNumber,
-    dividedBy: BigNumber,
+export function getDefaultPricesRates(
+    value: BigNumber.Value,
+    dividedBy: BigNumber.Value,
     decimals: number,
 ): BigNumber {
-    return value
-        .div(dividedBy)
-        .dp(decimals, BigNumber.ROUND_UP)
-        .shiftedBy(decimals)
+    return new BigNumber(value).div(dividedBy).dp(decimals, BigNumber.ROUND_UP)
 }
 
-export function getExchangePerPrice(
-    value: BigNumber,
-    dividedBy: BigNumber,
+export function getExchangePricesRates(
+    value: BigNumber.Value,
+    dividedBy: BigNumber.Value,
     decimals: number,
 ): BigNumber {
-    return value
+    return new BigNumber(value)
         .div(dividedBy)
         .shiftedBy(decimals)
         .dp(0, BigNumber.ROUND_DOWN)

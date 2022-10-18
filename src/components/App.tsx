@@ -7,16 +7,16 @@ import {
     BrowserRouter as Router,
     Switch,
 } from 'react-router-dom'
-import { ToastContainer } from 'react-toastify'
+import { toast, ToastContainer } from 'react-toastify'
 import { Observer } from 'mobx-react-lite'
 
 import { ScrollManager } from '@/components/layout/ScrollManager'
 import { Footer } from '@/components/layout/Footer'
-import { TokensUpgradeModal } from '@/components/common/TokensUpgradeModal'
 import { WalletConnectingModal } from '@/components/common/WalletConnectingModal'
 import { WalletUpdateModal } from '@/components/common/WalletUpdateModal'
 import { Header } from '@/components/layout/Header'
 import { LocalizationContext } from '@/context/Localization'
+import { TokensUpgradesModal } from '@/modules/TokensUpgrades'
 import Builder from '@/pages/builder'
 import CreateToken from '@/pages/builder/create'
 import CustomToken from '@/pages/builder/token'
@@ -39,16 +39,14 @@ import GaugesList from '@/pages/gauges/index'
 import GaugesItem from '@/pages/gauges/item'
 import BurnLiquidity from '@/pages/pools/burn-liquidity'
 import { appRoutes } from '@/routes'
-import { useUpgradeTokens } from '@/stores/UpgradeTokens'
 import { useWallet } from '@/stores/WalletService'
-import { noop } from '@/utils'
+import { isMobile, noop } from '@/utils'
 
 import './App.scss'
 
 
 export function App(): JSX.Element {
     const wallet = useWallet()
-    const upgradeTokens = useUpgradeTokens()
     const localization = React.useContext(LocalizationContext)
 
     React.useEffect(() => {
@@ -153,7 +151,6 @@ export function App(): JSX.Element {
                     </div>
                 </ScrollManager>
             </Router>
-            <ToastContainer />
             <Observer>
                 {() => (
                     <>
@@ -164,12 +161,13 @@ export function App(): JSX.Element {
                             <WalletUpdateModal />
                         ) : null}
 
-                        {upgradeTokens.hasTokensToUpgrade ? (
-                            <TokensUpgradeModal />
-                        ) : null}
+                        <TokensUpgradesModal />
                     </>
                 )}
             </Observer>
+            <ToastContainer
+                position={isMobile(navigator.userAgent) ? toast.POSITION.TOP_CENTER : toast.POSITION.BOTTOM_RIGHT}
+            />
         </IntlProvider>
     )
 }

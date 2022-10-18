@@ -1,5 +1,5 @@
 import {
-    Address,
+    Address, DelayedMessageExecution,
     FullContractState,
     TransactionId,
 } from 'everscale-inpage-provider'
@@ -238,10 +238,10 @@ export class TokenWallet {
         owner: Address,
         tokens: string,
     }>()({
+        bounce: true,
         grams: '500000000',
         payload: '',
         withDerive: false,
-        bounce: true,
     })): Promise<TransactionId> {
         let { address } = args
 
@@ -256,17 +256,89 @@ export class TokenWallet {
 
         const { id } = await tokenWalletContract.methods.transferToWallet({
             amount: args.tokens,
-            recipientTokenWallet: args.recipient,
-            payload: args.payload || '',
             notify: true,
+            payload: args.payload || '',
+            recipientTokenWallet: args.recipient,
             remainingGasTo: args.owner,
         }).send({
-            from: args.owner,
-            bounce: args.bounce,
             amount: args.grams || '500000000',
+            bounce: args.bounce,
+            from: args.owner,
         })
 
         return id
+    }
+
+    public static async transfer(args = params<{
+        address: Address,
+        deployWalletValue: string,
+        recipient: Address,
+        owner: Address,
+        tokens: string,
+    }>()({
+        bounce: true,
+        grams: '500000000',
+        payload: '',
+        withDerive: false,
+    })): Promise<DelayedMessageExecution> {
+        let { address } = args
+
+        if (args.withDerive) {
+            address = await this.walletAddress({
+                owner: args.owner,
+                root: args.address,
+            })
+        }
+
+        const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, address)
+
+        return tokenWalletContract.methods.transfer({
+            amount: args.tokens,
+            deployWalletValue: args.deployWalletValue || '0',
+            notify: true,
+            payload: args.payload || '',
+            recipient: args.recipient,
+            remainingGasTo: args.owner,
+        }).sendDelayed({
+            amount: args.grams || '500000000',
+            bounce: args.bounce,
+            from: args.owner,
+        })
+    }
+
+    public static async transferToWallet(args = params<{
+        address: Address,
+        recipient: Address,
+        owner: Address,
+        tokens: string,
+    }>()({
+        bounce: true,
+        grams: '500000000',
+        payload: '',
+        withDerive: false,
+    })): Promise<DelayedMessageExecution> {
+        let { address } = args
+
+        if (args.withDerive) {
+            address = await this.walletAddress({
+                owner: args.owner,
+                root: args.address,
+            })
+        }
+
+        const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, address)
+
+        return tokenWalletContract.methods.transferToWallet({
+            amount: args.tokens,
+            notify: true,
+            payload: args.payload || '',
+            recipientTokenWallet: args.recipient,
+            remainingGasTo: args.owner,
+        }).sendDelayed({
+            amount: args.grams || '500000000',
+            bounce: args.bounce,
+            from: args.owner,
+        })
     }
 
 }

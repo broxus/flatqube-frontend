@@ -1,9 +1,9 @@
 import { AddressLiteral } from 'everscale-inpage-provider'
 
 
-export const EVERWrapGas = '1000000000' // <= 1 EVER
+export const WrapGas = '1000000000' // <= 1 EVER
 
-export const EVERMultipleSwapFee = '10000000000' // <= 10 EVER
+export const SafeAmount = '10000000000' // <= 10 EVER
 
 export const QubeDaoMinLockPeriod = 14
 

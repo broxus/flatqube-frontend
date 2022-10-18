@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
-import { useSwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
+import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { SwapDirection } from '@/modules/Swap/types'
 import { formattedTokenAmount } from '@/utils'
 
@@ -13,7 +13,7 @@ import './index.scss'
 
 export function SwapPrice(): JSX.Element | null {
     const intl = useIntl()
-    const formStore = useSwapFormStore()
+    const formStore = useSwapFormStoreContext()
 
     if (formStore.leftToken === undefined || formStore.rightToken === undefined) {
         return null
@@ -85,35 +85,35 @@ export function SwapPrice(): JSX.Element | null {
             <div className="swap-price-details">
                 <Observer>
                     {() => {
-                        const { isMultipleSwapMode, multipleSwap, nativeCoinSide } = formStore
+                        const { coinSide, multipleSwap, priceDirection } = formStore
                         const { isEnoughCoinBalance, isEnoughTokenBalance } = multipleSwap
-                        const isCurrencyOnLeft = nativeCoinSide === 'leftToken'
-                        const isCurrencyOnRight = nativeCoinSide === 'rightToken'
-                        const leftSymbol = (
-                            isCurrencyOnLeft
-                            || (isMultipleSwapMode && !isEnoughTokenBalance && isEnoughCoinBalance)
-                        )
-                            ? formStore.coin.symbol
+                        const isCurrencyOnLeft = coinSide === 'leftToken'
+                        const isCurrencyOnRight = coinSide === 'rightToken'
+                        const leftSymbol = (isCurrencyOnLeft || (!isEnoughTokenBalance && isEnoughCoinBalance))
+                            ? formStore.wallet.coin.symbol
                             : formStore.leftToken?.symbol
                         const rightSymbol = isCurrencyOnRight
-                            ? formStore.coin.symbol
+                            ? formStore.wallet.coin.symbol
                             : formStore.rightToken?.symbol
 
-                        return formStore.priceDirection === SwapDirection.RTL ? (
+                        let ltrPrice = formStore.isLowTvl ? undefined : formStore.ltrPrice,
+                            rtlPrice = formStore.isLowTvl ? undefined : formStore.rtlPrice
+
+                        if (formStore.isCrossExchangeMode) {
+                            ltrPrice = formStore.crossPairSwap.ltrPrice
+                            rtlPrice = formStore.crossPairSwap.rtlPrice
+                        }
+
+                        return priceDirection === SwapDirection.RTL ? (
                             <span
                                 key={SwapDirection.RTL}
                                 dangerouslySetInnerHTML={{
                                     __html: intl.formatMessage({
                                         id: 'SWAP_PRICE_RESULT',
                                     }, {
-                                        value: formStore.priceLeftToRight !== undefined
-                                            ? formattedTokenAmount(
-                                                formStore.priceLeftToRight,
-                                                formStore.leftToken?.decimals,
-                                            )
-                                            : '--',
                                         leftSymbol,
                                         rightSymbol,
+                                        value: ltrPrice !== undefined ? formattedTokenAmount(ltrPrice) : '--',
                                     }, {
                                         ignoreTag: true,
                                     }),
@@ -126,14 +126,9 @@ export function SwapPrice(): JSX.Element | null {
                                     __html: intl.formatMessage({
                                         id: 'SWAP_PRICE_RESULT',
                                     }, {
-                                        value: formStore.priceRightToLeft !== undefined
-                                            ? formattedTokenAmount(
-                                                formStore.priceRightToLeft,
-                                                formStore.rightToken?.decimals,
-                                            )
-                                            : '--',
                                         leftSymbol: rightSymbol,
                                         rightSymbol: leftSymbol,
+                                        value: rtlPrice !== undefined ? formattedTokenAmount(rtlPrice) : '--',
                                     }, {
                                         ignoreTag: true,
                                     }),
