@@ -1,12 +1,7 @@
-import { USDTRootAddress, WEVERRootAddress } from '@/config'
-import { SwapBill } from '@/modules/Swap/types'
+import type { Subscriber } from 'everscale-inpage-provider'
 
+import type { SwapBill, SwapTransactionReceipt } from '@/modules/Swap/types'
 
-/* WEVER root address */
-export const DEFAULT_LEFT_TOKEN_ROOT = WEVERRootAddress.toString()
-
-/* USDT root address */
-export const DEFAULT_RIGHT_TOKEN_ROOT = USDTRootAddress.toString()
 
 export const DEFAULT_DECIMALS = 18
 
@@ -19,3 +14,7 @@ export const DEFAULT_SWAP_BILL: SwapBill = {
     minExpectedAmount: undefined,
     priceImpact: undefined,
 }
+
+export const SUBSCRIBERS = new Map<string, Subscriber>()
+
+export const RECEIPTS = new Map<string, SwapTransactionReceipt>()

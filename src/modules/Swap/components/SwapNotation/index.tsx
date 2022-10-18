@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl'
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { TokenIcons } from '@/components/common/TokenIcons'
-import { useSwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
+import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { storage } from '@/utils'
 
 import './index.scss'
@@ -13,25 +13,28 @@ import './index.scss'
 
 function SwapNotationInternal(): JSX.Element | null {
     const intl = useIntl()
-    const formStore = useSwapFormStore()
-    const wallet = formStore.useWallet
+    const formStore = useSwapFormStoreContext()
 
     const [available, setAvailable] = React.useState(storage.get('swap_notation') == null)
 
-    if (wallet.isInitializing || wallet.isUpdatingContract) {
+    if (formStore.wallet.isInitializing || formStore.wallet.isUpdatingContract) {
         return null
     }
 
-    if (!wallet.hasProvider || !wallet.isConnected || (wallet.isConnected && wallet.balance === '0')) {
+    if (
+        !formStore.wallet.hasProvider
+        || !formStore.wallet.isConnected
+        || (formStore.wallet.isConnected && formStore.wallet.balance === '0')
+    ) {
         const connect: React.MouseEventHandler<HTMLAnchorElement> = async event => {
             event.preventDefault()
-            await wallet.connect()
+            await formStore.wallet.connect()
         }
         return (
             <div className="card swap-notation-newbie">
                 <div>
                     <h3>{intl.formatMessage({ id: 'GREETING_BANNER_TITLE' })}</h3>
-                    {(!wallet.hasProvider || !wallet.isConnected) ? (
+                    {(!formStore.wallet.hasProvider || !formStore.wallet.isConnected) ? (
                         <p>{intl.formatMessage({ id: 'GREETING_BANNER_WALLET_NOT_INSTALLED_NOTE' })}</p>
                     ) : (
                         <>
@@ -40,7 +43,7 @@ function SwapNotationInternal(): JSX.Element | null {
                         </>
                     )}
                     <p>
-                        {!wallet.hasProvider && (
+                        {!formStore.wallet.hasProvider && (
                             <a
                                 className="swap-notation-link"
                                 href="https://l1.broxus.com/everscale/wallet"
@@ -51,7 +54,7 @@ function SwapNotationInternal(): JSX.Element | null {
                                 <Icon icon="chevronRight" />
                             </a>
                         )}
-                        {(wallet.hasProvider && !wallet.isConnected) && (
+                        {(formStore.wallet.hasProvider && !formStore.wallet.isConnected) && (
                             <a
                                 className="swap-notation-link"
                                 href="/"
@@ -97,7 +100,7 @@ function SwapNotationInternal(): JSX.Element | null {
         )
     }
 
-    if (wallet.isConnected && available) {
+    if (formStore.wallet.isConnected && available) {
         const onDismiss = () => {
             storage.set('swap_notation', '1')
             setAvailable(false)
@@ -117,7 +120,7 @@ function SwapNotationInternal(): JSX.Element | null {
                         <TokenIcons
                             icons={[
                                 { icon: 'https://raw.githubusercontent.com/broxus/ton-assets/master/icons/WEVER/logo.svg' },
-                                { icon: formStore.coin.icon },
+                                { icon: formStore.wallet.coin.icon },
                             ]}
                             size="medium"
                         />

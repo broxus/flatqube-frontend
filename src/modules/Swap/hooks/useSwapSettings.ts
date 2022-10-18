@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 import * as React from 'react'
 
 import { DEFAULT_SLIPPAGE_VALUE } from '@/modules/Swap/constants'
-import { useSwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
+import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { isGoodBignumber } from '@/utils'
 
 
@@ -19,7 +19,7 @@ type SwapSettingsShape = {
 
 
 export function useSwapSettings(): SwapSettingsShape {
-    const formStore = useSwapFormStore()
+    const formStore = useSwapFormStoreContext()
 
     const popupRef = React.useRef<HTMLDivElement>(null)
 
@@ -82,12 +82,13 @@ export function useSwapSettings(): SwapSettingsShape {
     }, [])
 
     return {
-        popupRef,
-        triggerRef,
-        isOpen,
-        show,
-        hide,
         handleOuterClick,
+        hide,
+        isOpen,
+        popupRef,
+        show,
+        triggerRef,
+        // eslint-disable-next-line sort-keys
         onBlur,
         onChange,
     }

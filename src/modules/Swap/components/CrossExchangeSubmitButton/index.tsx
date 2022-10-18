@@ -4,22 +4,20 @@ import { useIntl } from 'react-intl'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
-import { useSwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
+import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { SwapDirection } from '@/modules/Swap/types'
 
 
 function SubmitButton(): JSX.Element {
     const intl = useIntl()
-    const formStore = useSwapFormStore()
-    const tokensCache = formStore.useTokensCache
-    const wallet = formStore.useWallet
+    const formStore = useSwapFormStoreContext()
 
     if (
         formStore.isPreparing
         || formStore.isSwapping
         || formStore.isCalculating
         || formStore.isLoading
-        || !tokensCache.isReady
+        || !formStore.tokensCache.isReady
     ) {
         return (
             <Button
@@ -41,10 +39,10 @@ function SubmitButton(): JSX.Element {
     let buttonText: React.ReactNode = intl.formatMessage({ id: 'SWAP_BTN_TEXT_SUBMIT' })
 
     switch (true) {
-        case wallet.account === undefined:
-            buttonProps.disabled = wallet.isConnecting
+        case formStore.wallet.account === undefined:
+            buttonProps.disabled = formStore.wallet.isConnecting
             buttonProps.onClick = async () => {
-                await wallet.connect()
+                await formStore.wallet.connect()
             }
             buttonText = intl.formatMessage({
                 id: 'EVER_WALLET_CONNECT_BTN_TEXT',
@@ -79,9 +77,9 @@ function SubmitButton(): JSX.Element {
             buttonText = intl.formatMessage({
                 id: 'SWAP_BTN_TEXT_INSUFFICIENT_TOKEN_BALANCE',
             }, {
-                symbol: formStore.leftToken?.symbol || '',
                 // eslint-disable-next-line react/no-multi-comp,react/destructuring-assignment,react/no-unstable-nested-components
-                s: parts => <span className="truncate-name">{parts.join('')}</span>,
+                s: parts => `<span class="truncate-name">${parts.join('')}</span>`,
+                symbol: formStore.leftToken?.symbol || '',
             })
             break
 
@@ -110,9 +108,10 @@ function SubmitButton(): JSX.Element {
             className="form-submit"
             aria-disabled={buttonProps.disabled}
             {...buttonProps}
-        >
-            {buttonText}
-        </Button>
+            dangerouslySetInnerHTML={{
+                __html: buttonText as string,
+            }}
+        />
     )
 }
 

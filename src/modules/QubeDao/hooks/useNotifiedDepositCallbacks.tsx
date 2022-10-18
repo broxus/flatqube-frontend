@@ -1,4 +1,5 @@
 import * as React from 'react'
+import classNames from 'classnames'
 import type { DelayedMessageExecution } from 'everscale-inpage-provider'
 import { useIntl } from 'react-intl'
 import { toast } from 'react-toastify'
@@ -77,9 +78,13 @@ export function useNotifiedDepositCallbacks(props: QubeDaoDepositCallbacks): Qub
                         },
                     )}
                 </div>
-                <div className="notification-actions">
+                <div
+                    className={classNames('notification-actions', {
+                        'notification-actions--large': isMobile(navigator.userAgent),
+                    })}
+                >
                     <TransactionExplorerLink
-                        className={!isMobile(navigator.userAgent) ? 'btn btn-secondary' : undefined}
+                        className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
                         id={result.transaction.id.hash}
                         onClick={onClickActionButton}
                     >
@@ -89,7 +94,6 @@ export function useNotifiedDepositCallbacks(props: QubeDaoDepositCallbacks): Qub
             </>,
             intl.formatMessage({ id: 'QUBE_DAO_NOTIFICATION_SUCCESS_DEPOSIT_TITLE' }),
             {
-                autoClose: 10000,
                 closeOnClick: true,
                 isLoading: false,
                 toastId: `toast__${result.callId}`,
@@ -111,9 +115,13 @@ export function useNotifiedDepositCallbacks(props: QubeDaoDepositCallbacks): Qub
                     }) : reason.message}
                 </div>
                 {reason.transaction?.id.hash !== undefined && (
-                    <div className="notification-actions">
+                    <div
+                        className={classNames('notification-actions', {
+                            'notification-actions--large': isMobile(navigator.userAgent),
+                        })}
+                    >
                         <TransactionExplorerLink
-                            className={!isMobile(navigator.userAgent) ? 'btn btn-secondary' : undefined}
+                            className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
                             id={reason.transaction.id.hash}
                             onClick={onClickActionButton}
                         >
@@ -130,7 +138,6 @@ export function useNotifiedDepositCallbacks(props: QubeDaoDepositCallbacks): Qub
                     : 'QUBE_DAO_NOTIFICATION_FAILURE_DEPOSIT_TITLE',
             }),
             {
-                autoClose: 10000,
                 closeOnClick: true,
                 isLoading: false,
                 toastId: `toast__${reason.callId}`,

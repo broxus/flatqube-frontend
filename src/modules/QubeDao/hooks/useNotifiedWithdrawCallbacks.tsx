@@ -2,6 +2,7 @@ import * as React from 'react'
 import type { DelayedMessageExecution } from 'everscale-inpage-provider'
 import { useIntl } from 'react-intl'
 import { toast } from 'react-toastify'
+import classNames from 'classnames'
 
 import { TransactionExplorerLink } from '@/components/common/TransactionExplorerLink'
 import { notify, NotifyType } from '@/modules/Notification'
@@ -74,9 +75,13 @@ export function useNotifiedWithdrawCallbacks(props: QubeDaoWithdrawCallbacks): Q
                         },
                     )}
                 </div>
-                <div className="notification-actions">
+                <div
+                    className={classNames('notification-actions', {
+                        'notification-actions--large': isMobile(navigator.userAgent),
+                    })}
+                >
                     <TransactionExplorerLink
-                        className={!isMobile(navigator.userAgent) ? 'btn btn-secondary' : undefined}
+                        className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
                         id={result.transaction.id.hash}
                         onClick={onClickActionButton}
                     >
@@ -86,7 +91,6 @@ export function useNotifiedWithdrawCallbacks(props: QubeDaoWithdrawCallbacks): Q
             </>,
             intl.formatMessage({ id: 'QUBE_DAO_NOTIFICATION_SUCCESS_WITHDRAW_TITLE' }),
             {
-                autoClose: 10000,
                 closeOnClick: true,
                 isLoading: false,
                 toastId: `toast__${result.callId}`,
@@ -108,9 +112,13 @@ export function useNotifiedWithdrawCallbacks(props: QubeDaoWithdrawCallbacks): Q
                     ) : reason.message}
                 </div>
                 {reason.transaction?.id.hash !== undefined && (
-                    <div className="notification-actions">
+                    <div
+                        className={classNames('notification-actions', {
+                            'notification-actions--large': isMobile(navigator.userAgent),
+                        })}
+                    >
                         <TransactionExplorerLink
-                            className={!isMobile(navigator.userAgent) ? 'btn btn-secondary' : undefined}
+                            className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
                             id={reason.transaction.id.hash}
                             onClick={onClickActionButton}
                         >
@@ -127,7 +135,6 @@ export function useNotifiedWithdrawCallbacks(props: QubeDaoWithdrawCallbacks): Q
                     : 'QUBE_DAO_NOTIFICATION_FAILURE_WITHDRAW_TITLE',
             }),
             {
-                autoClose: 10000,
                 closeOnClick: true,
                 isLoading: false,
                 toastId: `toast__${reason.callId}`,

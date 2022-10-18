@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
-import { useSwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
+import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { useSwapSettings } from '@/modules/Swap/hooks/useSwapSettings'
 
 import './index.scss'
@@ -12,7 +12,7 @@ import './index.scss'
 
 function Settings(): JSX.Element {
     const intl = useIntl()
-    const formStore = useSwapFormStore()
+    const formStore = useSwapFormStoreContext()
     const settings = useSwapSettings()
 
     return (

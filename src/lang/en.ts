@@ -1,4 +1,3 @@
-/* eslint-disable */
 export default {
     OPEN_IN_EXPLORER: 'Open in EVER Scan',
 
@@ -46,6 +45,9 @@ export default {
     TOKENS_UPGRADE_POPUP_NOTE: 'We found some outdated tokens in your wallet. Please, upgrade these tokens to continue.',
     TOKENS_UPGRADE_UPGRADE_BTN_TEXT: 'Upgrade',
     TOKENS_UPGRADE_UPGRADING_BTN_TEXT: 'Upgrading',
+    TOKENS_UPGRADE_NOTIFICATION_TITLE: 'You have {value, plural, one {# outdated token} other {# outdated tokens}}',
+    TOKENS_UPGRADE_NOTIFICATION_DISMISS_BTN_TEXT: 'Dismiss',
+    TOKENS_UPGRADE_NOTIFICATION_UPGRADE_BTN_TEXT: 'Upgrade',
 
     FOOTER_NAV_HEADER_PRODUCT: 'FlatQube',
     FOOTER_NAV_HEADER_DOCS: 'Docs',
@@ -114,18 +116,20 @@ export default {
     SWAP_BILL_LABEL_FEE: 'Liquidity Provider Fee',
     SWAP_BILL_RESULT_FEE: '<span>{value}</span> {symbol}',
     SWAP_POPUP_CONFORMATION_TITLE: 'Confirm transaction',
-    SWAP_TRANSACTION_RECEIPT_POPUP_TITLE_SUCCESS: 'Swap has been completed successfully',
-    SWAP_TRANSACTION_RECEIPT_POPUP_TITLE_FAILURE: 'Swap cancelled',
-    SWAP_TRANSACTION_RECEIPT_LEAD_RECEIVED_AMOUNT: '+ <span>{value}</span> {symbol}',
-    SWAP_TRANSACTION_RECEIPT_LINK_TXT_TOKEN_ROOT_CONTRACT: 'Token root contract',
-    SWAP_TRANSACTION_RECEIPT_LINK_TXT_TRANSACTION: 'Transaction result',
-    SWAP_TRANSACTION_RECEIPT_CANCELLED_NOTE: '<p>The Swap was canceled. Your balance hasn’t changed.</p>',
-    SWAP_TRANSACTION_RECEIPT_CROSS_EXCHANGE_CANCELLED_NOTE: 'Due to the slippage is more than {slippage}% of the {leftSymbol}/{rightSymbol} pair, you stayed with {leftSymbol} token.',
 
     SWAP_COMBINED_NOTATION_TITLE: 'From now on EVER can be used on FlatQube',
     SWAP_COMBINED_NOTATION_P1: 'Your default balance on the DEX will now be the cumulative balance of your EVER and wEVER, which you can swap for any other TIP-3.1 tokens.',
     SWAP_COMBINED_NOTATION_P2: 'You can also swap by using only your EVER or wEVER balance, if preferable.',
     SWAP_COMBINED_NOTATION_HOW_TO_LINK_TEXT: 'How to swap',
+
+    SWAP_NOTIFICATION_TRANSACTION_PENDING_TITLE: 'Wait until the swap is completed',
+    SWAP_NOTIFICATION_SUCCESS_TITLE: 'Swap has been completed',
+    SWAP_NOTIFICATION_FAILURE_TITLE: 'The swap was canceled',
+    SWAP_NOTIFICATION_FAILURE_NOTE: 'Your balance hasn’t changed.',
+    SWAP_NOTIFICATION_CROSS_EXCHANGE_CANCELLED_TITLE: 'The swap was canceled',
+    SWAP_NOTIFICATION_CROSS_EXCHANGE_CANCELLED_NOTE: 'Due to the slippage is more than {slippage}% of the {leftSymbol}/{rightSymbol} pair, you stayed with {leftSymbol} token.',
+    SWAP_NOTIFICATION_RECEIPT_TOKEN_ROOT_CONTRACT_LINK_TEXT: 'Token contract',
+    SWAP_NOTIFICATION_RECEIPT_TRANSACTION_LINK_TEXT: 'Transaction result',
 
     CONVERSION_FIELD_LABEL_WRAP: 'Amount to wrap',
     CONVERSION_FIELD_LABEL_UNWRAP: 'Amount to unwrap',
@@ -138,8 +142,13 @@ export default {
     WRAP_RECEIPT_POPUP_TITLE_SUCCESS: 'Wrap receipt',
     UNWRAP_RECEIPT_POPUP_TITLE_SUCCESS: 'Unwrap receipt',
     CONVERSION_RECEIPT_LEAD_RECEIVED_AMOUNT: '+ <span>{value}</span> {symbol}',
-    CONVERSION_RECEIPT_LINK_TXT_TOKEN_ROOT_CONTRACT: 'Token root contract',
+    CONVERSION_RECEIPT_LINK_TXT_TOKEN_ROOT_CONTRACT: 'Token contract',
     CONVERSION_RECEIPT_LINK_TXT_TRANSACTION: 'Transaction result',
+
+    CONVERSION_NOTIFICATION_WRAP_PENDING_TITLE: 'Wait until the wrap is completed',
+    CONVERSION_NOTIFICATION_UNWRAP_PENDING_TITLE: 'Wait until the unwrap is completed',
+    CONVERSION_NOTIFICATION_WRAP_SUCCESS_TITLE: 'Wrap has been completed',
+    CONVERSION_NOTIFICATION_UNWRAP_SUCCESS_TITLE: 'Unwrap has been completed',
 
     TOKENS_LIST_POPUP_TITLE: 'Select a token',
     TOKENS_LIST_POPUP_FIELD_SEARCH_PLACEHOLDER: 'Enter a token name or address...',

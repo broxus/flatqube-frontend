@@ -22,6 +22,8 @@ export function Item({ disabled, token, onSelect }: ItemProps): JSX.Element {
 
     const balance = useTokenBalanceWatcher(token, {
         subscriberPrefix: 'list',
+        unwatchOnUnmount: false,
+        watchOnMount: false,
     })
 
     const onClick = () => {

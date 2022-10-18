@@ -4,22 +4,20 @@ import { useIntl } from 'react-intl'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
-import { useSwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
+import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { SwapExchangeMode } from '@/modules/Swap/types'
 
 
 function SubmitButton(): JSX.Element {
     const intl = useIntl()
-    const formStore = useSwapFormStore()
-    const tokensCache = formStore.useTokensCache
-    const wallet = formStore.useWallet
+    const formStore = useSwapFormStoreContext()
 
     if (
         formStore.isPreparing
         || formStore.isSwapping
         || formStore.isCalculating
         || formStore.isLoading
-        || !tokensCache.isReady
+        || !formStore.tokensCache.isReady
     ) {
         return (
             <Button
@@ -41,7 +39,7 @@ function SubmitButton(): JSX.Element {
     if (formStore.isWrapMode) {
         buttonText = intl.formatMessage({
             id: 'CONVERSION_FORM_WRAP_BTN_TEXT',
-        }, { symbol: formStore.conversion.coin?.symbol })
+        }, { symbol: formStore.conversion.wallet.coin.symbol })
     }
     else if (formStore.isUnwrapMode) {
         buttonText = intl.formatMessage({
@@ -50,10 +48,10 @@ function SubmitButton(): JSX.Element {
     }
 
     switch (true) {
-        case wallet.account === undefined:
-            buttonProps.disabled = wallet.isConnecting
+        case formStore.wallet.account === undefined:
+            buttonProps.disabled = formStore.wallet.isConnecting
             buttonProps.onClick = async () => {
-                await wallet.connect()
+                await formStore.wallet.connect()
             }
             buttonText = intl.formatMessage({
                 id: 'EVER_WALLET_CONNECT_BTN_TEXT',
@@ -70,7 +68,7 @@ function SubmitButton(): JSX.Element {
         case formStore.isUnwrapMode && formStore.conversion.isUnwrapValid:
             buttonProps.disabled = false
             buttonProps.onClick = async () => {
-                if (formStore.exchangeMode === SwapExchangeMode.WRAP_EVER) {
+                if (formStore.exchangeMode === SwapExchangeMode.WRAP_COIN) {
                     await formStore.conversion.wrap()
                 }
                 else {

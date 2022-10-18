@@ -1,8 +1,8 @@
 import BigNumber from 'bignumber.js'
 import { Address } from 'everscale-inpage-provider'
 import {
-    makeAutoObservable,
-    observable,
+    computed,
+    makeObservable,
     ObservableMap,
     reaction,
     runInAction,
@@ -13,6 +13,7 @@ import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { MigrationTokenAbi, TokenWallet, TokenWalletV4 } from '@/misc'
 import { useWallet, WalletService } from '@/stores/WalletService'
 import { debug, error } from '@/utils'
+import { BaseStore } from '@/stores/BaseStore'
 
 
 export type OutdatedTokenRaw = {
@@ -35,11 +36,13 @@ export type OutdatedTokenManifest = {
     tokens: OutdatedTokenRaw[];
 }
 
-export type UpgradeTokensData = {
+export type TokensUpgradesStoreData = {
     tokens: OutdatedToken[];
+    upgradableTokensList: OutdatedTokenRaw[];
 }
 
-export type UpgradeTokensState = {
+export type TokensUpgradesStoreState = {
+    isCheckingUpgrades: boolean;
     upgradedTokens: ObservableMap<string, boolean>;
     upgradingTokens: ObservableMap<string, boolean>;
 }
@@ -49,42 +52,35 @@ const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
-export class UpgradeTokens {
-
-    protected data: UpgradeTokensData
-
-    protected state: UpgradeTokensState
+export class TokensUpgradesStore extends BaseStore<TokensUpgradesStoreData, TokensUpgradesStoreState> {
 
     constructor(
         protected readonly wallet: WalletService,
     ) {
-        this.data = {
-            tokens: [],
-        }
+        super()
 
-        this.state = {
+        this.setData(() => ({
+            tokens: [],
+            upgradableTokensList: [],
+        }))
+
+        this.setState(() => ({
+            isCheckingUpgrades: false,
             upgradedTokens: new ObservableMap<string, boolean>(),
             upgradingTokens: new ObservableMap<string, boolean>(),
-        }
-
-        makeAutoObservable<UpgradeTokens, 'data' | 'state'>(this, {
-            data: observable,
-            state: observable,
-        })
+        }))
 
         reaction(() => this.wallet.address, async address => {
             if (address !== undefined) {
                 await this.checkForUpdates()
             }
-        }, { fireImmediately: true })
-    }
+        }, { delay: 100, fireImmediately: true })
 
-    public cleanup(): void {
-        this.data.tokens = []
-    }
-
-    public get tokens(): UpgradeTokensData['tokens'] {
-        return this.data.tokens
+        makeObservable(this, {
+            hasTokensToUpgrade: computed,
+            isCheckingUpgrades: computed,
+            tokens: computed,
+        })
     }
 
     public async checkForUpdates(): Promise<void> {
@@ -92,83 +88,81 @@ export class UpgradeTokens {
             return
         }
 
-        const tokens: UpgradeTokensData['tokens'] = []
-        const tokensToUpgrade: OutdatedTokenRaw[] = []
+        const tokens: TokensUpgradesStoreData['tokens'] = []
 
         try {
             await fetch('https://raw.githubusercontent.com/broxus/everscale-assets-upgrade/master/main.json', {
                 method: 'GET',
             }).then(value => value.json()).then((value: OutdatedTokenManifest) => {
-                tokensToUpgrade.push(...value.tokens)
+                this.setData('upgradableTokensList', value.tokens)
             })
         }
         catch (e) {
             error('Tokens upgrade manifest fetch error', e)
         }
 
-        try {
-            // eslint-disable-next-line no-restricted-syntax
-            for (const token of tokensToUpgrade) {
-                try {
-                    const rootV5Address = new Address(token.rootV5)
-                    const owner = (await TokenWallet.rootOwnerAddress(rootV5Address)).toString()
+        this.setState('isCheckingUpgrades', true)
 
-                    if (owner !== token.proxy) {
-                        continue
-                    }
-
-                    const rootV4Address = new Address(token.rootV4)
-                    const { state } = await staticRpc.getFullContractState({ address: rootV4Address })
-
-                    if (state === undefined || !state.isDeployed) {
-                        continue
-                    }
-
-                    const wallet = await TokenWalletV4.walletAddress({
-                        owner: this.wallet.account.address,
-                        root: rootV4Address,
-                    })
-
-                    const { state: walletState } = await staticRpc.getFullContractState({
-                        address: wallet,
-                    })
-
-                    if (walletState === undefined || !walletState.isDeployed) {
-                        continue
-                    }
-
-                    const [balance, decimals, symbol, name] = await Promise.all([
-                        TokenWalletV4.balance({ wallet }, walletState),
-                        TokenWalletV4.getDecimals(rootV4Address, state),
-                        TokenWalletV4.getSymbol(rootV4Address, state),
-                        TokenWalletV4.getName(rootV4Address, state),
-                    ])
-
-                    if (new BigNumber(balance ?? 0).isZero() || decimals == null) {
-                        continue
-                    }
-
-                    tokens.push({
-                        ...token,
-                        balance,
-                        decimals,
-                        name,
-                        symbol,
-                        wallet: wallet.toString(),
-                    })
-                }
-                catch (e) {
-                    debug('Token check error', token, e)
-                }
+        await Promise.allSettled(this.data.upgradableTokensList.map(token => (async () => {
+            if (this.wallet.account?.address === undefined) {
+                return
             }
 
-            runInAction(() => {
-                this.data.tokens = tokens
-            })
-        }
-        catch (e) {
-            error('Upgrades error', e)
-        }
+            try {
+                const rootV5Address = new Address(token.rootV5)
+                const owner = (await TokenWallet.rootOwnerAddress(rootV5Address)).toString()
+
+                if (owner !== token.proxy) {
+                    return
+                }
+
+                const rootV4Address = new Address(token.rootV4)
+                const { state } = await staticRpc.getFullContractState({ address: rootV4Address })
+
+                if (state === undefined || !state.isDeployed) {
+                    return
+                }
+
+                const wallet = await TokenWalletV4.walletAddress({
+                    owner: this.wallet.account.address,
+                    root: rootV4Address,
+                }, state)
+
+                const { state: walletState } = await staticRpc.getFullContractState({
+                    address: wallet,
+                })
+
+                if (walletState === undefined || !walletState.isDeployed) {
+                    return
+                }
+
+                const [balance, decimals, symbol, name] = await Promise.all([
+                    TokenWalletV4.balance({ wallet }, walletState),
+                    TokenWalletV4.getDecimals(rootV4Address, state),
+                    TokenWalletV4.getSymbol(rootV4Address, state),
+                    TokenWalletV4.getName(rootV4Address, state),
+                ])
+
+                if (new BigNumber(balance ?? 0).isZero() || decimals == null) {
+                    return
+                }
+
+                tokens.push({
+                    ...token,
+                    balance,
+                    decimals,
+                    name,
+                    symbol,
+                    wallet: wallet.toString(),
+                })
+            }
+            catch (e) {
+                debug('Token check error', token, e)
+            }
+        })()))
+
+        this.setData('tokens', tokens)
+        this.setState('isCheckingUpgrades', false)
     }
 
     public async upgrade(token: OutdatedToken): Promise<void> {
@@ -220,6 +214,20 @@ export class UpgradeTokens {
         return !!this.state.upgradingTokens.get(root)
     }
 
+    public cleanup(): void {
+        this.setData(() => ({
+            tokens: [],
+        }))
+    }
+
+    public get isCheckingUpgrades(): TokensUpgradesStoreState['isCheckingUpgrades'] {
+        return this.state.isCheckingUpgrades
+    }
+
+    public get tokens(): TokensUpgradesStoreData['tokens'] {
+        return this.data.tokens
+    }
+
     public get hasTokensToUpgrade(): boolean {
         return this.data.tokens.length > 0
     }
@@ -227,8 +235,8 @@ export class UpgradeTokens {
 }
 
 
-const store = new UpgradeTokens(useWallet())
+const store = new TokensUpgradesStore(useWallet())
 
-export function useUpgradeTokens(): UpgradeTokens {
+export function useTokensUpgrades(): TokensUpgradesStore {
     return store
 }

@@ -2,20 +2,14 @@ import BigNumber from 'bignumber.js'
 import { Address } from 'everscale-inpage-provider'
 import { computed, makeObservable } from 'mobx'
 
-import { WeverVaultAddress } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
-import { TokenAbi } from '@/misc'
+import { TokenWallet } from '@/misc'
+import type { ConversionStoreCtorOptions, ConversionStoreData, ConversionStoreState } from '@/modules/Swap/types'
 import { BaseStore } from '@/stores/BaseStore'
 import { TokensCacheService } from '@/stores/TokensCacheService'
-import { WalletService } from '@/stores/WalletService'
-import { error, isGoodBignumber, log } from '@/utils'
-import type {
-    ConversionStoreData,
-    ConversionStoreInitialData,
-    ConversionStoreState,
-    ConversionTransactionCallbacks,
-} from '@/modules/Swap/types'
 import type { TokenCache } from '@/stores/TokensCacheService'
+import { WalletService } from '@/stores/WalletService'
+import { error, getSafeProcessingId, isGoodBignumber } from '@/utils'
 
 
 const rpc = useRpc()
@@ -24,17 +18,14 @@ const rpc = useRpc()
 export class ConversionStore extends BaseStore<ConversionStoreData, ConversionStoreState> {
 
     constructor(
-        protected readonly wallet: WalletService,
-        protected readonly tokensCache: TokensCacheService,
-        protected readonly initialData?: ConversionStoreInitialData,
-        protected readonly callbacks?: ConversionTransactionCallbacks,
+        public readonly wallet: WalletService,
+        public readonly tokensCache: TokensCacheService,
+        protected readonly options?: ConversionStoreCtorOptions,
     ) {
         super()
 
         this.setData({
             amount: '',
-            coin: initialData?.coin,
-            token: initialData?.token,
         })
 
         this.setState({
@@ -42,53 +33,63 @@ export class ConversionStore extends BaseStore<ConversionStoreData, ConversionSt
         })
 
         makeObservable(this, {
-            wrappedAmount: computed,
-            unwrappedAmount: computed,
+            isInsufficientUnwrapBalance: computed,
+            isInsufficientWrapBalance: computed,
+            isProcessing: computed,
+            isUnwrapAmountValid: computed,
+            isUnwrapValid: computed,
+            isWrapAmountValid: computed,
+            isWrapValid: computed,
             token: computed,
             txHash: computed,
-            isWrapAmountValid: computed,
-            isUnwrapAmountValid: computed,
-            isInsufficientWrapBalance: computed,
-            isInsufficientUnwrapBalance: computed,
-            isProcessing: computed,
-            isWrapValid: computed,
-            isUnwrapValid: computed,
+            unwrappedAmount: computed,
+            wrappedAmount: computed,
         })
     }
 
     public async wrap(): Promise<void> {
-        if (this.wallet.account?.address === undefined || this.coin?.decimals === undefined) {
+        if (this.wallet.account?.address === undefined || this.options?.wrappedCoinVaultAddress === undefined) {
             return
         }
 
-        try {
-            const wrappedAmount = new BigNumber(this.amount ?? 0).shiftedBy(this.coin.decimals)
-            const amount = wrappedAmount.plus(this.initialData?.wrapGas ?? 0).toFixed()
+        const callId = getSafeProcessingId()
 
+        try {
             this.setState('isProcessing', true)
 
-            const { transaction } = await rpc.sendMessage({
+            const wrappedAmount = new BigNumber(this.amount ?? 0).shiftedBy(this.wallet.coin.decimals)
+            const amount = wrappedAmount.plus(this.options?.wrapGas ?? 0).toFixed()
+
+            const message = await rpc.sendMessageDelayed({
                 amount,
                 bounce: false,
-                recipient: WeverVaultAddress,
+                recipient: this.options.wrappedCoinVaultAddress,
                 sender: this.wallet.account.address,
             })
 
-            log('Wrap successful. Tx Hash: ', transaction.id.hash)
+            this.options?.callbacks?.onSend?.(message, { callId, mode: 'wrap' })
 
-            this.setData({
-                amount: '',
-                txHash: transaction.id.hash,
-                wrappedAmount: wrappedAmount.toFixed(),
-            })
+            this.setState('isProcessing', false)
 
-            this.callbacks?.onTransactionSuccess?.({
+            const transaction = await message.transaction
+
+            this.options?.callbacks?.onTransactionSuccess?.({
                 amount: wrappedAmount.toFixed(),
+                callId,
+                direction: 'wrap',
+                receivedDecimals: this.token?.decimals,
+                receivedIcon: this.token?.icon,
+                receivedRoot: this.token?.root,
+                receivedSymbol: this.token?.symbol,
                 txHash: transaction.id.hash,
             })
         }
-        catch (e) {
-            error('EVER wrap error', e)
+        catch (e: any) {
+            error('Wrap error', e)
+            if (e.code !== 3) {
+                this.options?.callbacks?.onTransactionFailure?.({ callId, direction: 'wrap', message: e.message })
+            }
+            throw e
         }
         finally {
             this.setState('isProcessing', false)
@@ -100,46 +101,51 @@ export class ConversionStore extends BaseStore<ConversionStoreData, ConversionSt
             this.wallet.account?.address === undefined
             || this.token?.wallet === undefined
             || this.token?.decimals === undefined
+            || this.options?.wrappedCoinVaultAddress === undefined
         ) {
             return
         }
+
+        const callId = getSafeProcessingId()
 
         try {
             const amount = new BigNumber(this.amount ?? 0).shiftedBy(this.token.decimals ?? 0).toFixed()
 
             this.setState('isProcessing', true)
 
-            const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, new Address(this.token.wallet))
-            const transaction = await tokenWalletContract
-                .methods.transfer({
-                    amount,
-                    deployWalletValue: '0',
-                    notify: true,
-                    recipient: WeverVaultAddress,
-                    remainingGasTo: this.wallet.account.address,
-                    payload: '',
-                })
-                .send({
-                    amount: '500000000',
-                    bounce: false,
-                    from: this.wallet.account.address,
-                })
-
-            log('Unwrap successful. Tx: Hash', transaction.id.hash)
-
-            this.setData({
-                amount: '',
-                txHash: transaction.id.hash,
-                unwrappedAmount: amount,
+            const message = await TokenWallet.transfer({
+                address: new Address(this.token.wallet),
+                bounce: false,
+                deployWalletValue: '0',
+                grams: '500000000',
+                owner: this.wallet.account.address,
+                payload: '',
+                recipient: this.options.wrappedCoinVaultAddress,
+                tokens: amount,
             })
 
-            this.callbacks?.onTransactionSuccess?.({
+            this.options?.callbacks?.onSend?.(message, { callId, mode: 'unwrap' })
+
+            this.setState('isProcessing', false)
+
+            const transaction = await message.transaction
+
+            this.options?.callbacks?.onTransactionSuccess?.({
                 amount,
+                callId,
+                direction: 'unwrap',
+                receivedDecimals: this.wallet.coin.decimals,
+                receivedIcon: this.wallet.coin.icon,
+                receivedSymbol: this.wallet.coin.symbol,
                 txHash: transaction.id.hash,
             })
         }
-        catch (e) {
-            error('WEVER unwrap error', e)
+        catch (e: any) {
+            error('Unwrap error', e)
+            if (e.code !== 3) {
+                this.options?.callbacks?.onTransactionFailure?.({ callId, direction: 'unwrap', message: e.message })
+            }
+            throw e
         }
         finally {
             this.setState('isProcessing', false)
@@ -158,12 +164,8 @@ export class ConversionStore extends BaseStore<ConversionStoreData, ConversionSt
         return this.data.unwrappedAmount
     }
 
-    public get coin(): ConversionStoreData['coin'] {
-        return this.data.coin
-    }
-
     public get token(): TokenCache | undefined {
-        return this.tokensCache.get(this.data.token)
+        return this.tokensCache.get(this.options?.tokenAddress?.toString())
     }
 
     public get txHash(): ConversionStoreData['txHash'] {
@@ -187,13 +189,13 @@ export class ConversionStore extends BaseStore<ConversionStoreData, ConversionSt
     }
 
     public get isInsufficientWrapBalance(): boolean {
-        if (this.coin?.decimals === undefined) {
+        if (this.wallet.coin.decimals === undefined) {
             return true
         }
 
         const amount = new BigNumber(this.amount || 0)
-        const balance = new BigNumber(this.wallet.balance || 0).shiftedBy(-this.coin.decimals)
-        const safeAmount = new BigNumber(this.initialData?.safeAmount ?? 0).shiftedBy(-this.coin.decimals)
+        const balance = new BigNumber(this.wallet.balance || 0).shiftedBy(-this.wallet.coin.decimals)
+        const safeAmount = new BigNumber(this.options?.safeAmount ?? 0).shiftedBy(-this.wallet.coin.decimals)
 
         return isGoodBignumber(amount) && balance.minus(safeAmount).lt(amount)
     }

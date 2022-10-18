@@ -14,7 +14,7 @@ import { PairTransactions } from '@/modules/Pairs/components/PairTransactions'
 import { Stats } from '@/modules/Pairs/components/Stats'
 import { usePairStore } from '@/modules/Pairs/providers/PairStoreProvider'
 import { TogglePoolButton } from '@/modules/Pools/components/TogglePoolButton'
-import { getDefaultPerPrice } from '@/modules/Swap/utils'
+import { getDefaultPricesRates } from '@/modules/Swap/utils'
 import { TokenImportPopup } from '@/modules/TokensList/components'
 import { TokenCache, useTokensCache } from '@/stores/TokensCacheService'
 import { concatSymbols, formattedTokenAmount, isGoodBignumber } from '@/utils'
@@ -35,7 +35,7 @@ function getPrice(
         && baseToken?.decimals !== undefined
         && counterToken?.decimals !== undefined
     )
-        ? getDefaultPerPrice(
+        ? getDefaultPricesRates(
             new BigNumber(rightLocked || 0).shiftedBy(-counterToken.decimals),
             new BigNumber(leftLocked || 0).shiftedBy(-baseToken.decimals),
             counterToken?.decimals,
