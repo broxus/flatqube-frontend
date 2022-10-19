@@ -17,7 +17,7 @@ import type {
     QubeDaoVoteEpochParams,
 } from '@/modules/QubeDao/stores/QubeDaoStore'
 import type { QubeDaoEpochStore } from '@/modules/QubeDao/stores/QubeDaoEpochStore'
-import type { QubeDaoEpochVoteResponse } from '@/modules/QubeDao/types'
+import type { QubeDaoEpochVoteResponse, QubeDaoEpochVotesSumResponse } from '@/modules/QubeDao/types'
 import { BaseStore } from '@/stores/BaseStore'
 import { error, isGoodBignumber, uniqueId } from '@/utils'
 
@@ -39,11 +39,13 @@ export type QubeDaoVotingStateStoreData = {
     gauges: GaugeShape[];
     /** Limit of the gauges per one vote */
     limit: number;
+    prevEpochVotesSummary?: QubeDaoEpochVotesSumResponse[];
     /** List of a user's votes */
     userVotes: QubeDaoEpochVoteResponse[];
 }
 
 export type QubeDaoVotingStateStoreState = {
+    isFetchingPrevEpoch?: boolean;
     isFetchingUserVotes?: boolean;
     isInitializing: boolean;
 }
@@ -82,12 +84,15 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
             candidates: computed,
             endVoting: action.bound,
             gauges: computed,
+            isFetchingPrevEpoch: computed,
             isFetchingUserVotes: computed,
             isLimitExceed: computed,
             isValid: computed,
             limit: computed,
             scoredGaugesDistribution: computed,
             scoredGaugesFarmSpeed: computed,
+            scoredGaugesNormalizedVotesAmount: computed,
+            scoredGaugesNormalizedVotesShare: computed,
             scoredGaugesVotesAmount: computed,
             scoredGaugesVotesShare: computed,
             scoredUserCandidatesAmount: computed,
@@ -112,6 +117,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         this.setState('isInitializing', true)
 
         await this.syncWhitelistGauges()
+        await this.fetchPrevEpochDetails()
 
         this.#initDisposer = reaction(() => this.dao.wallet.address, async (address, prevAddress) => {
             if (address !== undefined && address !== prevAddress) {
@@ -194,6 +200,36 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         })
     }
 
+    protected async fetchPrevEpochDetails(force?: boolean, silence: boolean = false): Promise<void> {
+        if (!force && this.isFetchingPrevEpoch) {
+            return
+        }
+
+        if (this.epoch.epochNum === undefined || Number.isNaN(this.epoch.epochNum) || this.epoch.epochNum === 1) {
+            return
+        }
+
+        this.setState('isFetchingPrevEpoch', !silence)
+
+        try {
+            const prevEpochVotesSummary = await this.api.epochsVotesSum({
+                epochNum: (this.epoch.epochNum - 1).toString(),
+            }, { method: 'GET' })
+
+            if (!prevEpochVotesSummary) {
+                return
+            }
+
+            this.setData('prevEpochVotesSummary', prevEpochVotesSummary)
+        }
+        catch (e) {
+            error(`Fetch epoch ${this.epoch.epochNum} error`, e)
+        }
+        finally {
+            this.setState('isFetchingPrevEpoch', false)
+        }
+    }
+
     protected async fetchUserVotes(force?: boolean, silence: boolean = false): Promise<void> {
         if (this.dao.wallet.address === undefined || this.epoch.epochNum === undefined) {
             return
@@ -225,9 +261,14 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
 
     protected async syncWhitelistGauges(): Promise<void> {
         try {
-            const whitelist = await this.dao.veContract
-                .methods.gaugeWhitelist({})
-                .call({ cachedState: this.dao.veContractCachedState })
+            const [whitelist, details] = await Promise.all([
+                this.dao.veContract
+                    .methods.gaugeWhitelist({})
+                    .call({ cachedState: this.dao.veContractCachedState }),
+                this.dao.veContract
+                    .methods.getVotingDetails({})
+                    .call({ cachedState: this.dao.veContractCachedState }),
+            ])
 
             const gauges = whitelist.gaugeWhitelist.filter(([, enabled]) => enabled).map(([address, enabled]) => ({
                 address: address.toString(),
@@ -236,7 +277,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
 
             this.setData({
                 gauges,
-                limit: gauges.length,
+                limit: Math.min(gauges.length, parseInt(details._maxGaugesPerVote, 10)),
             })
         }
         catch (e) {
@@ -258,6 +299,10 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
 
     public get limit(): QubeDaoVotingStateStoreData['limit'] {
         return this.data.limit
+    }
+
+    public get isFetchingPrevEpoch(): QubeDaoVotingStateStoreState['isFetchingPrevEpoch'] {
+        return this.state.isFetchingPrevEpoch
     }
 
     public get isFetchingUserVotes(): QubeDaoVotingStateStoreState['isFetchingUserVotes'] {
@@ -287,15 +332,17 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         ) {
             return this.epoch.normalizedDistribution[gauge]
         }
-        const gaugeVoteShare = this.currentGaugeVoteShare(gauge)
-        const distribution = new BigNumber(this.epoch.totalDistribution || 0)
-            .times(this.epoch.distributionScheme[0] ?? 1)
-            .div(10000)
-        return distribution
-            .div(100)
-            .times(gaugeVoteShare)
-            .dp(0, BigNumber.ROUND_UP)
-            .toFixed()
+        return this.epoch.epochVotesSummary
+            .find(item => gauge === item.gauge)
+            ?.distributedAmount
+            // if not found in api response - calculate via distributed scheme
+            ?? new BigNumber(this.epoch.totalDistribution || 0)
+                .times(this.epoch.distributionScheme[0] ?? 1)
+                .div(10000)
+                .div(100)
+                .times(this.currentGaugeNormalizedVoteShare(gauge))
+                .dp(0, BigNumber.ROUND_UP)
+                .toFixed()
     }
 
     /**
@@ -306,10 +353,41 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         if (this.epoch.epochEnd == null || this.epoch.epochStart == null) {
             return '0'
         }
-        const gaugeDistribution = this.currentGaugeDistribution(gauge)
-        return new BigNumber(gaugeDistribution || 0)
+        return new BigNumber(this.currentGaugeDistribution(gauge) || 0)
             .shiftedBy(-this.dao.tokenDecimals)
-            .div(this.epoch.epochEnd - this.epoch.epochStart)
+            .div(this.dao.epochTime)
+            .toFixed()
+    }
+
+    public currentGaugeFarmingSpeedRateChange(gauge: string): string {
+        if (this.epoch.epochNum === 1) {
+            return '100'
+        }
+
+        const currentFarmingSpeed = this.currentGaugeFarmingSpeed(gauge)
+        const prevEpochGauge = this.data.prevEpochVotesSummary?.find(
+            summary => gauge.toLowerCase() === summary.gauge.toLowerCase(),
+        )
+        const distribution = new BigNumber(prevEpochGauge?.distributedAmount || 0)
+        const prevFarmingSpeed = distribution
+            .shiftedBy(-this.dao.tokenDecimals)
+            .div(this.dao.epochTime)
+
+        return new BigNumber(currentFarmingSpeed ?? 0)
+            .div(prevFarmingSpeed)
+            .times(100)
+            .dp(2)
+            .toFixed()
+    }
+
+    public currentGaugeNormalizedAmount(gauge: string): string | null | undefined {
+        return this.epoch.epochVotesSummary.find(item => gauge === item.gauge)?.normalizedAmount
+    }
+
+    public currentGaugeNormalizedVoteShare(gauge: string): string {
+        return new BigNumber(this.currentGaugeNormalizedAmount(gauge) ?? 0)
+            .div(isGoodBignumber(this.epoch.totalVeAmount) ? (this.epoch.totalVeAmount ?? 1) : 1)
+            .times(100)
             .toFixed()
     }
 
@@ -359,6 +437,20 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         return new BigNumber(this.scoredGaugesDistribution || 0)
             .shiftedBy(-this.dao.tokenDecimals)
             .div(this.epoch.epochEnd - this.epoch.epochStart)
+            .toFixed()
+    }
+
+    public get scoredGaugesNormalizedVotesAmount(): string {
+        return this.epoch.epochVotesSummary.reduce(
+            (acc, vote) => acc.plus(this.currentGaugeNormalizedAmount(vote.gauge) ?? 0),
+            new BigNumber(0),
+        ).toFixed()
+    }
+
+    public get scoredGaugesNormalizedVotesShare(): string {
+        return new BigNumber(this.scoredGaugesNormalizedVotesAmount)
+            .div(isGoodBignumber(this.epoch.totalVeAmount) ? (this.epoch.totalVeAmount ?? 1) : 1)
+            .times(100)
             .toFixed()
     }
 

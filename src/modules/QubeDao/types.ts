@@ -266,7 +266,9 @@ export type QubeDaoEpochVotesResponse = {
 }
 
 export type QubeDaoEpochVotesSumResponse = {
+    distributedAmount?: string | null;
     gauge: string;
+    normalizedAmount?: string | null;
     totalAmount: string;
 }
 
