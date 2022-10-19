@@ -142,7 +142,10 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
             votes: this.candidates.map(
                 ({ address, amount }) => [
                     new Address(address),
-                    new BigNumber(amount || 0).dp(this.dao.veDecimals).shiftedBy(this.dao.veDecimals).toFixed(),
+                    new BigNumber(amount || 0)
+                        .dp(this.dao.veDecimals, BigNumber.ROUND_DOWN)
+                        .shiftedBy(this.dao.veDecimals)
+                        .toFixed(),
                 ],
             ),
             // eslint-disable-next-line sort-keys

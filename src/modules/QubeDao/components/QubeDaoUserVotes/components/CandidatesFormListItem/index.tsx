@@ -44,6 +44,7 @@ function CandidatesFormListItemInternal({ candidate, idx }: Props): JSX.Element 
             .shiftedBy(-daoContext.veDecimals)
             .div(100)
             .times(perCent || 0)
+            .dp(daoContext.veDecimals, BigNumber.ROUND_DOWN)
             .toFixed(),
         [],
     )
