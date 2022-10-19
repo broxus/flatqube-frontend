@@ -102,14 +102,15 @@ function UserPerformanceStartBannerInner(): JSX.Element {
                         })}
                     </Button>
 
-                    {/* <Button
+                    <Button
                         size="md"
                         type="secondary"
+                        href="https://broxus.medium.com/how-to-transfer-lp-tokens-from-old-farming-pools-to-new-c02752202176"
                     >
                         {intl.formatMessage({
                             id: 'GAUGE_SEE_GUIDE',
                         })}
-                    </Button> */}
+                    </Button>
                 </div>
             </div>
         )
