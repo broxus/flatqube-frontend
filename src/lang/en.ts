@@ -726,6 +726,7 @@ export default {
     QUBE_DAO_VOTE_STATE_LIST_FUTURE_SPEED_CELL: 'Normal. farm. speed',
     QUBE_DAO_VOTE_STATE_LIST_FUTURE_SPEED_VALUE: '{value} {symbol}/sec',
     QUBE_DAO_VOTE_STATE_LIST_FUTURE_SPEED_CURRENCY_VALUE: '{value}/sec',
+    QUBE_DAO_VOTE_STATE_LIST_TREASURY_AMOUNT: 'Treasury',
     QUBE_DAO_VOTE_AWAITING_BANNER_TITLE: 'The voting starts {date} at {time} (UTC{offset})',
     QUBE_DAO_VOTE_AWAITING_BANNER_NOTE: 'After that you will be able to vote for candidates (farming pools).',
     QUBE_DAO_VOTE_DEPOSIT_BANNER_TITLE: 'Deposit {symbol} tokens to get {veSymbol} and start voting',

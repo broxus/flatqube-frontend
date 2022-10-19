@@ -8,7 +8,7 @@ import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochSt
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import type { QubeDaoEpochVotesSumResponse } from '@/modules/QubeDao/types'
-import { formattedAmount, formattedTokenAmount } from '@/utils'
+import { formattedAmount, formattedTokenAmount, isGoodBignumber } from '@/utils'
 import { RateChange } from '@/components/common/RateChange'
 
 type Props = {
@@ -91,9 +91,11 @@ function VotingStateListItemInternal({ summary }: Props): JSX.Element {
                         }),
                     },
                 )}
-                <div>
-                    <RateChange size="sm" value={formattedAmount(farmingSpeedRateChange)} />
-                </div>
+                {isGoodBignumber(currentGaugeFarmingSpeed) && (
+                    <div>
+                        <RateChange size="sm" value={formattedAmount(farmingSpeedRateChange)} />
+                    </div>
+                )}
             </div>
         </div>
     )
