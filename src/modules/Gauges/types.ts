@@ -33,3 +33,10 @@ export type GaugesFilters = {
     aprMaxFrom?: string;
     aprMaxTo?: string;
 }
+
+export type Duration = {
+    days: number;
+    hours: number;
+    minutes: number;
+    years: number;
+}

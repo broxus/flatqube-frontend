@@ -124,7 +124,11 @@ function DepositsTableInner(): JSX.Element {
                                 </div>
                                 <div className="list__cell list__cell--right">
                                     {item.lockPeriod ? (
-                                        getDuration(item.lockPeriod)
+                                        intl.formatMessage({
+                                            id: 'GAUGE_PERIOD',
+                                        }, {
+                                            ...getDuration(item.lockPeriod),
+                                        })
                                     ) : '—'}
                                 </div>
                                 <div className="list__cell list__cell--right">

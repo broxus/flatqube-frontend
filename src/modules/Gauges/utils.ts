@@ -1,10 +1,10 @@
 import { Address } from 'everscale-inpage-provider'
 import BigNumber from 'bignumber.js'
-import { Duration } from 'luxon'
+import * as luxon from 'luxon'
 
 import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { GaugeAbi } from '@/misc'
-import { createHandler, error } from '@/utils'
+import { createHandler } from '@/utils'
 import { apiRoutes, gaugesApiRoutes, tokensApiRoutes } from '@/routes'
 import {
     DepositRequest, DepositResponse, GaugeBatchRequest, GaugeBatchResponse,
@@ -13,7 +13,7 @@ import {
     TransactionRequest, TransactionResponse, UserBalanceRequest, UserBalancesResponse,
 } from '@/modules/Gauges/api/models'
 import { GAUGES_API_URL, TOKENS_API_URL } from '@/config'
-import { RewardDetails, TokenResponse } from '@/modules/Gauges/types'
+import { Duration, RewardDetails, TokenResponse } from '@/modules/Gauges/types'
 import { SECONDS_IN_DAY } from '@/constants'
 
 export async function calcBoost(id: string, amount: string, lockTime: string): Promise<string> {
@@ -56,24 +56,16 @@ export function secsToDays(value: string): string {
         : '0'
 }
 
-export function getDuration(period: number): string {
-    try {
-        const d = Duration.fromMillis(period * 1000)
-            .shiftTo('years', 'days', 'hours', 'minutes', 'seconds')
-            .toObject()
+export function getDuration(period: number): Duration {
+    const d = luxon.Duration.fromMillis(period * 1000)
+        .shiftTo('years', 'days', 'hours', 'minutes')
+        .toObject()
 
-        return Duration.fromObject({
-            days: d.days || undefined,
-            hours: d.hours || undefined,
-            minutes: d.minutes || undefined,
-            seconds: d.seconds || undefined,
-            years: d.years || undefined,
-        })
-            .toHuman({ unitDisplay: 'short' })
-    }
-    catch (e) {
-        error(e)
-        return `${period}s`
+    return {
+        days: d.days || 0,
+        hours: d.hours || 0,
+        minutes: d.minutes || 0,
+        years: d.years || 0,
     }
 }
 

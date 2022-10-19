@@ -73,7 +73,11 @@ function VestingTableInner(): JSX.Element {
                                     )}
                             </div>
                             <div className="list__cell list__cell--right">
-                                {getDuration(parseInt(rewardDetails._qubeVestingPeriod, 10))}
+                                {intl.formatMessage({
+                                    id: 'GAUGE_PERIOD',
+                                }, {
+                                    ...getDuration(parseInt(rewardDetails._qubeVestingPeriod, 10)),
+                                })}
                             </div>
                             <div className="list__cell list__cell--right">
                                 {qubeVestingTime ? formatDate(qubeVestingTime) : '—'}
@@ -107,9 +111,11 @@ function VestingTableInner(): JSX.Element {
                                         : '—'}
                                 </div>
                                 <div className="list__cell list__cell--right">
-                                    {rewardDetails._extraVestingPeriods[index]
-                                        ? getDuration(parseInt(rewardDetails._extraVestingPeriods[index], 10))
-                                        : '—'}
+                                    {intl.formatMessage({
+                                        id: 'GAUGE_PERIOD',
+                                    }, {
+                                        ...getDuration(parseInt(rewardDetails._extraVestingPeriods[index], 10)),
+                                    })}
                                 </div>
                                 <div className="list__cell list__cell--right">
                                     {extraVestingTime && extraVestingTime[index]
