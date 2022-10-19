@@ -25,9 +25,21 @@ function VotingStateListScoreInternal(): JSX.Element {
         <div className="list__row">
             <div className="list__cell list__cell--left" />
             <div className="list__cell list__cell--right">
+                {`${formattedTokenAmount(votesStore.scoredUserVotesAmount, daoContext.veDecimals)} ${daoContext.veSymbol}`}
+                <div className="text-sm text-muted">
+                    {`${formattedAmount(votesStore.scoredUserVotesShare)}%`}
+                </div>
+            </div>
+            <div className="list__cell list__cell--right">
                 {`${formattedTokenAmount(votesStore.scoredGaugesVotesAmount, daoContext.veDecimals)} ${daoContext.veSymbol}`}
                 <div className="text-sm text-muted">
                     {`${formattedAmount(votesStore.scoredGaugesVotesShare)}%`}
+                </div>
+            </div>
+            <div className="list__cell list__cell--right">
+                {`${formattedTokenAmount(votesStore.scoredGaugesNormalizedVotesAmount, daoContext.veDecimals)} ${daoContext.veSymbol}`}
+                <div className="text-sm text-muted">
+                    {`${formattedAmount(votesStore.scoredGaugesNormalizedVotesShare)}%`}
                 </div>
             </div>
             <div className="list__cell list__cell--right">

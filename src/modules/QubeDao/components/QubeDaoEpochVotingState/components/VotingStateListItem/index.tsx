@@ -9,6 +9,7 @@ import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import type { QubeDaoEpochVotesSumResponse } from '@/modules/QubeDao/types'
 import { formattedAmount, formattedTokenAmount } from '@/utils'
+import { RateChange } from '@/components/common/RateChange'
 
 type Props = {
     summary: QubeDaoEpochVotesSumResponse;
@@ -32,6 +33,12 @@ function VotingStateListItemInternal({ summary }: Props): JSX.Element {
         .shiftedBy(-daoContext.tokenDecimals)
         .times(daoContext.tokenPrice ?? 0)
         .toFixed()
+    const normalizedVoteAmount = votesStore.currentGaugeNormalizedAmount(summary.gauge)
+    const normalizedVoteShare = votesStore.currentGaugeNormalizedVoteShare(summary.gauge)
+    const userVote = votesStore.userVotes.find(
+        vote => summary.gauge.toLowerCase() === vote.gauge.toLowerCase(),
+    )?.veAmount
+    const farmingSpeedRateChange = votesStore.currentGaugeFarmingSpeedRateChange(summary.gauge)
 
     return (
         <div className="list__row">
@@ -42,12 +49,28 @@ function VotingStateListItemInternal({ summary }: Props): JSX.Element {
                 />
             </div>
             <div className="list__cell list__cell--right">
+                {`${formattedTokenAmount(userVote, daoContext.veDecimals)} ${daoContext.veSymbol}`}
+                <div className="text-muted text-sm">
+                    {`${formattedAmount(votesStore.gaugeUserVoteShare(userVote ?? '0'))}%`}
+                </div>
+            </div>
+            <div className="list__cell list__cell--right">
                 {`${formattedTokenAmount(currentGaugeTotalAmount, daoContext.veDecimals)} ${daoContext.veSymbol}`}
                 <div className="text-sm">
                     <QubeDaoShareRate
                         maxValue={maxVotesRatio}
                         minValue={minVotesRatio}
                         value={currentGaugeVoteShare}
+                    />
+                </div>
+            </div>
+            <div className="list__cell list__cell--right">
+                {`${formattedTokenAmount(normalizedVoteAmount || 0, daoContext.veDecimals)} ${daoContext.veSymbol}`}
+                <div className="text-sm">
+                    <QubeDaoShareRate
+                        maxValue={maxVotesRatio}
+                        minValue={minVotesRatio}
+                        value={normalizedVoteShare}
                     />
                 </div>
             </div>
@@ -68,6 +91,9 @@ function VotingStateListItemInternal({ summary }: Props): JSX.Element {
                         }),
                     },
                 )}
+                <div>
+                    <RateChange size="sm" value={formattedAmount(farmingSpeedRateChange)} />
+                </div>
             </div>
         </div>
     )

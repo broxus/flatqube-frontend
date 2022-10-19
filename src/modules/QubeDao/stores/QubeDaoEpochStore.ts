@@ -10,6 +10,7 @@ import { BaseStore } from '@/stores/BaseStore'
 import { error, isGoodBignumber } from '@/utils'
 
 export type QubeDaoEpochStoreData = {
+    distributionSchedule: string[];
     distributionScheme: string[];
     epochEnd: number | null;
     epochNum?: number;
@@ -51,6 +52,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         super()
 
         this.setData(() => ({
+            distributionSchedule: [],
             distributionScheme: [],
             epochNum: options?.epochNum,
             epochVotesSummary: [],
@@ -65,6 +67,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
 
         makeObservable(this, {
             distributionPrice: computed,
+            distributionSchedule: computed,
             distributionScheme: computed,
             epochEnd: computed,
             epochNum: computed,
@@ -94,6 +97,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         this.setState('isInitializing', true)
 
         await Promise.all([
+            this.syncDistributionSchedule(),
             this.syncDistributionScheme(),
             this.fetchGaugesDetails(),
         ])
@@ -119,7 +123,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
                         currentEpochDetails,
                         votingDetails,
                         currentVotingEntities,
-                        distribution,
+                        normalization,
                     ] = await Promise.all([
                         this.dao.veContract
                             .methods.getCurrentEpochDetails({})
@@ -131,10 +135,9 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
                             .methods.currentVotingVotes({})
                             .call({ cachedState: this.dao.veContractCachedState }))
                             .currentVotingVotes,
-                        (await this.dao.veContract
+                        this.dao.veContract
                             .methods.getNormalizedVoting({})
-                            .call({ cachedState: this.dao.veContractCachedState }))
-                            ._distribution,
+                            .call({ cachedState: this.dao.veContractCachedState }),
                     ])
 
                     const now = DateTime.local().toSeconds()
@@ -154,10 +157,19 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
                         votingEndAvailable: votingEndTime > 0 && DateTime.local().toSeconds() > votingEndTime,
                     })
 
+                    const normalizedVotes = normalization._normalizedVotes.reduce<
+                        { [gaugeAddress: string]: string }
+                    >((acc, [address, amount]) => {
+                        if (acc[address.toString()] === undefined) {
+                            acc[address.toString()] = amount
+                        }
+                        return acc
+                    }, {})
                     const epochVotesSummary = currentVotingEntities.reduce<QubeDaoEpochVotesSumResponse[]>(
                         (acc, [gauge, amount]) => {
                             acc.push({
                                 gauge: gauge.toString(),
+                                normalizedAmount: normalizedVotes[gauge.toString()] ?? 0,
                                 totalAmount: amount,
                             })
                             return acc
@@ -165,7 +177,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
                         [],
                     ).sort((a, b) => Number(b.totalAmount) - Number(a.totalAmount))
 
-                    const normalizedDistribution = distribution.reduce<
+                    const normalizedDistribution = normalization._distribution.reduce<
                         { [gaugeAddress: string]: string }
                     >((acc, [address, amount]) => {
                         if (acc[address.toString()] === undefined) {
@@ -185,7 +197,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
                 }
             }
             catch (e) {
-
+                error(e)
             }
         }, { fireImmediately: true })
 
@@ -218,11 +230,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
             })
 
             if (!isGoodBignumber(response.totalDistribution)) {
-                const { distributionSchedule = [] } = await this.dao.veContract
-                    .methods.distributionSchedule({})
-                    .call({ cachedState: this.dao.veContractCachedState })
-
-                this.setData('totalDistribution', distributionSchedule[(this.epochNum ?? 0) - 1])
+                this.setData('totalDistribution', this.data.distributionSchedule[(this.epochNum ?? 0) - 1])
             }
         }
         catch (e) {
@@ -256,9 +264,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
             }
 
             this.setData({
-                epochEnd: ((response.voteStart ?? 0) > response.epochEnd || (response.voteEnd ?? 0) > response.epochEnd)
-                    ? response.voteEnd
-                    : response.epochEnd,
+                epochEnd: response.epochEnd,
                 epochNum: response.epochNum,
                 epochStart: response.epochStart,
                 totalDistribution: response.totalDistribution,
@@ -268,11 +274,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
             })
 
             if (!isGoodBignumber(response.totalDistribution)) {
-                const { distributionSchedule = [] } = await this.dao.veContract
-                    .methods.distributionSchedule({})
-                    .call({ cachedState: this.dao.veContractCachedState })
-
-                this.setData('totalDistribution', distributionSchedule[(this.epochNum ?? 0) - 1])
+                this.setData('totalDistribution', this.data.distributionSchedule[(this.epochNum ?? 0) - 1])
             }
         }
         catch (e) {
@@ -383,6 +385,21 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         }
     }
 
+    protected async syncDistributionSchedule(): Promise<void> {
+        try {
+            this.setData(
+                'distributionSchedule',
+                (await this.dao.veContract
+                    .methods.distributionSchedule({})
+                    .call({ cachedState: this.dao.veContractCachedState }))
+                    .distributionSchedule,
+            )
+        }
+        catch (e) {
+            error('Sync distribution scheme error', e)
+        }
+    }
+
     protected async syncDistributionScheme(): Promise<void> {
         try {
             this.setData(
@@ -396,6 +413,10 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         catch (e) {
             error('Sync distribution scheme error', e)
         }
+    }
+
+    public get distributionSchedule(): QubeDaoEpochStoreData['distributionSchedule'] {
+        return this.data.distributionSchedule
     }
 
     public get distributionScheme(): QubeDaoEpochStoreData['distributionScheme'] {

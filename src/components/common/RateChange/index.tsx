@@ -34,8 +34,8 @@ export function RateChange({
     return (
         <div
             className={classNames('rate-change', className, {
-                'rate-change-up': dir > 0,
                 'rate-change-down': dir < 0,
+                'rate-change-up': dir > 0,
                 [`rate-change-${size}`]: size !== undefined,
             })}
         >

@@ -457,6 +457,15 @@ export abstract class VoteEscrowAbi {
                 ],
             },
             {
+                name: 'setVotingNormalizingType',
+                inputs: [
+                    { name: '_new_type', type: 'uint8' },
+                    { components: [{ name: 'call_id', type: 'uint32' }, { name: 'nonce', type: 'uint32' }, { name: 'send_gas_to', type: 'address' }], name: 'meta', type: 'tuple' },
+                ],
+                outputs: [
+                ],
+            },
+            {
                 name: 'setWhitelistPrice',
                 inputs: [
                     { name: 'new_price', type: 'uint128' },
@@ -611,7 +620,7 @@ export abstract class VoteEscrowAbi {
                 name: 'normalizeVotesStep',
                 inputs: [
                     { name: 'start_addr', type: 'address' },
-                    { name: 'treasury_votes', type: 'uint128' },
+                    { name: 'overflow_votes', type: 'uint128' },
                     { name: 'exceeded_votes', type: 'uint128' },
                     { name: 'valid_votes', type: 'uint128' },
                     { components: [{ name: 'call_id', type: 'uint32' }, { name: 'nonce', type: 'uint32' }, { name: 'send_gas_to', type: 'address' }], name: 'meta', type: 'tuple' },
@@ -623,7 +632,7 @@ export abstract class VoteEscrowAbi {
                 name: 'distributeEpochQubesStep',
                 inputs: [
                     { name: 'start_addr', type: 'address' },
-                    { name: 'bonus_treasury_votes', type: 'uint128' },
+                    { name: 'overflow_votes', type: 'uint128' },
                     { name: 'distributed', type: 'map(address,uint128)' },
                     { components: [{ name: 'call_id', type: 'uint32' }, { name: 'nonce', type: 'uint32' }, { name: 'send_gas_to', type: 'address' }], name: 'meta', type: 'tuple' },
                 ],
@@ -641,6 +650,7 @@ export abstract class VoteEscrowAbi {
                     { name: 'to_distribute_total', type: 'uint128' },
                     { name: 'to_distribute_team', type: 'uint128' },
                     { name: 'to_distribute_treasury', type: 'uint128' },
+                    { name: '_emissionDebt', type: 'uint128' },
                 ],
             },
             {
@@ -792,6 +802,7 @@ export abstract class VoteEscrowAbi {
                     { name: '_qubeMaxLockTime', type: 'uint32' },
                     { name: '_gaugeWhitelistPrice', type: 'uint128' },
                     { name: '_whitelistPayments', type: 'uint128' },
+                    { name: '_emissionDebt', type: 'uint128' },
                     { name: '_initialized', type: 'bool' },
                     { name: '_paused', type: 'bool' },
                     { name: '_emergency', type: 'bool' },
@@ -848,6 +859,7 @@ export abstract class VoteEscrowAbi {
                     { name: '_gaugeMaxVotesRatio', type: 'uint32' },
                     { name: '_gaugeMinVotesRatio', type: 'uint32' },
                     { name: '_gaugeMaxDowntime', type: 'uint8' },
+                    { name: '_votingNormalizing', type: 'uint8' },
                     { name: '_maxGaugesPerVote', type: 'uint32' },
                     { name: '_gaugesNum', type: 'uint32' },
                 ],
@@ -1075,6 +1087,15 @@ export abstract class VoteEscrowAbi {
                 ],
             },
             {
+                name: 'NormalizingTypeUpdate',
+                inputs: [
+                    { name: 'call_id', type: 'uint32' },
+                    { name: 'new_type', type: 'uint8' },
+                ],
+                outputs: [
+                ],
+            },
+            {
                 name: 'DistributionSupplyIncrease',
                 inputs: [
                     { name: 'call_id', type: 'uint32' },
@@ -1228,6 +1249,7 @@ export abstract class VoteEscrowAbi {
                     { name: 'team_tokens', type: 'uint128' },
                     { name: 'treasury_tokens', type: 'uint128' },
                     { name: 'total_distributed', type: 'uint128' },
+                    { name: 'emission_debt', type: 'uint128' },
                 ],
                 outputs: [
                 ],
@@ -1366,6 +1388,8 @@ export abstract class VoteEscrowAbi {
             { name: 'gaugeMaxVotesRatio', type: 'uint32' },
             { name: 'gaugeMinVotesRatio', type: 'uint32' },
             { name: 'gaugeMaxDowntime', type: 'uint8' },
+            { name: 'votingNormalizing', type: 'uint8' },
+            { name: 'emissionDebt', type: 'uint128' },
             { name: 'maxGaugesPerVote', type: 'uint32' },
             { name: 'gaugesNum', type: 'uint32' },
             { name: 'gaugeWhitelist', type: 'map(address,bool)' },

@@ -106,6 +106,7 @@ function CandidatesFormListItemInternal({ candidate, idx }: Props): JSX.Element 
     const gaugeCurrentVoteShare = votesStore.currentGaugeVoteShare(candidate.address)
 
     const gaugeNextTotalAmount = new BigNumber(candidate.amount || 0)
+        .dp(daoContext.veDecimals, BigNumber.ROUND_DOWN)
         .shiftedBy(daoContext.veDecimals)
         .plus(gaugeCurrentTotalAmount ?? 0)
     const gaugeNextVoteShare = gaugeNextTotalAmount
@@ -142,8 +143,7 @@ function CandidatesFormListItemInternal({ candidate, idx }: Props): JSX.Element 
             placeholder="0"
             prefix={(
                 <TokenIcon
-                    address={daoContext.tokenAddress.toString()}
-                    icon={daoContext.token?.icon}
+                    icon={daoContext.veIcon}
                     size="xsmall"
                 />
             )}

@@ -105,6 +105,7 @@ export type QubeDaoStoreData = {
     accountAddress?: Address;
     averageLockTime: number;
     currentEpochNum: number;
+    epochTime: number;
     farmingAllocatorTokenBalance?: string;
     maxVotesRatio?: string;
     minVotesRatio?: string;
@@ -165,6 +166,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         makeObservable(this, {
             averageLockTime: computed,
             currentEpochNum: computed,
+            epochTime: computed,
             farmingAllocatorTokenBalance: computed,
             hasUnlockedAmount: computed,
             isDepositing: computed,
@@ -325,7 +327,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
                     .methods.encodeDepositPayload({
                         call_id: callId,
                         deposit_owner: this.wallet.account.address,
-                        lock_time: params.lockPeriod,
+                        lock_time: 3600, // params.lockPeriod,
                         nonce: '0',
                     })
                     .call({ cachedState: this.veContractCachedState }))
@@ -449,8 +451,6 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
                 totalLockedAmount: response.totalAmount ?? 0,
                 totalLockedVeAmount: response.totalVeAmount ?? 0,
             })
-
-            console.log(this.toJSON())
         }
         catch (e) {
             //
@@ -530,6 +530,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
                 .call({ cachedState: this.veContractCachedState })
 
             this.setData({
+                epochTime: parseInt(details._epochTime, 10),
                 maxVotesRatio: details._gaugeMaxVotesRatio,
                 minVotesRatio: details._gaugeMinVotesRatio,
             })
@@ -896,6 +897,10 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
 
     public get currentEpochNum(): QubeDaoStoreData['currentEpochNum'] {
         return this.data.currentEpochNum
+    }
+
+    public get epochTime(): QubeDaoStoreData['epochTime'] {
+        return this.data.epochTime
     }
 
     public get farmingAllocatorTokenBalance(): QubeDaoStoreData['farmingAllocatorTokenBalance'] {

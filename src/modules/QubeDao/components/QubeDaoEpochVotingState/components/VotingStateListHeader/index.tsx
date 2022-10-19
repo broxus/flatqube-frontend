@@ -10,7 +10,13 @@ export function VotingStateListHeader(): JSX.Element {
                 {intl.formatMessage({ id: 'QUBE_DAO_VOTE_STATE_LIST_CANDIDATE_CELL' })}
             </div>
             <div className="list__cell list__cell--right">
+                {intl.formatMessage({ id: 'QUBE_DAO_VOTE_STATE_LIST_USER_VOTE_CELL' })}
+            </div>
+            <div className="list__cell list__cell--right">
                 {intl.formatMessage({ id: 'QUBE_DAO_VOTE_STATE_LIST_ELECTORAL_CELL' })}
+            </div>
+            <div className="list__cell list__cell--right">
+                {intl.formatMessage({ id: 'QUBE_DAO_VOTE_STATE_LIST_NORMALIZED_CELL' })}
             </div>
             <div className="list__cell list__cell--right">
                 {intl.formatMessage({ id: 'QUBE_DAO_VOTE_STATE_LIST_DISTRIBUTION_CELL' })}
