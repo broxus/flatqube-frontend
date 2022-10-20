@@ -7,11 +7,13 @@ import { GaugesTokensProvider } from '@/modules/Gauges/providers/GaugesTokensPro
 import { GaugesListDataProvider } from '@/modules/Gauges/providers/GaugesListDataProvider'
 import { GaugesFavoritesProvider } from '@/modules/Gauges/providers/GaugesFavoritesProvider'
 import { GaugesFavoritesList } from '@/modules/Gauges/components/GaugesList/Favorites'
+import { GaugesBannerNew } from '@/modules/Gauges/components/GaugesBanners/BannerNew'
 
 export function GaugesList(): JSX.Element {
     return (
         <div className="container container--large">
             <GaugesListHead />
+            <GaugesBannerNew />
             <GaugesTokensProvider>
                 <GaugesListDataProvider>
                     <GaugesFavoritesProvider>

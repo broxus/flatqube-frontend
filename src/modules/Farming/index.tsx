@@ -10,6 +10,7 @@ import {
 import { useFavoriteFarmings } from '@/stores/FavoritePairs'
 import { useWallet } from '@/stores/WalletService'
 import { useLocationFilter } from '@/modules/Farming/hooks/useLocationFilter'
+import { GaugesBannerOld } from '@/modules/Gauges/components/GaugesBanners/BannerOld'
 
 import './index.scss'
 
@@ -37,6 +38,8 @@ function FarmingsInner(): JSX.Element | null {
 
     return (
         <>
+            <GaugesBannerOld />
+
             {favoriteFarmings.addresses.length > 0 && (
                 <FarmingList
                     key="favorite"

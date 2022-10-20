@@ -105,7 +105,7 @@ function UserPerformanceStartBannerInner(): JSX.Element {
                     <Button
                         size="md"
                         type="secondary"
-                        href="https://broxus.medium.com/how-to-transfer-lp-tokens-from-old-farming-pools-to-new-c02752202176"
+                        href="https://broxus.medium.com/flatqube-dao-f20da95b9548"
                     >
                         {intl.formatMessage({
                             id: 'GAUGE_SEE_GUIDE',
