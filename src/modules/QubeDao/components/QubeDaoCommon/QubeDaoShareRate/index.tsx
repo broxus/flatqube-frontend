@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js'
 import * as React from 'react'
 import { useIntl } from 'react-intl'
 
+import { votesColors } from '@/modules/QubeDao/constants'
 import { formattedAmount } from '@/utils'
 
 type Props = {
@@ -34,8 +35,18 @@ export function QubeDaoShareRate({ maxValue, minValue, onlyValues, value }: Prop
 
         case new BigNumber(value).lt(maxValue):
             return (
-                <span className="text-warning">
+                <span style={{ color: votesColors[Math.ceil(parseInt(value, 10) || 1) - 1] }}>
                     {`${formattedAmount(value)}%`}
+                </span>
+            )
+
+        case new BigNumber(value).gte(maxValue):
+            return (
+                <span className="text-success">
+                    {onlyValues ? `${formattedAmount(value)}%` : intl.formatMessage(
+                        { id: 'QUBE_DAO_VOTE_MAX_VOTES_REACHED_HINT' },
+                        { value: `${formattedAmount(value)}%` },
+                    )}
                 </span>
             )
 

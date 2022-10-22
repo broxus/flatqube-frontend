@@ -21,22 +21,39 @@ export function VotingStateListTreasury(): JSX.Element {
         .shiftedBy(-daoContext.tokenDecimals)
         .times(daoContext.tokenPrice ?? 0)
         .toFixed()
+    const treasuryVotes = new BigNumber(votesStore.scoredGaugesVotesAmount)
+        .minus(votesStore.scoredGaugesNormalizedVotesAmount)
+        .toFixed()
+    const treasuryVotesShare = new BigNumber(votesStore.scoredGaugesVotesShare)
+        .minus(votesStore.scoredGaugesNormalizedVotesShare)
+        .toFixed()
 
     return (
         <div className="list__row">
             <div className="list__cell list__cell--left">
                 {intl.formatMessage({ id: 'QUBE_DAO_VOTE_STATE_LIST_TREASURY_AMOUNT' })}
             </div>
-            <div className="list__cell list__cell--right" />
-            <div className="list__cell list__cell--right" />
-            <div className="list__cell list__cell--right" />
+            <div className="list__cell list__cell--right">
+                &mdash;
+            </div>
+            <div className="list__cell list__cell--right">
+                &mdash;
+            </div>
+            <div className="list__cell list__cell--right">
+                {`${formattedTokenAmount(treasuryVotes, daoContext.veDecimals)} ${daoContext.veSymbol}`}
+                <div className="text-sm text-muted">
+                    {`${formattedAmount(treasuryVotesShare)}%`}
+                </div>
+            </div>
             <div className="list__cell list__cell--right">
                 {`${formattedTokenAmount(treasuryAmount, daoContext.tokenDecimals)} ${daoContext.tokenSymbol}`}
                 <div className="text-sm text-muted">
                     {`$${formattedAmount(treasuryAmountPrice)}`}
                 </div>
             </div>
-            <div className="list__cell list__cell--right" />
+            <div className="list__cell list__cell--right">
+                &mdash;
+            </div>
         </div>
     )
 }

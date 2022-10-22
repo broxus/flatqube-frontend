@@ -36,6 +36,7 @@
             "ignorePseudoClasses": ["global", "local"]
         }],
         "selector-class-pattern": null,
+        "value-no-vendor-prefix": null,
         "scss/at-rule-no-unknown": true,
         "scss/at-import-no-partial-leading-underscore": null,
         "scss/at-import-partial-extension": null,

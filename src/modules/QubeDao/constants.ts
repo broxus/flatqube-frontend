@@ -1,4 +1,4 @@
-export const colors = [
+export const chartColors = [
     '#e4572e',
     '#17bebb',
     '#ffc914',
@@ -12,3 +12,40 @@ export const colors = [
     '#AD90E9',
     '#3A458C',
 ]
+
+export const votesColors = [
+    '#E56841',
+    '#E56C3D',
+    '#E57039',
+    '#E57535',
+    '#E57931',
+    '#E57D2D',
+    '#E58129',
+    '#E58525',
+    '#E68A20',
+    '#E68E1C',
+    '#E69218',
+    '#E69614',
+    '#E69A10',
+    '#E69F0C',
+    '#E6A308',
+    '#E6A704',
+    '#E6AC00',
+    '#DCAD05',
+    '#D3AD09',
+    '#CAAE0E',
+    '#C1AE12',
+    '#B8AF16',
+    '#AFAF1A',
+    '#A6B01F',
+    '#9DB023',
+    '#93B127',
+    '#8AB12B',
+    '#81B230',
+    '#78B234',
+    '#6FB338',
+    '#66B33C',
+    '#5DB441',
+    '#54B445',
+]
+

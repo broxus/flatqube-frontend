@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
 import { VotingStateListTreasury } from '@/modules/QubeDao/components/QubeDaoEpochVotingState/components/VotingStateListTreasury'
+import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { formattedAmount, formattedTokenAmount } from '@/utils'
@@ -12,9 +13,10 @@ function VotingStateListScoreInternal(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
+    const epochStore = useQubeDaoEpochStore()
     const votesStore = useQubeDaoVotingStateStore()
 
-    const scoredGaugesDistributionPrice = new BigNumber(votesStore.scoredGaugesDistribution)
+    const scoredGaugesDistributionPrice = new BigNumber(epochStore.normalizedTotalDistribution)
         .shiftedBy(-daoContext.tokenDecimals)
         .times(daoContext.tokenPrice ?? 0)
         .toFixed()
@@ -40,13 +42,13 @@ function VotingStateListScoreInternal(): JSX.Element {
                     </div>
                 </div>
                 <div className="list__cell list__cell--right">
-                    {`${formattedTokenAmount(votesStore.scoredGaugesNormalizedVotesAmount, daoContext.veDecimals)} ${daoContext.veSymbol}`}
+                    {`${formattedTokenAmount(votesStore.scoredGaugesVotesAmount, daoContext.veDecimals)} ${daoContext.veSymbol}`}
                     <div className="text-sm text-muted">
-                        {`${formattedAmount(votesStore.scoredGaugesNormalizedVotesShare)}%`}
+                        {`${formattedAmount(votesStore.scoredGaugesVotesShare)}%`}
                     </div>
                 </div>
                 <div className="list__cell list__cell--right">
-                    {`${formattedTokenAmount(votesStore.scoredGaugesDistribution, daoContext.tokenDecimals)} ${daoContext.tokenSymbol}`}
+                    {`${formattedTokenAmount(epochStore.normalizedTotalDistribution, daoContext.tokenDecimals)} ${daoContext.tokenSymbol}`}
                     <div className="text-sm text-muted">
                         {`$${formattedAmount(scoredGaugesDistributionPrice)}`}
                     </div>
