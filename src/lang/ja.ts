@@ -711,6 +711,7 @@ export default {
     QUBE_DAO_VOTE_POPUP_CONFORMATION_BILL_NOTE_VOTED_BALANCE_TERM: 'Not voted',
     QUBE_DAO_VOTE_POPUP_CONFORMATION_SUBMIT_BTN_TEXT: 'Confirm voting',
     QUBE_DAO_VOTE_TOO_FEW_VOTES_HINT: 'too few votes: {value}',
+    QUBE_DAO_VOTE_MAX_VOTES_REACHED_HINT: 'max votes reached {value}',
     QUBE_DAO_VOTE_FINISH_TITLE: 'The voting time has ended',
     QUBE_DAO_VOTE_FINISH_NOTE: 'Press the button below to finish voting finally. It’s a common button that can be pressed by any member.',
     QUBE_DAO_VOTE_FINISH_BTN_TEXT: 'Finish voting',

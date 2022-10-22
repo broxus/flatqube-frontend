@@ -1,3 +1,6 @@
+import BigNumber from 'bignumber.js'
+import { Address } from 'everscale-inpage-provider'
+import type { DecodedAbiFunctionOutputs } from 'everscale-inpage-provider'
 import {
     action,
     computed,
@@ -5,10 +8,8 @@ import {
     reaction,
 } from 'mobx'
 import type { IReactionDisposer } from 'mobx'
-import BigNumber from 'bignumber.js'
-import { Address } from 'everscale-inpage-provider'
 
-import { isAddressValid } from '@/misc'
+import { isAddressValid, VoteEscrowAbi } from '@/misc'
 import { useQubeDaoApi } from '@/modules/QubeDao/hooks/useApi'
 import type {
     QubeDaoEndVotingCallbacks,
@@ -226,7 +227,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
             this.setData('prevEpochVotesSummary', prevEpochVotesSummary)
         }
         catch (e) {
-            error(`Fetch epoch ${this.epoch.epochNum} error`, e)
+            error(`Fetch prev epoch ${this.epoch.epochNum} error`, e)
         }
         finally {
             this.setState('isFetchingPrevEpoch', false)
@@ -264,14 +265,21 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
 
     protected async syncWhitelistGauges(): Promise<void> {
         try {
-            const [whitelist, details] = await Promise.all([
+            type ResponseTuple = [
+                DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Root, 'gaugeWhitelist'>,
+                DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Root, 'getVotingDetails'>,
+            ]
+
+            const [whitelist, details] = await Promise.allSettled([
                 this.dao.veContract
                     .methods.gaugeWhitelist({})
                     .call({ cachedState: this.dao.veContractCachedState }),
                 this.dao.veContract
                     .methods.getVotingDetails({})
                     .call({ cachedState: this.dao.veContractCachedState }),
-            ])
+            ]).then(res => res.map(
+                r => (r.status === 'fulfilled' ? r.value : undefined),
+            )) as ResponseTuple
 
             const gauges = whitelist.gaugeWhitelist.filter(([, enabled]) => enabled).map(([address, enabled]) => ({
                 address: address.toString(),
@@ -284,7 +292,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
             })
         }
         catch (e) {
-
+            error('Whitelist gauges sync error', e)
         }
     }
 

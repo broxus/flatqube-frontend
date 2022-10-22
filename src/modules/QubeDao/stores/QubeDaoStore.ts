@@ -1,10 +1,15 @@
 import BigNumber from 'bignumber.js'
 import type {
-    Address, Contract, DecodedAbiFunctionOutputs, DecodedEvent, FullContractState, Transaction,
+    Address,
+    Contract,
+    DecodedAbiFunctionOutputs,
+    DecodedEvent,
+    FullContractState,
+    Subscription,
+    Transaction,
 } from 'everscale-inpage-provider'
 import { computed, makeObservable, reaction } from 'mobx'
 import type { IReactionDisposer } from 'mobx'
-import { Subscription } from 'everscale-inpage-provider'
 
 import { useRpc } from '@/hooks/useRpc'
 import { useStaticRpc } from '@/hooks/useStaticRpc'

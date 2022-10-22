@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl'
 
 import { Placeholder } from '@/components/common/Placeholder'
 import { PieChart } from '@/components/common/PieChart'
-import { colors } from '@/modules/QubeDao/constants'
+import { chartColors } from '@/modules/QubeDao/constants'
 import { QubeDaoCandidateItem } from '@/modules/QubeDao/components/QubeDaoCommon'
 import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
@@ -36,7 +36,7 @@ export function Chart(): JSX.Element {
                 )
                 const data = epochStore.epochVotesSummary.map(
                     (summary, idx) => ({
-                        color: `${colors[idx]}e6` ?? `#${summary.gauge.split(':')[1].slice(0, 6)}e6`,
+                        color: `${chartColors[idx]}e6` ?? `#${summary.gauge.split(':')[1].slice(0, 6)}e6`,
                         value: summary.totalAmount,
                     }),
                 )
@@ -76,7 +76,7 @@ export function Chart(): JSX.Element {
                                                 <div
                                                     className={styles.stats_legend__color}
                                                     style={{
-                                                        background: `${colors[idx]}e6`
+                                                        background: `${chartColors[idx]}e6`
                                                             ?? `#${summary.gauge.split(':')[1].slice(0, 6)}e6`,
                                                     }}
                                                 />
@@ -133,7 +133,7 @@ export function Chart(): JSX.Element {
                                                 <div
                                                     className={styles.stats_legend__color}
                                                     style={{
-                                                        background: `${colors[halfCount + idx]}e6`
+                                                        background: `${chartColors[halfCount + idx]}e6`
                                                             ?? `#${summary.gauge.split(':')[1].slice(0, 6)}e6`,
                                                     }}
                                                 />
