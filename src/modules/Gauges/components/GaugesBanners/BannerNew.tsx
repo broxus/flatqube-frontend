@@ -27,7 +27,7 @@ export function GaugesBannerNew(): JSX.Element | null {
         setVisible(storage.get('gauges-banner-new-closed') !== '1')
     }, [])
 
-    if (!visible || days === 0) {
+    if (!visible) {
         return null
     }
 
