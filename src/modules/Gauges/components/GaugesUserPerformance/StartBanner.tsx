@@ -86,7 +86,7 @@ function UserPerformanceStartBannerInner(): JSX.Element {
                     <Button
                         size="md"
                         type="primary"
-                        href={leftToken && rightToken
+                        link={leftToken && rightToken
                             ? appRoutes.poolCreate.makeUrl({
                                 leftTokenRoot: leftToken.root,
                                 rightTokenRoot: rightToken.root,
