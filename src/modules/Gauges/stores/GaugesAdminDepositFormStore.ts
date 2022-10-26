@@ -114,7 +114,7 @@ export class GaugesAdminDepositFormStore {
                 })
                 .delayed(s => s.first())
 
-            const msg = await tokenWalletContract.methods.transfer({
+            await tokenWalletContract.methods.transfer({
                 amount: this.normalizedAmount,
                 deployWalletValue: '0',
                 notify: true,
@@ -128,7 +128,6 @@ export class GaugesAdminDepositFormStore {
                     from: new Address(this.wallet.address),
                 })
 
-            await msg.transaction
             await successStream()
             await subscriber.unsubscribe()
             await this.dataStore.sync()

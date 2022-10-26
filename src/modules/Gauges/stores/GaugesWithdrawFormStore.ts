@@ -79,7 +79,7 @@ export class GaugesWithdrawFormStore {
                 })
                 .delayed(s => s.first())
 
-            const msg = await rootContract.methods.withdraw({
+            await rootContract.methods.withdraw({
                 amount: this.normalizedAmount,
                 claim: this.claim,
                 meta: {
@@ -94,7 +94,6 @@ export class GaugesWithdrawFormStore {
                     from: new Address(this.wallet.address),
                 })
 
-            await msg.transaction
             await successStream()
             await subscriber.unsubscribe()
             await this.userData.sync()

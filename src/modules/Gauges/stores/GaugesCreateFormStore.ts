@@ -211,7 +211,7 @@ export class GaugesCreateFormStore {
                 })
                 .delayed(s => s.first())
 
-            const msg = await factory.methods.deployGauge({
+            await factory.methods.deployGauge({
                 call_id: callId,
                 depositTokenRoot: new Address(this.data.tokenRoot),
                 gauge_owner: new Address(this.wallet.address),
@@ -249,7 +249,6 @@ export class GaugesCreateFormStore {
                     from: new Address(this.wallet.address),
                 })
 
-            await msg.transaction
             await successStream()
             await subscriber.unsubscribe()
 

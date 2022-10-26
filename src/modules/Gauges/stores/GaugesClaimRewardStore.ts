@@ -70,7 +70,7 @@ export class GaugesClaimRewardStore {
                 })
                 .delayed(s => s.first())
 
-            const msg = await rootContract.methods.claimReward({
+            await rootContract.methods.claimReward({
                 meta: {
                     call_id: callId,
                     nonce: 0,
@@ -83,7 +83,6 @@ export class GaugesClaimRewardStore {
                     from: new Address(this.wallet.address),
                 })
 
-            await msg.transaction
             await successStream()
             await subscriber.unsubscribe()
             await this.userData.sync()

@@ -95,7 +95,7 @@ export class GaugesAdminEndDateFormStore {
                 })
                 .delayed(s => s.first())
 
-            const msg = await rootContract.methods.setExtraFarmEndTime({
+            await rootContract.methods.setExtraFarmEndTime({
                 farm_end_times: this.dateTime
                     .filter(item => !!item)
                     .map(item => Math.ceil(item as number / 1000)),
@@ -112,7 +112,6 @@ export class GaugesAdminEndDateFormStore {
                     from: new Address(this.wallet.address),
                 })
 
-            await msg.transaction
             await successStream()
             await subscriber.unsubscribe()
             await this.dataStore.sync()

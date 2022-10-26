@@ -110,7 +110,7 @@ export class GaugesAdminSpeedFormStore {
                 })
                 .delayed(s => s.first())
 
-            const msg = await rootContract.methods.addRewardRounds({
+            await rootContract.methods.addRewardRounds({
                 ids,
                 meta: {
                     call_id: callId,
@@ -128,7 +128,6 @@ export class GaugesAdminSpeedFormStore {
                     from: new Address(this.wallet.address),
                 })
 
-            await msg.transaction
             await successStream()
             await subscriber.unsubscribe()
             await this.dataStore.sync()

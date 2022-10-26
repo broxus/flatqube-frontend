@@ -87,7 +87,7 @@ export class GaugesAdminWithdrawStore {
                 })
                 .delayed(s => s.first())
 
-            const msg = await rootContract.methods.withdrawUnclaimed({
+            await rootContract.methods.withdrawUnclaimed({
                 ids,
                 meta: {
                     call_id: callId,
@@ -105,7 +105,6 @@ export class GaugesAdminWithdrawStore {
                     from: new Address(this.wallet.address),
                 })
 
-            await msg.transaction
             await successStream()
             await subscriber.unsubscribe()
             await this.dataStore.sync()
