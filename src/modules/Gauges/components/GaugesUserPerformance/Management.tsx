@@ -50,11 +50,9 @@ function UserPerformanceManagementInner({
                         >
                             {intl.formatMessage({
                                 // eslint-disable-next-line no-nested-ternary
-                                id: asToolBar
-                                    ? 'GAUGE_DEPOSIT'
-                                    : data.poolTokens.length > 1
-                                        ? 'GAUGE_DEPOSIT_LP_TOKENS'
-                                        : 'GAUGE_DEPOSIT_TOKENS',
+                                id: data.poolTokens.length > 1
+                                    ? 'GAUGE_DEPOSIT_LP_TOKENS'
+                                    : 'GAUGE_DEPOSIT_TOKENS',
                             })}
                         </Button>
                     )}
