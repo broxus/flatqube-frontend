@@ -26,7 +26,7 @@ function GaugesItemHeaderInner(): JSX.Element {
         const tokenLinkBtn = (
             <Button
                 className={styles.tokenLink}
-                href={leftToken && rightToken
+                link={leftToken && rightToken
                     ? appRoutes.poolCreate.makeUrl({
                         leftTokenRoot: leftToken.root,
                         rightTokenRoot: rightToken.root,
