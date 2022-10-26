@@ -273,7 +273,7 @@
         grid-gap: 8px;
 
         .btn {
-            flex-grow: 1;
+            flex: 1;
         }
     }
 }
@@ -422,7 +422,7 @@
             }
 
             .action {
-                flex: 1;
+                flex-grow: 1;
             }
         }
     }
