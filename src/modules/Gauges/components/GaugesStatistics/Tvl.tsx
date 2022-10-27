@@ -16,7 +16,7 @@ function StatisticsTvlInner(): JSX.Element {
     const data = useContext(GaugesDataStoreContext)
     const { poolTokensAmount } = data
 
-    if (data.rootToken && data.rootTokenBalance && data.rootTokenBalanceUSDT) {
+    if (data.rootToken && data.rootTokenBalance && data.tvl) {
         return (
             <GaugesPanel className={styles.tvl}>
                 <div className={styles.title}>
@@ -27,7 +27,7 @@ function StatisticsTvlInner(): JSX.Element {
 
                 <div className={styles.amount}>
                     $
-                    {formattedAmount(data.rootTokenBalanceUSDT)}
+                    {formattedAmount(data.tvl)}
                 </div>
 
                 {poolTokensAmount && data.poolTokens && data.poolTokens.length > 1 ? (

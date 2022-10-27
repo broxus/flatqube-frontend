@@ -2,14 +2,13 @@ import {
     IReactionDisposer, makeAutoObservable, reaction, runInAction, toJS,
 } from 'mobx'
 import { Address } from 'everscale-inpage-provider'
-import BigNumber from 'bignumber.js'
 
 import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { RewardDetails, TokenDetails } from '@/modules/Gauges/types'
 import { GaugeAbi, Token } from '@/misc'
 import { error, warn } from '@/utils'
 import {
-    decimalAmount, gaugeHandler, getEndDate, getStartDate, normalizeAmount,
+    gaugeHandler, getEndDate, getStartDate, normalizeAmount,
 } from '@/modules/Gauges/utils'
 import { GaugesTokensStore } from '@/modules/Gauges/stores/GaugesTokensStore'
 import { GaugesAutoResyncStore } from '@/modules/Gauges/stores/GaugesAutoResyncStore'
@@ -370,15 +369,8 @@ export class GaugesDataStore {
         return this.data.tokenDetails?._depositTokenData.balance
     }
 
-    public get rootTokenBalanceUSDT(): string | undefined {
-        const root = this.rootToken?.root
-        const price = root ? this.price.byRoot[root] : undefined
-
-        if (this.rootTokenBalance && this.rootToken && price) {
-            const amount = decimalAmount(this.rootTokenBalance, this.rootToken.decimals)
-            return new BigNumber(price).times(amount).toString()
-        }
-        return undefined
+    public get tvl(): string | undefined {
+        return this.data.gaugeItem?.tvl
     }
 
     public get ownerAddress(): string | undefined {
