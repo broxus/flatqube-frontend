@@ -10,7 +10,7 @@ export type QubeDaoDepositFormStoreProviderProps = React.PropsWithChildren<QubeD
 // @ts-ignore
 export const QubeDaoDepositFormStoreContext = React.createContext<QubeDaoDepositFormStore>()
 
-export function useQubeDaoDepositFormStore(): QubeDaoDepositFormStore {
+export function useQubeDaoDepositFormContext(): QubeDaoDepositFormStore {
     return React.useContext(QubeDaoDepositFormStoreContext)
 }
 

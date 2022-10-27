@@ -2,4 +2,8 @@
     align-items: center;
     display: flex;
     gap: 8px;
+
+    &__label {
+        color: #fff
+    }
 }

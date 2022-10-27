@@ -8,7 +8,7 @@ export type QubeDaoEpochsStoreProviderProps = React.PropsWithChildren
 // @ts-ignore
 export const QubeDaoEpochsStoreContext = React.createContext<QubeDaoEpochsStore>()
 
-export function useQubeDaoEpochsStore(): QubeDaoEpochsStore {
+export function useQubeDaoEpochsContext(): QubeDaoEpochsStore {
     return React.useContext(QubeDaoEpochsStoreContext)
 }
 

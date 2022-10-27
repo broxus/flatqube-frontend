@@ -11,7 +11,7 @@ import { Chart } from '@/modules/QubeDao/components/QubeDaoEpochDetails/componen
 import { Stats } from '@/modules/QubeDao/components/QubeDaoEpochDetails/components/Stats'
 import { Timeline } from '@/modules/QubeDao/components/QubeDaoEpochDetails/components/Timeline'
 import { UserVotePreviewCard } from '@/modules/QubeDao/components/QubeDaoLastEpochDetails/components/UserVotePreviewCard'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { appRoutes } from '@/routes'
 
 import styles from './index.module.scss'
@@ -20,7 +20,7 @@ import styles from './index.module.scss'
 export function QubeDaoLastEpochDetails(): JSX.Element {
     const intl = useIntl()
 
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     React.useEffect(() => {
         epochStore.init().catch(reason => reason)

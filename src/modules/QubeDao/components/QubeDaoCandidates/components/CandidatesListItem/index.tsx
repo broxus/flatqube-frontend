@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
 import { QubeDaoCandidateItem, QubeDaoShareRate } from '@/modules/QubeDao/components/QubeDaoCommon'
-import { useQubeDaoCandidatesStore } from '@/modules/QubeDao/providers/QubeDaoCandidatesStoreProvider'
+import { useQubeDaoCandidatesContext } from '@/modules/QubeDao/providers/QubeDaoCandidatesStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import type { QubeDaoWhitelistGaugeResponse } from '@/modules/QubeDao/types'
 import { formattedAmount, formattedTokenAmount } from '@/utils'
@@ -17,7 +17,7 @@ function CandidatesListItemInternal({ candidate }: Props): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const candidatesStore = useQubeDaoCandidatesStore()
+    const candidatesStore = useQubeDaoCandidatesContext()
 
     const gaugeDetails = candidatesStore.gaugeDetails(candidate.address)
 

@@ -328,7 +328,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         return (
             this.candidates.every(({ address, amount }) => isAddressValid(address) && isGoodBignumber(amount))
             && new BigNumber(this.dao.userVeBalance || 0).gte(this.scoredUserCandidatesAmount)
-            && !this.isLimitExceed
+            && this.limit >= this.candidates.length
         )
     }
 

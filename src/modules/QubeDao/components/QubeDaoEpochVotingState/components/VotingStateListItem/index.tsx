@@ -4,9 +4,9 @@ import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
 import { QubeDaoCandidateItem, QubeDaoShareRate } from '@/modules/QubeDao/components/QubeDaoCommon'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import type { QubeDaoEpochVotesSumResponse } from '@/modules/QubeDao/types'
 import { formattedAmount, formattedTokenAmount, isGoodBignumber } from '@/utils'
 import { RateChange } from '@/components/common/RateChange'
@@ -19,8 +19,8 @@ function VotingStateListItemInternal({ summary }: Props): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
-    const votesStore = useQubeDaoVotingStateStore()
+    const epochStore = useQubeDaoEpochContext()
+    const votesStore = useQubeDaoVotingStateContext()
 
     const maxVotesRatio = new BigNumber(daoContext.maxVotesRatio || 0).shiftedBy(-2).toFixed()
     const minVotesRatio = new BigNumber(daoContext.minVotesRatio || 0).shiftedBy(-2).toFixed()

@@ -4,6 +4,7 @@ import { reaction } from 'mobx'
 import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
+import { Button } from '@/components/common/Button'
 import { PanelLoader } from '@/components/common/PanelLoader'
 import { SectionTitle } from '@/components/common/SectionTitle'
 import { CandidatesListEmpty } from '@/modules/QubeDao/components/QubeDaoCandidates/components/CandidatesListEmpty'
@@ -11,8 +12,9 @@ import { CandidatesListHeader } from '@/modules/QubeDao/components/QubeDaoCandid
 import { CandidatesListItem } from '@/modules/QubeDao/components/QubeDaoCandidates/components/CandidatesListItem'
 import { CandidatesListPagination } from '@/modules/QubeDao/components/QubeDaoCandidates/components/CandidatesListPagination'
 import { CandidatesListPlaceholder } from '@/modules/QubeDao/components/QubeDaoCandidates/components/CandidatesListPlaceholder'
-import { useQubeDaoCandidatesStore } from '@/modules/QubeDao/providers/QubeDaoCandidatesStoreProvider'
+import { useQubeDaoCandidatesContext } from '@/modules/QubeDao/providers/QubeDaoCandidatesStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
+import { appRoutes } from '@/routes'
 
 import styles from './index.module.scss'
 
@@ -20,7 +22,7 @@ export function QubeDaoCandidates(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const candidatesStore = useQubeDaoCandidatesStore()
+    const candidatesStore = useQubeDaoCandidatesContext()
 
     React.useEffect(() => reaction(
         () => daoContext.tokensCache.isReady,
@@ -38,6 +40,11 @@ export function QubeDaoCandidates(): JSX.Element {
                 <SectionTitle size="small">
                     {intl.formatMessage({ id: 'QUBE_DAO_CANDIDATES_TITLE' })}
                 </SectionTitle>
+                <div className="section__header-actions">
+                    <Button link={appRoutes.daoWhitelisting.makeUrl()} type="primary">
+                        {intl.formatMessage({ id: 'QUBE_DAO_CANDIDATES_BECOME_CANDIDATE_LINK_TXT' })}
+                    </Button>
+                </div>
             </header>
 
             <Observer>

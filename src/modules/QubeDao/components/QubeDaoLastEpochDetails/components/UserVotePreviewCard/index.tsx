@@ -8,14 +8,14 @@ import { ConnectWallet } from '@/modules/QubeDao/components/QubeDaoLastEpochDeta
 import { Deposit } from '@/modules/QubeDao/components/QubeDaoLastEpochDetails/components/UserVotePreviewCard/Deposit'
 import { NotVoted } from '@/modules/QubeDao/components/QubeDaoLastEpochDetails/components/UserVotePreviewCard/NotVoted'
 import { Voted } from '@/modules/QubeDao/components/QubeDaoLastEpochDetails/components/UserVotePreviewCard/Voted'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { isGoodBignumber } from '@/utils'
 
 
 export function UserVotePreviewCard(): JSX.Element {
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     return (
         <Observer>

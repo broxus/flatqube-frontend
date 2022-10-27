@@ -219,7 +219,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
                 if (address !== undefined && isTokensCacheReady) {
                     await this.syncAccountAddress()
                     await Promise.allSettled([
-                        this.syncTokenBalance(false, true),
+                        this.syncTokenBalance(false, false),
                         this.syncBalances(false),
                     ])
                     await this.tokensCache.watch(this.options.tokenAddress.toString(), 'qube-dao')

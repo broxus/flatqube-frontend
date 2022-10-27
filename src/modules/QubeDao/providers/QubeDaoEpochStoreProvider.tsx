@@ -6,7 +6,7 @@ import { QubeDaoEpochStore } from '@/modules/QubeDao/stores/QubeDaoEpochStore'
 // @ts-ignore
 export const QubeDaoEpochStoreContext = React.createContext<QubeDaoEpochStore>()
 
-export function useQubeDaoEpochStore(): QubeDaoEpochStore {
+export function useQubeDaoEpochContext(): QubeDaoEpochStore {
     return React.useContext(QubeDaoEpochStoreContext)
 }
 

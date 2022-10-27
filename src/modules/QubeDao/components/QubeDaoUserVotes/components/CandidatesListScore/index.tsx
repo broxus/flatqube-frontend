@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { formattedAmount, formattedTokenAmount } from '@/utils'
 
 
@@ -12,7 +12,7 @@ function CandidatesListScoreInternal(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const votesStore = useQubeDaoVotingStateStore()
+    const votesStore = useQubeDaoVotingStateContext()
 
     const scoredUserDistributionPrice = new BigNumber(votesStore.scoredUserDistribution)
         .shiftedBy(-daoContext.tokenDecimals)

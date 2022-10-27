@@ -3,14 +3,14 @@ import classNames from 'classnames'
 import { DateTime } from 'luxon'
 import { useIntl } from 'react-intl'
 
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 
 import styles from './index.module.scss'
 
 export function Awaiting(): JSX.Element {
     const intl = useIntl()
 
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     return (
         <div className={classNames('card card--flat card--xsmall', styles.user_vote_preview_card)}>

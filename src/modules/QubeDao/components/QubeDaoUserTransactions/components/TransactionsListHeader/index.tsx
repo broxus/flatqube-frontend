@@ -3,14 +3,14 @@ import { useIntl } from 'react-intl'
 
 import { OrderingSwitcher } from '@/components/common/OrderingSwitcher'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
-import { useQubeDaoTransactionsStore } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
+import { useQubeDaoTransactionsContext } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
 import type { Direction, QubeDaoTransactionColumn } from '@/modules/QubeDao/types'
 
 export function TransactionsListHeader(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const transactionsStore = useQubeDaoTransactionsStore()
+    const transactionsStore = useQubeDaoTransactionsContext()
 
     const onSwitchOrdering = async (value: string) => {
         const [column, direction] = value.split('_') as [k: QubeDaoTransactionColumn, d: Direction]

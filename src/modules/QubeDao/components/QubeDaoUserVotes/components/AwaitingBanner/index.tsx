@@ -2,13 +2,13 @@ import * as React from 'react'
 import { DateTime } from 'luxon'
 import { useIntl } from 'react-intl'
 
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import TransactionsListEmptyBg from '@/modules/Transactions/assets/TransactionsListEmptyBg.png'
 
 export function AwaitingBanner(): JSX.Element {
     const intl = useIntl()
 
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     return (
         <div className="card card--flat card--small text-center">

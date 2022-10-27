@@ -1,10 +1,10 @@
 import * as React from 'react'
 
 import { Pagination } from '@/components/common/Pagination'
-import { useQubeDaoEpochsStore } from '@/modules/QubeDao/providers/QubeDaoEpochsStoreProvider'
+import { useQubeDaoEpochsContext } from '@/modules/QubeDao/providers/QubeDaoEpochsStoreProvider'
 
 export function EpochsListPagination(): JSX.Element {
-    const epochsStore = useQubeDaoEpochsStore()
+    const epochsStore = useQubeDaoEpochsContext()
 
     const onNextPage = async () => {
         epochsStore.setState('pagination', {

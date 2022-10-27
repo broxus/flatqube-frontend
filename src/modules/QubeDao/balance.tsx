@@ -10,9 +10,9 @@ import { QubeDaoUserBalances } from '@/modules/QubeDao/components/QubeDaoUserBal
 import { QubeDaoUserDeposits } from '@/modules/QubeDao/components/QubeDaoUserDeposits'
 import { QubeDaoWithdrawBanner } from '@/modules/QubeDao/components/QubeDaoWithdrawBanner'
 import { QubeDaoDepositFormStoreProvider } from '@/modules/QubeDao/providers/QubeDaoDepositFormStoreProvider'
-import { useQubeDaoDepositsStore } from '@/modules/QubeDao/providers/QubeDaoDepositsStoreProvider'
+import { useQubeDaoDepositsContext } from '@/modules/QubeDao/providers/QubeDaoDepositsStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
-import { useQubeDaoTransactionsStore } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
+import { useQubeDaoTransactionsContext } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
 
 import styles from './balance.module.scss'
 
@@ -20,8 +20,8 @@ export function QubeDaoBalance(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const depositsStore = useQubeDaoDepositsStore()
-    const transactionsStore = useQubeDaoTransactionsStore()
+    const depositsStore = useQubeDaoDepositsContext()
+    const transactionsStore = useQubeDaoTransactionsContext()
 
     const timeoutDeposits = React.useRef<ReturnType<typeof setTimeout>>()
     const timeoutTransactions = React.useRef<ReturnType<typeof setTimeout>>()

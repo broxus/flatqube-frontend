@@ -1,10 +1,10 @@
 import * as React from 'react'
 
 import { Pagination } from '@/components/common/Pagination'
-import { useQubeDaoDepositsStore } from '@/modules/QubeDao/providers/QubeDaoDepositsStoreProvider'
+import { useQubeDaoDepositsContext } from '@/modules/QubeDao/providers/QubeDaoDepositsStoreProvider'
 
 export function DepositsListPagination(): JSX.Element {
-    const depositsStore = useQubeDaoDepositsStore()
+    const depositsStore = useQubeDaoDepositsContext()
 
     const onNextPage = async () => {
         depositsStore.setState('pagination', {

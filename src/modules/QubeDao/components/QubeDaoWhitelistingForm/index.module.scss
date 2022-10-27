@@ -1,0 +1,46 @@
+.form_whitelisting {
+    :global .form-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+
+    & &__info {
+        margin: 24px 0;
+
+        :global {
+            .form-rows { margin: 0; }
+
+            .form-row {
+                height: 24px;
+                margin: 0;
+            }
+            .form-row:not(:first-child) { margin: 12px 0 0; }
+
+            .token_amount_badge__label {
+                color: #fff;
+            }
+        }
+    }
+
+    &__info_total {
+        font-weight: 500;
+
+        :global {
+            .token_amount_badge__label {
+                font-size: 18px;
+                line-height: 24px;
+            }
+        }
+    }
+
+    &_alert {
+        align-items: center;
+        background: rgb(235 67 97 / 48%);
+        border-left: 4px solid #eb4361;
+        display: flex;
+        flex-direction: row;
+        font-weight: 700;
+        margin: 24px 0;
+        padding: 12px;
+    }
+}

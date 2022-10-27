@@ -11,7 +11,7 @@ import { Icon } from '@/components/common/Icon'
 import { TextInput } from '@/components/common/TextInput'
 import { TokenBadge } from '@/components/common/TokenBadge'
 import { QubeDaoMaxLockPeriod, QubeDaoMinLockPeriod } from '@/config'
-import { useQubeDaoDepositFormStore } from '@/modules/QubeDao/providers/QubeDaoDepositFormStoreProvider'
+import { useQubeDaoDepositFormContext } from '@/modules/QubeDao/providers/QubeDaoDepositFormStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { debounce, formattedTokenAmount, isGoodBignumber } from '@/utils'
 
@@ -22,7 +22,7 @@ export function QubeDaoDepositForm(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const depositForm = useQubeDaoDepositFormStore()
+    const depositForm = useQubeDaoDepositFormContext()
 
     const debouncedCalculation = debounce(async () => {
         await depositForm.calculateVeMintAmount()

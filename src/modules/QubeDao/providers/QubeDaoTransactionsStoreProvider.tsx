@@ -9,7 +9,7 @@ export type QubeDaoTransactionsStoreProviderProps = React.PropsWithChildren
 // @ts-ignore
 export const QubeDaoTransactionsStoreContext = React.createContext<QubeDaoTransactionsStore>()
 
-export function useQubeDaoTransactionsStore(): QubeDaoTransactionsStore {
+export function useQubeDaoTransactionsContext(): QubeDaoTransactionsStore {
     return React.useContext(QubeDaoTransactionsStoreContext)
 }
 

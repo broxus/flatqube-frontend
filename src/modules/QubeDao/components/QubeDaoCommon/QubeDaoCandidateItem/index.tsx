@@ -39,13 +39,21 @@ function QubeDaoCandidateItemInternal({ address, gaugeDetails, linkable = true, 
                         <Link to={appRoutes.gaugesItem.makeUrl({ address })}>
                             {tokens?.map(token => token.symbol).join('/')}
                         </Link>
-                    ) : tokens?.map(token => token.symbol).join('/')}
+                    ) : (
+                        <span className={styles.gauge_candidate_item__label}>
+                            {tokens?.map(token => token.symbol).join('/')}
+                        </span>
+                    )}
                 </>
             ) : linkable ? (
                 <Link to={appRoutes.gaugesItem.makeUrl({ address })}>
                     {sliceAddress(address)}
                 </Link>
-            ) : sliceAddress(address)}
+            ) : (
+                <span className={styles.gauge_candidate_item__label}>
+                    {sliceAddress(address)}
+                </span>
+            )}
         </div>
     )
 }

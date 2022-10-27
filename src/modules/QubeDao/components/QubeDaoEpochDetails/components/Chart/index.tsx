@@ -7,7 +7,7 @@ import { Placeholder } from '@/components/common/Placeholder'
 import { PieChart } from '@/components/common/PieChart'
 import { chartColors } from '@/modules/QubeDao/constants'
 import { QubeDaoCandidateItem } from '@/modules/QubeDao/components/QubeDaoCommon'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { formattedTokenAmount, isGoodBignumber, sliceAddress } from '@/utils'
 
@@ -17,7 +17,7 @@ export function Chart(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     return (
         <Observer>

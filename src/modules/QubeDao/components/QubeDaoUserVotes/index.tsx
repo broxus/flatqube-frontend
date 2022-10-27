@@ -11,7 +11,7 @@ import { CandidatesFormList } from '@/modules/QubeDao/components/QubeDaoUserVote
 import { DepositBanner } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/DepositBanner'
 import { VotesListPlaceholder } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/VotesListPlaceholder'
 import { VotingSkipped } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/VotingSkipped'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { WalletMiddleware } from '@/modules/WalletMiddleware'
 import { isGoodBignumber } from '@/utils'
@@ -22,7 +22,7 @@ export function QubeDaoUserVotes(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     return (
         <section className="section">

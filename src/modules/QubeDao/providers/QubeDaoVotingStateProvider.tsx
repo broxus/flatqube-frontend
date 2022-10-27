@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { QubeDaoVotingStateStore } from '@/modules/QubeDao/stores/QubeDaoVotingStateStore'
 import { useNotifiedEndVotingCallbacks } from '@/modules/QubeDao/hooks/useNotifiedEndVotingCallbacks'
@@ -11,7 +11,7 @@ export type QubeDaoVotingStateStoreProviderProps = React.PropsWithChildren
 // @ts-ignore
 export const QubeDaoVotingStateStoreContext = React.createContext<QubeDaoVotingStateStore>()
 
-export function useQubeDaoVotingStateStore(): QubeDaoVotingStateStore {
+export function useQubeDaoVotingStateContext(): QubeDaoVotingStateStore {
     return React.useContext(QubeDaoVotingStateStoreContext)
 }
 
@@ -19,7 +19,7 @@ export function QubeDaoVotingStateStoreProvider(props: QubeDaoVotingStateStorePr
     const { children } = props
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
     const endVotingCallbacks = useNotifiedEndVotingCallbacks({})
     const voteEpochCallbacks = useNotifiedVoteEpochCallbacks({})
 

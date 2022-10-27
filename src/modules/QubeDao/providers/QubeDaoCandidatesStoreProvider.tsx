@@ -8,7 +8,7 @@ export type QubeDaoCandidatesStoreProviderProps = React.PropsWithChildren
 // @ts-ignore
 export const QubeDaoCandidatesStoreContext = React.createContext<QubeDaoCandidatesStore>()
 
-export function useQubeDaoCandidatesStore(): QubeDaoCandidatesStore {
+export function useQubeDaoCandidatesContext(): QubeDaoCandidatesStore {
     return React.useContext(QubeDaoCandidatesStoreContext)
 }
 

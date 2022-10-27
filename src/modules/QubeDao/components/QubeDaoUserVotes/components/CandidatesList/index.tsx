@@ -7,12 +7,12 @@ import { CandidatesListItem } from '@/modules/QubeDao/components/QubeDaoUserVote
 import { CandidatesListHeader } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/CandidatesListHeder'
 import { VotesListPlaceholder } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/VotesListPlaceholder'
 import { CandidatesListScore } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/CandidatesListScore'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 
 import styles from './index.module.scss'
 
 export function CandidatesList(): JSX.Element {
-    const votesStore = useQubeDaoVotingStateStore()
+    const votesStore = useQubeDaoVotingStateContext()
 
     return (
         <div className="card card--flat card--small">

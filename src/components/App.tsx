@@ -25,6 +25,7 @@ import FarmingItem from '@/pages/farming/item'
 import CreateFarmPool from '@/pages/farming/create'
 import DAO from '@/pages/dao'
 import Balance from '@/pages/dao/balance'
+import CreateCandidate from '@/pages/dao/whitelisting'
 import Epoch from '@/pages/dao/epoch'
 import Pairs from '@/pages/pairs'
 import Pair from '@/pages/pairs/item'
@@ -125,6 +126,9 @@ export function App(): JSX.Element {
                                 <Route exact path={appRoutes.daoBalance.path}>
                                     <Balance />
                                 </Route>
+                                <Route exact path={appRoutes.daoWhitelisting.path}>
+                                    <CreateCandidate />
+                                </Route>
 
                                 <Route exact path={appRoutes.gauges.path}>
                                     <GaugesList />
@@ -150,6 +154,11 @@ export function App(): JSX.Element {
                         <Footer key="footer" />
                     </div>
                 </ScrollManager>
+                <ToastContainer
+                    position={isMobile(navigator.userAgent)
+                        ? toast.POSITION.TOP_CENTER
+                        : toast.POSITION.BOTTOM_RIGHT}
+                />
             </Router>
             <Observer>
                 {() => (
@@ -165,9 +174,6 @@ export function App(): JSX.Element {
                     </>
                 )}
             </Observer>
-            <ToastContainer
-                position={isMobile(navigator.userAgent) ? toast.POSITION.TOP_CENTER : toast.POSITION.BOTTOM_RIGHT}
-            />
         </IntlProvider>
     )
 }
