@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl'
 import { Button } from '@/components/common/Button'
 import { VoteConfirmationPopup } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/VoteConfirmationPopup'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { isGoodBignumber, uniqueId } from '@/utils'
 import { Icon } from '@/components/common/Icon'
 
@@ -15,7 +15,7 @@ export function CandidatesFormListActions(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const votesStore = useQubeDaoVotingStateStore()
+    const votesStore = useQubeDaoVotingStateContext()
 
     const [isAwaitingConfirmation, setAwaitingConfirmation] = React.useState(false)
 

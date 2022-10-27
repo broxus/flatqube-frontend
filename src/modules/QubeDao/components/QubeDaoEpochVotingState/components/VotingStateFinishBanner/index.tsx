@@ -4,14 +4,14 @@ import { useIntl } from 'react-intl'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 
 export function VotingStateFinishBanner(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const votesStore = useQubeDaoVotingStateStore()
+    const votesStore = useQubeDaoVotingStateContext()
 
     return (
         <Observer>

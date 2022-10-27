@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl'
 
 import { Button } from '@/components/common/Button'
 import { endsIn } from '@/components/common/EndsIn'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { appRoutes } from '@/routes'
 
@@ -15,7 +15,7 @@ export function NotVoted(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     const isQueued = Interval.fromDateTimes(
         DateTime.fromSeconds(epochStore.voteEnd ?? 0).toUTC(),

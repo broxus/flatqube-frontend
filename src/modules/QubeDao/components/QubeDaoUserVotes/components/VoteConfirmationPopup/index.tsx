@@ -5,7 +5,7 @@ import BigNumber from 'bignumber.js'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { formattedTokenAmount } from '@/utils'
 
@@ -19,7 +19,7 @@ export function VoteConfirmationPopup({ onDismiss }: Props): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const votesStore = useQubeDaoVotingStateStore()
+    const votesStore = useQubeDaoVotingStateContext()
 
     const [isAwaiting, setAwaiting] = React.useState(false)
 

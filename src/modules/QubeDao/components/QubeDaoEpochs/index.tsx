@@ -11,7 +11,7 @@ import { EpochsListHeader } from '@/modules/QubeDao/components/QubeDaoEpochs/com
 import { EpochsListItem } from '@/modules/QubeDao/components/QubeDaoEpochs/components/EpochsListItem'
 import { EpochsListPagination } from '@/modules/QubeDao/components/QubeDaoEpochs/components/EpochsListPagination'
 import { EpochListPlaceholder } from '@/modules/QubeDao/components/QubeDaoEpochs/components/EpochsListPlaceholder'
-import { useQubeDaoEpochsStore } from '@/modules/QubeDao/providers/QubeDaoEpochsStoreProvider'
+import { useQubeDaoEpochsContext } from '@/modules/QubeDao/providers/QubeDaoEpochsStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 
 import styles from './index.module.scss'
@@ -20,7 +20,7 @@ export function QubeDaoEpochs(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochsStore = useQubeDaoEpochsStore()
+    const epochsStore = useQubeDaoEpochsContext()
 
     React.useEffect(() => reaction(
         () => daoContext.tokensCache.isReady,

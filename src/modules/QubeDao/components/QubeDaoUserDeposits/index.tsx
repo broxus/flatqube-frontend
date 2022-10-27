@@ -11,7 +11,7 @@ import { DepositsListHeader } from '@/modules/QubeDao/components/QubeDaoUserDepo
 import { DepositListItem } from '@/modules/QubeDao/components/QubeDaoUserDeposits/components/DepositListItem'
 import { DepositsListPagination } from '@/modules/QubeDao/components/QubeDaoUserDeposits/components/DepositsListPagination'
 import { DepositsListPlaceholder } from '@/modules/QubeDao/components/QubeDaoUserDeposits/components/DepositsListPlaceholder'
-import { useQubeDaoDepositsStore } from '@/modules/QubeDao/providers/QubeDaoDepositsStoreProvider'
+import { useQubeDaoDepositsContext } from '@/modules/QubeDao/providers/QubeDaoDepositsStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 
 import styles from './index.module.scss'
@@ -20,7 +20,7 @@ export function QubeDaoUserDeposits(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const depositsStore = useQubeDaoDepositsStore()
+    const depositsStore = useQubeDaoDepositsContext()
 
     React.useEffect(() => reaction(
         () => [daoContext.wallet.isReady, daoContext.tokensCache.isReady],

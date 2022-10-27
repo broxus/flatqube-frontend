@@ -6,7 +6,7 @@ import { useIntl } from 'react-intl'
 import { SectionTitle } from '@/components/common/SectionTitle'
 import { Timeline } from '@/modules/QubeDao/components/QubeDaoEpochDetails/components/Timeline'
 import { Stats } from '@/modules/QubeDao/components/QubeDaoEpochDetails/components/Stats'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { Chart } from '@/modules/QubeDao/components/QubeDaoEpochDetails/components/Chart'
 
 import styles from './index.module.scss'
@@ -15,7 +15,7 @@ import styles from './index.module.scss'
 export function QubeDaoEpochDetails(): JSX.Element {
     const intl = useIntl()
 
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     React.useEffect(() => {
         epochStore.init().catch(reason => reason)

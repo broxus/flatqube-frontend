@@ -3,7 +3,7 @@ import classNames from 'classnames'
 import { useIntl } from 'react-intl'
 import { DateTime } from 'luxon'
 
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 
 import styles from './index.module.scss'
 
@@ -19,7 +19,7 @@ type Props = {
 export function Scale(props: Props): JSX.Element {
     const intl = useIntl()
 
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     const {
         epochEnd,

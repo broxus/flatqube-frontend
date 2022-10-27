@@ -2,12 +2,12 @@ import * as React from 'react'
 import { observer } from 'mobx-react-lite'
 
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { formattedTokenAmount } from '@/utils'
 
 function CandidatesFormListScoreInternal(): JSX.Element {
     const daoContext = useQubeDaoContext()
-    const votesStore = useQubeDaoVotingStateStore()
+    const votesStore = useQubeDaoVotingStateContext()
 
     return (
         <div className="list__row visible@s">

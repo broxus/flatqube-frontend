@@ -1,10 +1,10 @@
 import * as React from 'react'
 
 import { Pagination } from '@/components/common/Pagination'
-import { useQubeDaoCandidatesStore } from '@/modules/QubeDao/providers/QubeDaoCandidatesStoreProvider'
+import { useQubeDaoCandidatesContext } from '@/modules/QubeDao/providers/QubeDaoCandidatesStoreProvider'
 
 export function CandidatesListPagination(): JSX.Element {
-    const candidatesStore = useQubeDaoCandidatesStore()
+    const candidatesStore = useQubeDaoCandidatesContext()
 
     const onNextPage = async () => {
         candidatesStore.setState('pagination', {

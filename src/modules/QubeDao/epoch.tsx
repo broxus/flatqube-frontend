@@ -13,7 +13,7 @@ import { StatusLabel } from '@/modules/QubeDao/components/QubeDaoEpochDetails/co
 import { VotingStateFinishBanner } from '@/modules/QubeDao/components/QubeDaoEpochVotingState/components/VotingStateFinishBanner'
 import { QubeDaoEpochVotingState } from '@/modules/QubeDao/components/QubeDaoEpochVotingState'
 import { QubeDaoUserVotes } from '@/modules/QubeDao/components/QubeDaoUserVotes'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { QubeDaoVotingStateStoreProvider } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { appRoutes } from '@/routes'
@@ -25,7 +25,7 @@ export function QubeDaoEpoch(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     return (
         <QubeDaoVotingStateStoreProvider>

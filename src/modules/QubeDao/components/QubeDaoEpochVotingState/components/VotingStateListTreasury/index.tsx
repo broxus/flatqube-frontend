@@ -2,8 +2,8 @@ import * as React from 'react'
 import BigNumber from 'bignumber.js'
 import { useIntl } from 'react-intl'
 
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { formattedAmount, formattedTokenAmount } from '@/utils'
 
@@ -11,8 +11,8 @@ export function VotingStateListTreasury(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
-    const votesStore = useQubeDaoVotingStateStore()
+    const epochStore = useQubeDaoEpochContext()
+    const votesStore = useQubeDaoVotingStateContext()
 
     const treasuryAmount = new BigNumber(epochStore.normalizedTotalDistribution)
         .minus(votesStore.scoredGaugesDistribution)

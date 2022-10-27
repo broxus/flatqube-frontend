@@ -8,7 +8,7 @@ import { ContentLoader } from '@/components/common/ContentLoader'
 import { NativeScrollArea } from '@/components/common/NativeScrollArea'
 import { SECONDS_IN_DAY } from '@/constants'
 import { Scale } from '@/modules/QubeDao/components/QubeDaoEpochDetails/components/Timeline/Scale'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { makeArray } from '@/utils'
 
 import styles from './index.module.scss'
@@ -16,7 +16,7 @@ import styles from './index.module.scss'
 function TimelineInternal(): JSX.Element {
     const intl = useIntl()
 
-    const epochStore = useQubeDaoEpochStore()
+    const epochStore = useQubeDaoEpochContext()
 
     if (epochStore.isFetchingEpoch || epochStore.isFetchingEpoch === undefined) {
         return (

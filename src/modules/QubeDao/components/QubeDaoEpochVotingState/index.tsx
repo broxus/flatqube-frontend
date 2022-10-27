@@ -9,8 +9,8 @@ import { VotingStateListHeader } from '@/modules/QubeDao/components/QubeDaoEpoch
 import { VotingStateListItem } from '@/modules/QubeDao/components/QubeDaoEpochVotingState/components/VotingStateListItem'
 import { VotingListPlaceholder } from '@/modules/QubeDao/components/QubeDaoEpochVotingState/components/VotingStateListPlaceholder'
 import { VotingStateListScore } from '@/modules/QubeDao/components/QubeDaoEpochVotingState/components/VotingStateListScore'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 
 import styles from './index.module.scss'
@@ -20,8 +20,8 @@ export function QubeDaoEpochVotingState(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
-    const votesStore = useQubeDaoVotingStateStore()
+    const epochStore = useQubeDaoEpochContext()
+    const votesStore = useQubeDaoVotingStateContext()
 
     React.useEffect(() => {
         (async () => {

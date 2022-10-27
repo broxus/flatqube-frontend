@@ -10,14 +10,14 @@ import { TransactionsListHeader } from '@/modules/QubeDao/components/QubeDaoUser
 import { TransactionsListItem } from '@/modules/QubeDao/components/QubeDaoUserTransactions/components/TransactionsListItem'
 import { TransactionsListPagination } from '@/modules/QubeDao/components/QubeDaoUserTransactions/components/TransactionsListPagination'
 import { TransactionsListPlaceholder } from '@/modules/QubeDao/components/QubeDaoUserTransactions/components/TransactionsListPlaceholder'
-import { useQubeDaoTransactionsStore } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
+import { useQubeDaoTransactionsContext } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
 
 import styles from './index.module.scss'
 
 export function QubeDaoUserTransactions(): JSX.Element {
     const intl = useIntl()
 
-    const transactionsStore = useQubeDaoTransactionsStore()
+    const transactionsStore = useQubeDaoTransactionsContext()
 
     return (
         <section className="section">

@@ -4,17 +4,17 @@ import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
 import { VotingStateListTreasury } from '@/modules/QubeDao/components/QubeDaoEpochVotingState/components/VotingStateListTreasury'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { formattedAmount, formattedTokenAmount } from '@/utils'
 
 function VotingStateListScoreInternal(): JSX.Element {
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
-    const votesStore = useQubeDaoVotingStateStore()
+    const epochStore = useQubeDaoEpochContext()
+    const votesStore = useQubeDaoVotingStateContext()
 
     const scoredGaugesDistributionPrice = new BigNumber(epochStore.normalizedTotalDistribution)
         .shiftedBy(-daoContext.tokenDecimals)

@@ -1,0 +1,13 @@
+@import '@/styles/variables.scss';
+
+.low_balance_banner {
+    background: url('../../../../assets/CoinsBackground.png') 100% 50% no-repeat;
+    background-size: contain;
+    margin: 24px 0 !important;
+    padding: 16px !important;
+
+    @media only screen and (min-width: $breakpoint-medium) {
+        margin: 40px 0 !important;
+        padding: 16px 50px 16px 16px !important;
+    }
+}

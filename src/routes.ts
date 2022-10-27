@@ -189,6 +189,9 @@ export const appRoutes = {
     daoEpoch: new Route<{ epochNum: string }>(
         '/dao/epochs/:epochNum',
     ),
+    daoWhitelisting: new Route(
+        '/dao/whitelisting',
+    ),
     builder: new Route(
         '/builder',
     ),

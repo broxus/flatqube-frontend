@@ -6,12 +6,12 @@ import { CandidatesFormListActions } from '@/modules/QubeDao/components/QubeDaoU
 import { CandidatesFormListHeader } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/CandidatesFormListHeader'
 import { CandidatesFormListItem } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/CandidatesFormListItem'
 import { CandidatesFormListScore } from '@/modules/QubeDao/components/QubeDaoUserVotes/components/CandidatesFormListScore'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 
 import styles from './index.module.scss'
 
 export function CandidatesFormList(): JSX.Element {
-    const votesStore = useQubeDaoVotingStateStore()
+    const votesStore = useQubeDaoVotingStateContext()
 
     return (
         <div className="card card--flat card--small">

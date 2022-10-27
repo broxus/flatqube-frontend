@@ -1,10 +1,10 @@
 import * as React from 'react'
 
 import { Pagination } from '@/components/common/Pagination'
-import { useQubeDaoTransactionsStore } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
+import { useQubeDaoTransactionsContext } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
 
 export function TransactionsListPagination(): JSX.Element {
-    const transactionsStore = useQubeDaoTransactionsStore()
+    const transactionsStore = useQubeDaoTransactionsContext()
 
     const onNextPage = async () => {
         transactionsStore.setState('pagination', {

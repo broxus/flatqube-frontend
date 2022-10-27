@@ -10,8 +10,8 @@ import { Icon } from '@/components/common/Icon'
 import { Select } from '@/components/common/Select'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { QubeDaoCandidateItem, QubeDaoShareRate } from '@/modules/QubeDao/components/QubeDaoCommon'
-import { useQubeDaoEpochStore } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
-import { useQubeDaoVotingStateStore } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
+import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
+import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import type { Candidate } from '@/modules/QubeDao/stores/QubeDaoVotingStateStore'
 import { formattedTokenAmount, isGoodBignumber } from '@/utils'
@@ -27,8 +27,8 @@ function CandidatesFormListItemInternal({ candidate, idx }: Props): JSX.Element 
     const intl = useIntl()
 
     const daoContext = useQubeDaoContext()
-    const epochStore = useQubeDaoEpochStore()
-    const votesStore = useQubeDaoVotingStateStore()
+    const epochStore = useQubeDaoEpochContext()
+    const votesStore = useQubeDaoVotingStateContext()
 
     const calcPerCents = React.useCallback(
         (amount: string) => new BigNumber(amount || 0)
