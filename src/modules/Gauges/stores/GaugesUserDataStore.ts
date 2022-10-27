@@ -546,8 +546,7 @@ export class GaugesUserDataStore {
     }
 
     public get balanceUSDT(): string | undefined {
-        const root = this.dataStore.rootToken?.root
-        const price = root ? this.price.byRoot[root] : undefined
+        const price = this.dataStore.rootTokenPrice
 
         if (this.balance && price && this.dataStore.rootToken) {
             const amount = decimalAmount(this.balance, this.dataStore.rootToken.decimals)
@@ -558,8 +557,7 @@ export class GaugesUserDataStore {
     }
 
     public get lockedBalanceUSDT(): string | undefined {
-        const root = this.dataStore.rootToken?.root
-        const price = root ? this.price.byRoot[root] : undefined
+        const price = this.dataStore.rootTokenPrice
 
         if (this.lockedBalance && price && this.dataStore.rootToken) {
             const amount = decimalAmount(this.lockedBalance, this.dataStore.rootToken.decimals)
@@ -569,8 +567,7 @@ export class GaugesUserDataStore {
     }
 
     public get withdrawBalanceUSDT(): string | undefined {
-        const root = this.dataStore.rootToken?.root
-        const price = root ? this.price.byRoot[root] : undefined
+        const price = this.dataStore.rootTokenPrice
 
         if (this.withdrawBalance && price && this.dataStore.rootToken) {
             const amount = decimalAmount(this.withdrawBalance, this.dataStore.rootToken.decimals)
