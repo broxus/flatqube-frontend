@@ -12,6 +12,7 @@ import { calcBoost, daysToSecs, normalizeAmount } from '@/modules/Gauges/utils'
 import { useRpc } from '@/hooks/useRpc'
 import { GaugeAbi, TokenAbi } from '@/misc'
 import { useStaticRpc } from '@/hooks/useStaticRpc'
+import { SECONDS_IN_DAY } from '@/constants'
 
 type State = {
     days?: string;
@@ -242,12 +243,15 @@ export class GaugesDepositFormStore {
     }
 
     public get daysIsValid(): boolean {
-        if (new BigNumber(this.lockTime).isZero()) {
+        const lockTimeBN = new BigNumber(this.lockTime)
+
+        if (lockTimeBN.isZero()) {
             return true
         }
 
         if (this.data.maxLockTime) {
-            return new BigNumber(this.lockTime).lte(this.data.maxLockTime)
+            return lockTimeBN.lte(this.data.maxLockTime)
+                && lockTimeBN.gte(SECONDS_IN_DAY * 2)
         }
 
         return false

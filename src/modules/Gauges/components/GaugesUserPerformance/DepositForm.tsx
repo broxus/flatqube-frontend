@@ -162,9 +162,10 @@ function UserPerformanceDepositFormInner({
                 {data.maxLockTime && (
                     <div className={styles.hint}>
                         {intl.formatMessage({
-                            id: 'GAUGE_MAX_VALUE',
+                            id: 'GAUGE_MIN_MAX_VALUE',
                         }, {
-                            value: secsToDays(data.maxLockTime),
+                            max: secsToDays(data.maxLockTime),
+                            min: 2,
                         })}
                     </div>
                 )}

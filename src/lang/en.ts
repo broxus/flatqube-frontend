@@ -1123,5 +1123,6 @@ export default {
     GAUGE_FILTER_TO: 'To',
     GAUGE_FILTER_APR_MIN: 'Apr, min',
     GAUGE_FILTER_APR_MAX: 'Apr, max',
-    GAUGE_PERIOD: '{years, plural, =0 {} one {# year } other {# years }}{days, plural, =0 {} one {# day } other {# days }}{hours, plural, =0 {} one {# hour } other {# hours }}{minutes, plural, =0 {} one {# minute } other {# minutes }}'
+    GAUGE_PERIOD: '{years, plural, =0 {} one {# year } other {# years }}{days, plural, =0 {} one {# day } other {# days }}{hours, plural, =0 {} one {# hour } other {# hours }}{minutes, plural, =0 {} one {# minute } other {# minutes }}',
+    GAUGE_MIN_MAX_VALUE: 'Min value: {min}, max: {max}',
 }
