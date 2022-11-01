@@ -348,7 +348,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
             ?.distributedAmount
             // if not found in api response - calculate via distributed scheme
             ?? new BigNumber(this.epoch.totalDistribution || 0)
-                .times(this.epoch.distributionScheme[0] ?? 1)
+                .times(this.dao.distributionScheme[0] ?? 1)
                 .div(10000)
                 .div(100)
                 .times(this.currentGaugeNormalizedVoteShare(gauge))
@@ -531,7 +531,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
 
     public get scoredUserVotesAmount(): string {
         return this.userVotes.reduce(
-            (acc, vote) => acc.plus(vote.veAmount),
+            (acc, vote) => acc.plus(vote.veAmount || 0),
             new BigNumber(0),
         ).toFixed()
     }

@@ -14,6 +14,7 @@ export const chartColors = [
 ]
 
 export const votesColors = [
+    '#E55B4D',
     '#E56841',
     '#E56C3D',
     '#E57039',

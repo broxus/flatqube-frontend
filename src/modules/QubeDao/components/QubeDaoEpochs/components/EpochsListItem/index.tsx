@@ -1,5 +1,7 @@
 import * as React from 'react'
+import BigNumber from 'bignumber.js'
 import { DateTime } from 'luxon'
+import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 import { Link } from 'react-router-dom'
 
@@ -30,12 +32,22 @@ export function EpochsListItem({ epoch }: Props): JSX.Element {
                     }, { value: epoch.epochNum })}
                 </Link>
             </div>
-            <div className="list__cell list__cell--right">
-                {`${formattedTokenAmount(
-                    epoch.totalDistribution,
-                    daoContext.tokenDecimals,
-                )} ${daoContext.tokenSymbol}`}
-            </div>
+            <Observer>
+                {() => {
+                    const totalDistribution = new BigNumber(epoch.totalDistribution || 0)
+                        .times(daoContext.distributionScheme[0] ?? 1)
+                        .div(10000)
+                        .toFixed()
+                    return (
+                        <div className="list__cell list__cell--right">
+                            {`${formattedTokenAmount(
+                                totalDistribution,
+                                daoContext.tokenDecimals,
+                            )} ${daoContext.tokenSymbol}`}
+                        </div>
+                    )
+                }}
+            </Observer>
             <div className="list__cell list__cell--right">
                 {`${formattedTokenAmount(
                     epoch.totalVeAmount,

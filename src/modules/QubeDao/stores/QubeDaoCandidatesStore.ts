@@ -67,7 +67,7 @@ export class QubeDaoCandidatesStore extends BaseStore<QubeDaoCandidatesStoreData
                 limit: this.pagination.limit,
                 offset: this.pagination.limit * (this.pagination.currentPage - 1),
                 ordering: {
-                    column: 'averageAmount',
+                    column: 'averagePercentage',
                     direction: 'DESC',
                 },
             })

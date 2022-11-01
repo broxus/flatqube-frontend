@@ -11,7 +11,6 @@ import { error, isGoodBignumber } from '@/utils'
 
 export type QubeDaoEpochStoreData = {
     distributionSchedule: string[];
-    distributionScheme: string[];
     epochEnd: number | null;
     epochNum?: number;
     epochStart: number | null;
@@ -53,7 +52,6 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
 
         this.setData(() => ({
             distributionSchedule: [],
-            distributionScheme: [],
             epochNum: options?.epochNum,
             epochVotesSummary: [],
             gaugesDetails: {},
@@ -68,7 +66,6 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         makeObservable(this, {
             distributionPrice: computed,
             distributionSchedule: computed,
-            distributionScheme: computed,
             epochEnd: computed,
             epochNum: computed,
             epochStart: computed,
@@ -101,7 +98,6 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
 
         await Promise.all([
             this.syncDistributionSchedule(),
-            this.syncDistributionScheme(),
             this.fetchGaugesDetails(),
         ])
 
@@ -403,27 +399,8 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         }
     }
 
-    protected async syncDistributionScheme(): Promise<void> {
-        try {
-            this.setData(
-                'distributionScheme',
-                (await this.dao.veContract
-                    .methods.distributionScheme({})
-                    .call({ cachedState: this.dao.veContractCachedState }))
-                    .distributionScheme,
-            )
-        }
-        catch (e) {
-            error('Sync distribution scheme error', e)
-        }
-    }
-
     public get distributionSchedule(): QubeDaoEpochStoreData['distributionSchedule'] {
         return this.data.distributionSchedule
-    }
-
-    public get distributionScheme(): QubeDaoEpochStoreData['distributionScheme'] {
-        return this.data.distributionScheme
     }
 
     public get epochEnd(): QubeDaoEpochStoreData['epochEnd'] {
@@ -499,7 +476,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
 
     public get normalizedTotalDistribution(): string {
         return new BigNumber(this.totalDistribution || 0)
-            .times(this.distributionScheme[0] ?? 1)
+            .times(this.dao.distributionScheme[0] ?? 1)
             .div(10000)
             .toFixed()
     }

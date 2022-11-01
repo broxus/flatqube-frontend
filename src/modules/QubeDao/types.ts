@@ -370,7 +370,7 @@ export type QubeDaoTransactionsResponse = {
 }
 
 
-export type QubeDaoWhitelistColumn = 'averageAmount' | 'createdAt'
+export type QubeDaoWhitelistColumn = 'averageAmount' | 'averagePercentage' | 'createdAt'
 
 export type QubeDaoWhitelistOrdering = {
     column: QubeDaoWhitelistColumn;

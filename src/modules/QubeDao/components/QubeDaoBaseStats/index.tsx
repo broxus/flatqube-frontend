@@ -158,7 +158,11 @@ export function QubeDaoBaseStats(): JSX.Element {
                                         && !isFetchingBalancesStats
                                     ) && (
                                         <div className={styles.stats_stat_rate}>
-                                            <RateChange size="sm" value={baseStatsStore.totalSupplyShareRateChange} />
+                                            <RateChange
+                                                displayPercents={false}
+                                                size="sm"
+                                                value={baseStatsStore.totalSupplyShareRateChange}
+                                            />
                                         </div>
                                     )}
                                 </div>

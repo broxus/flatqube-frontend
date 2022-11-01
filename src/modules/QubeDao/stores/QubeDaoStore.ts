@@ -110,6 +110,7 @@ export type QubeDaoStoreData = {
     accountAddress?: Address;
     averageLockTime: number;
     currentEpochNum: number;
+    distributionScheme: string[];
     epochTime: number;
     farmingAllocatorTokenBalance?: string;
     maxVotesRatio?: string;
@@ -166,11 +167,13 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         this.setData(() => ({
             averageLockTime: 0,
             currentEpochNum: 0,
+            distributionScheme: [],
         }))
 
         makeObservable(this, {
             averageLockTime: computed,
             currentEpochNum: computed,
+            distributionScheme: computed,
             epochTime: computed,
             farmingAllocatorTokenBalance: computed,
             hasUnlockedAmount: computed,
@@ -211,7 +214,10 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         this.setState('isInitializing', true)
 
         await this.syncVeContractState()
-        await this.syncVotingDetails()
+        await Promise.all([
+            this.syncVotingDetails(),
+            this.syncDistributionScheme(),
+        ])
 
         this.#initDisposer = reaction(
             () => [this.wallet.address, this.tokensCache.isReady],
@@ -542,6 +548,21 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
         }
         catch (e) {
             error(e)
+        }
+    }
+
+    protected async syncDistributionScheme(): Promise<void> {
+        try {
+            this.setData(
+                'distributionScheme',
+                (await this.veContract
+                    .methods.distributionScheme({})
+                    .call({ cachedState: this.veContractCachedState }))
+                    .distributionScheme,
+            )
+        }
+        catch (e) {
+            error('Sync distribution scheme error', e)
         }
     }
 
@@ -902,6 +923,10 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
 
     public get currentEpochNum(): QubeDaoStoreData['currentEpochNum'] {
         return this.data.currentEpochNum
+    }
+
+    public get distributionScheme(): QubeDaoStoreData['distributionScheme'] {
+        return this.data.distributionScheme
     }
 
     public get epochTime(): QubeDaoStoreData['epochTime'] {

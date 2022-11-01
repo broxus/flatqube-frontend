@@ -7,7 +7,7 @@ import { VotingStateListTreasury } from '@/modules/QubeDao/components/QubeDaoEpo
 import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { useQubeDaoVotingStateContext } from '@/modules/QubeDao/providers/QubeDaoVotingStateProvider'
-import { formattedAmount, formattedTokenAmount } from '@/utils'
+import { formattedAmount, formattedTokenAmount, isGoodBignumber } from '@/utils'
 
 function VotingStateListScoreInternal(): JSX.Element {
     const intl = useIntl()
@@ -23,6 +23,9 @@ function VotingStateListScoreInternal(): JSX.Element {
     const scoredGaugesFarmSpeedPrice = new BigNumber(votesStore.scoredGaugesFarmSpeed)
         .times(daoContext.tokenPrice ?? 0)
         .toFixed()
+    const scoredUserVotesShare = isGoodBignumber(votesStore.scoredUserVotesShare)
+        ? votesStore.scoredUserVotesShare
+        : 0
 
     return (
         <>
@@ -32,7 +35,7 @@ function VotingStateListScoreInternal(): JSX.Element {
                 <div className="list__cell list__cell--right">
                     {`${formattedTokenAmount(votesStore.scoredUserVotesAmount, daoContext.veDecimals)} ${daoContext.veSymbol}`}
                     <div className="text-sm text-muted">
-                        {`${formattedAmount(votesStore.scoredUserVotesShare)}%`}
+                        {`${formattedAmount(scoredUserVotesShare)}%`}
                     </div>
                 </div>
                 <div className="list__cell list__cell--right">

@@ -82,7 +82,7 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
             const response = await this.api.balancesStatsSearch({}, { method: 'POST' }, {
                 dayGe: Math.ceil(DateTime.local().minus({ day: 9 }).toSeconds()),
                 dayLe: Math.ceil(DateTime.local().toSeconds()),
-                limit: 9,
+                limit: 21,
                 offset: 0,
                 ordering: {
                     column: 'day',
@@ -111,7 +111,7 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
             const response = await this.api.depositsStatsSearch({}, { method: 'POST' }, {
                 dayGe: Math.ceil(DateTime.local().minus({ day: 9 }).toSeconds()),
                 dayLe: Math.ceil(DateTime.local().toSeconds()),
-                limit: 9,
+                limit: 21,
                 offset: 0,
                 ordering: {
                     column: 'day',
@@ -143,8 +143,8 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
 
         const stats = this.data.balancesStats.slice().sort((a, b) => a.day - b.day)
         const first = stats[0]?.day ?? DateTime.local().toSeconds()
-        const { days = 8 } = DateTime.local().diff(DateTime.fromSeconds(first), ['days', 'hours'])
-        const daysCount = days < 8 ? 8 : days
+        const { days = 14 } = DateTime.local().diff(DateTime.fromSeconds(first), ['days', 'hours'])
+        const daysCount = days < 14 ? 14 : days
 
         const dates = makeArray(daysCount, idx => DateTime.local().minus({ day: daysCount - idx }).toFormat('yyyy-LL-dd'))
 
@@ -183,8 +183,8 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
 
         const stats = this.data.depositsStats.slice().sort((a, b) => a.day - b.day)
         const first = stats[0]?.day ?? DateTime.local().toSeconds()
-        const { days = 8 } = DateTime.local().diff(DateTime.fromSeconds(first), ['days', 'hours'])
-        const daysCount = days < 8 ? 8 : days
+        const { days = 14 } = DateTime.local().diff(DateTime.fromSeconds(first), ['days', 'hours'])
+        const daysCount = days < 14 ? 14 : days
 
         const dates = makeArray(daysCount, idx => DateTime.local().minus({ day: daysCount - idx }).toFormat('yyyy-LL-dd'))
 

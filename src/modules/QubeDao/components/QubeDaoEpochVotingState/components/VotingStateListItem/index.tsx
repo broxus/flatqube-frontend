@@ -37,7 +37,10 @@ function VotingStateListItemInternal({ summary }: Props): JSX.Element {
     const normalizedVoteShare = votesStore.currentGaugeNormalizedVoteShare(summary.gauge)
     const userVote = votesStore.userVotes.find(
         vote => summary.gauge.toLowerCase() === vote.gauge.toLowerCase(),
-    )?.veAmount
+    )?.veAmount ?? '0'
+    const userVoteShare = isGoodBignumber(votesStore.gaugeUserVoteShare(userVote))
+        ? votesStore.gaugeUserVoteShare(userVote)
+        : 0
     const farmingSpeedRateChange = votesStore.currentGaugeFarmingSpeedRateChange(summary.gauge)
 
     return (
@@ -51,7 +54,7 @@ function VotingStateListItemInternal({ summary }: Props): JSX.Element {
             <div className="list__cell list__cell--right">
                 {`${formattedTokenAmount(userVote, daoContext.veDecimals)} ${daoContext.veSymbol}`}
                 <div className="text-muted text-sm">
-                    {`${formattedAmount(votesStore.gaugeUserVoteShare(userVote ?? '0'))}%`}
+                    {`${formattedAmount(userVoteShare)}%`}
                 </div>
             </div>
             <div className="list__cell list__cell--right">

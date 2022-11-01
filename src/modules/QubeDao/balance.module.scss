@@ -28,8 +28,21 @@
     }
 
     &__featured_deposit_trigger {
-        margin: 0 -16px;
-        min-width: 100%;
-        width: auto !important;
+        background-color: rgb(5 11 46 / 64%);
+        bottom: 0;
+        left: 0;
+        position: fixed;
+        width: 100%;
+        z-index: 100;
+
+        :global {
+            .card { background: none }
+        }
+
+        @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+            -webkit-backdrop-filter: blur(32px);
+            backdrop-filter: blur(32px);
+            background: linear-gradient(0deg, rgb(5 11 46 / 12%), rgb(5 11 46 / 12%)), rgb(255 255 255 / 12%);
+        }
     }
 }

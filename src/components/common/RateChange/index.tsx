@@ -8,9 +8,10 @@ import './index.scss'
 
 
 type RateChangeProps = {
-    value: string;
-    size?: 'sm';
     className?: string;
+    displayPercents?: boolean;
+    size?: 'sm';
+    value: string;
 }
 
 function getDirection(value: BigNumber.Value): number {
@@ -26,9 +27,10 @@ function getDirection(value: BigNumber.Value): number {
 
 
 export function RateChange({
-    value,
-    size,
     className,
+    displayPercents = true,
+    size,
+    value,
 }: RateChangeProps): JSX.Element {
     const dir = getDirection(value)
     return (
@@ -40,7 +42,7 @@ export function RateChange({
             })}
         >
             {formattedAmount(value, undefined, { preserve: true })}
-            %
+            {displayPercents && '%'}
         </div>
     )
 }
