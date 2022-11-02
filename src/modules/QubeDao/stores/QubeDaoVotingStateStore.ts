@@ -365,8 +365,8 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
             return '0'
         }
         return new BigNumber(this.currentGaugeDistribution(gauge) || 0)
-            .shiftedBy(-this.dao.tokenDecimals)
             .div(this.dao.epochTime)
+            .dp(0, BigNumber.ROUND_DOWN)
             .toFixed()
     }
 
@@ -381,14 +381,19 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
         )
         const distribution = new BigNumber(prevEpochGauge?.distributedAmount || 0)
         const prevFarmingSpeed = distribution
-            .shiftedBy(-this.dao.tokenDecimals)
             .div(this.dao.epochTime)
+            .dp(0, BigNumber.ROUND_DOWN)
 
-        return new BigNumber(currentFarmingSpeed ?? 0)
-            .div(prevFarmingSpeed)
-            .times(100)
-            .dp(2)
-            .toFixed()
+        if (!isGoodBignumber(prevFarmingSpeed)) {
+            return '100'
+        }
+
+        if (prevFarmingSpeed.toFixed() === currentFarmingSpeed || !isGoodBignumber(currentFarmingSpeed)) {
+            return '0'
+        }
+
+        const numerator = new BigNumber(currentFarmingSpeed).minus(prevFarmingSpeed)
+        return new BigNumber(numerator.div(prevFarmingSpeed)).times(100).dp(2).toFixed()
     }
 
     public currentGaugeNormalizedAmount(gauge: string): string | null | undefined {

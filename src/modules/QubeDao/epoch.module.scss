@@ -1,3 +1,5 @@
+@import '@/styles/variables.scss';
+
 .epoch {
     &__page_header_grid {
         align-items: center;
@@ -9,6 +11,11 @@
         > * {
             justify-content: center;
             width: 100%;
+
+            @media only screen and (min-width: $breakpoint-small) {
+                justify-content: space-between;
+                width: auto;
+            }
         }
     }
 }

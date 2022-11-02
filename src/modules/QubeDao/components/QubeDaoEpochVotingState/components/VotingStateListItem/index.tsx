@@ -96,7 +96,7 @@ function VotingStateListItemInternal({ summary }: Props): JSX.Element {
                 )}
                 {isGoodBignumber(currentGaugeFarmingSpeed) && (
                     <div>
-                        <RateChange size="sm" value={formattedAmount(farmingSpeedRateChange)} />
+                        <RateChange size="sm" value={farmingSpeedRateChange} />
                     </div>
                 )}
             </div>

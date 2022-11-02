@@ -26,7 +26,7 @@ function TimelineInternal(): JSX.Element {
         )
     }
 
-    const startDate = DateTime.fromSeconds(epochStore.epochStart || 0).startOf('day')
+    const startDate = DateTime.fromSeconds(epochStore.epochStart || 0).minus({ day: epochStore.epochNum === 1 ? 0 : 1 }).startOf('day')
     const endDate = DateTime.fromSeconds(epochStore.epochEnd || 0).plus({ day: 1 }).endOf('day')
     const days = Math.round(Interval.fromDateTimes(startDate, endDate).length('days'))
 

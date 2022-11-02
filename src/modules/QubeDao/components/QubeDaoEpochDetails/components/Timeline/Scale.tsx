@@ -28,7 +28,7 @@ export function Scale(props: Props): JSX.Element {
         voteStart,
     } = props
 
-    const startDate = DateTime.fromSeconds(epochStart || 0).startOf('day')
+    const startDate = DateTime.fromSeconds(epochStart || 0).minus({ day: epochStore.epochNum === 1 ? 0 : 1 }).startOf('day')
     const endDate = DateTime.fromSeconds(epochEnd || 0).plus({ day: 1 }).endOf('day')
 
     const totalSeconds = endDate.diff(startDate, ['seconds', 'milliseconds']).toObject().seconds || 1
