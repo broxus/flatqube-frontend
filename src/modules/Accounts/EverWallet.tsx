@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl'
 import { Icon } from '@/components/common/Icon'
 import { DexConstants } from '@/misc'
 import { useWallet } from '@/stores/WalletService'
-import { formattedAmount, sliceAddress } from '@/utils'
+import { formattedTokenAmount, sliceAddress } from '@/utils'
 
 import './index.scss'
 
@@ -72,15 +72,11 @@ export function EverWallet({ showDisconnectButton }: Props): JSX.Element | null 
                                             {intl.formatMessage({
                                                 id: 'WALLET_BALANCE_HINT',
                                             }, {
-                                                value: formattedAmount(
+                                                currency: DexConstants.CoinSymbol,
+                                                value: formattedTokenAmount(
                                                     wallet.balance,
                                                     DexConstants.CoinDecimals,
-                                                    {
-                                                        preserve: true,
-                                                        roundOn: false,
-                                                    },
                                                 ),
-                                                currency: DexConstants.CoinSymbol,
                                             })}
                                         </div>
                                     )}
