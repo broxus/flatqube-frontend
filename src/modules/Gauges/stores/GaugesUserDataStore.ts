@@ -20,7 +20,7 @@ import { HistoryBalance } from '@/modules/Gauges/api/models'
 type AprBoost = {
     currentApr: string;
     lockBoostApr: string;
-    qubeBoostApr: string;
+    qubeBoostApr?: string;
 }
 
 type Data = {
@@ -288,6 +288,7 @@ export class GaugesUserDataStore {
         veAccountAverage: VeAccountAverage,
         veAverage: VeAverage,
         syncData: SyncData,
+        qubeSpeed: string,
     ): Promise<AprBoost | undefined> {
         try {
             const account = new this.staticRpc.Contract(
@@ -316,10 +317,12 @@ export class GaugesUserDataStore {
                 .multipliedBy(apr)
                 .toFixed()
 
-            const qubeBoostApr = qubeBoostMultiplier
-                .minus(1)
-                .multipliedBy(apr)
-                .toFixed()
+            const qubeBoostApr = new BigNumber(qubeSpeed).gt(0)
+                ? qubeBoostMultiplier
+                    .minus(1)
+                    .multipliedBy(apr)
+                    .toFixed()
+                : '0'
 
             const currentApr = new BigNumber(apr)
                 .plus(lockBoostApr)
@@ -354,11 +357,11 @@ export class GaugesUserDataStore {
 
     public async sync(): Promise<void> {
         try {
-            const { apr, veAddress, id } = this.dataStore
+            const { apr, veAddress, id, qubeTokenSpeed } = this.dataStore
             const token = this.depositToken
             const owner = this.wallet.address
 
-            if (!this.extraTokens || !this.isReady || !id || !veAddress || !token || !apr) {
+            if (!this.extraTokens || !this.isReady || !id || !veAddress || !token || !apr || !qubeTokenSpeed) {
                 return
             }
 
@@ -408,10 +411,23 @@ export class GaugesUserDataStore {
 
                 const [pendingReward, aprBoost] = await Promise.all([
                     userAddress && veAverage && veAccountAverage && syncData
-                        ? this.getPendingReward(userAddress, veAverage, veAccountAverage, syncData)
+                        ? this.getPendingReward(
+                            userAddress,
+                            veAverage,
+                            veAccountAverage,
+                            syncData,
+                        )
                         : undefined,
                     userAddress && lockBalanceAverage && veAccountAverage && veAverage && syncData
-                        ? this.getAprBoost(apr, userAddress, lockBalanceAverage, veAccountAverage, veAverage, syncData)
+                        ? this.getAprBoost(
+                            apr,
+                            userAddress,
+                            lockBalanceAverage,
+                            veAccountAverage,
+                            veAverage,
+                            syncData,
+                            qubeTokenSpeed,
+                        )
                         : undefined,
                 ])
 
