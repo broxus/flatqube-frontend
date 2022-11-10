@@ -12,6 +12,8 @@ export type VeAverage = DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Root, 'ca
 export type SyncData = DecodedAbiFunctionOutputs<typeof GaugeAbi.Root, 'calcSyncData'>['value0']
 export type VeAccountAverage = DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Account, 'calculateVeAverage'>
 export type LockBalanceAverage = DecodedAbiFunctionOutputs<typeof GaugeAbi.Account, 'calculateLockBalanceAverage'>
+export type FactoryDetails = DecodedAbiFunctionOutputs<typeof GaugeAbi.Factory, 'getDetails'>
+export type VeDetails = DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Root, 'getDetails'>
 
 export type TokenResponse = {
     name: string;
@@ -39,4 +41,10 @@ export type Duration = {
     hours: number;
     minutes: number;
     years: number;
+}
+
+export type QubeDaoMainPageResponse = {
+    averageLockTime: number;
+    totalAmount: string;
+    totalVeAmount: string;
 }

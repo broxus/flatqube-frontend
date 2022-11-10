@@ -1,0 +1,36 @@
+.gaugesCalcForm {
+    display: grid;
+    align-items: flex-start;
+    grid-gap: 40px;
+    grid-template-columns: minmax(0, 1fr) 292px;
+
+    @media (max-width: 959px) {
+        grid-gap: 16px;
+        grid-template-columns: 1fr;
+    }
+}
+
+.list {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    grid-gap: 8px;
+
+    @media (max-width: 959px) {
+        grid-gap: 16px;
+    }
+}
+
+.spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.noData {
+    padding: 24px;
+    text-align: center;
+    font-size: 14px;
+    letter-spacing: 0.1px;
+}

@@ -9,6 +9,12 @@
  * ---------------------------------------------------------------
  */
 
+export interface CurrentBalance {
+  /** Decimal value */
+  lpAmount: string;
+  lpBreakdown: PoolTokenInfoWithPrice[];
+}
+
 export interface Deposit {
   /** Decimal value */
   boost: string;
@@ -72,12 +78,51 @@ export interface FromTo {
   to?: string;
 }
 
+export interface FromToNumeric {
+  /** @format int64 */
+  from: number | null;
+
+  /** @format int64 */
+  to: number | null;
+}
+
+export interface GaugeBatchInfo {
+  gaugeAddress: string;
+
+  /** Decimal value */
+  suggestedQubeFarmingSpeed?: string;
+}
+
 export interface GaugeBatchRequest {
   gauges: string[];
 }
 
 export interface GaugeBatchResponse {
+  gauges: GaugeInfo[];
+}
+
+export interface GaugeCompleteResponse {
   gauges: GaugeItem[];
+}
+
+export interface GaugeCustomAprRequest {
+  gauges: GaugeBatchInfo[];
+}
+
+export interface GaugeInfo {
+  address: string;
+  depositTokenRoot: string;
+
+  /** Decimal value */
+  maxApr: string;
+
+  /** Decimal value */
+  minApr: string;
+  poolTokens: PoolTokenInfo[];
+  rewardTokens: RewardTokenInfo[];
+
+  /** Decimal value */
+  tvl: string;
 }
 
 export interface GaugeItem {
@@ -86,6 +131,7 @@ export interface GaugeItem {
 
   /** @format uint32 */
   endTime: number | null;
+  hasQubeReward: boolean;
   isLowBalance: boolean;
 
   /** Decimal value */
@@ -93,6 +139,12 @@ export interface GaugeItem {
 
   /** Decimal value */
   maxAprChange: string;
+
+  /** @format double */
+  maxBoost: number;
+
+  /** @format int32 */
+  maxLockTime: number;
 
   /** Decimal value */
   minApr: string;
@@ -122,10 +174,15 @@ export interface GaugeListRequest {
 
   /** @format uint32 */
   offset: number;
+  ordering?: Ordering;
   showLowBalance?: boolean | null;
   starredGauges?: string[] | null;
   tvl?: FromTo;
   whitelistUri: string;
+}
+
+export interface GaugeLpRootRequest {
+  lpAddress: string;
 }
 
 export interface GaugeResponse {
@@ -144,11 +201,33 @@ export interface HistoryBalance {
   lpBreakdown: PoolTokenInfo[];
 }
 
+/**
+ * @example TvlDesc
+ */
+export enum Ordering {
+  TvlDesc = "TvlDesc",
+  TvlAsc = "TvlAsc",
+  MinAprDesc = "MinAprDesc",
+  MinAprAsc = "MinAprAsc",
+  MaxAprDesc = "MaxAprDesc",
+  MaxAprAsc = "MaxAprAsc",
+}
+
 export interface PoolTokenInfo {
   /** Decimal value */
   amount: string;
   tokenRoot: string;
   tokenSymbol: string;
+}
+
+export interface PoolTokenInfoWithPrice {
+  /** Decimal value */
+  amount: string;
+  tokenRoot: string;
+  tokenSymbol: string;
+
+  /** Decimal value */
+  value: string;
 }
 
 export interface RewardRound {
@@ -266,13 +345,14 @@ export interface Transaction {
 
 export interface TransactionRequest {
   eventTypes: EventType[];
-  gaugeAddress: string;
+  gaugeAddress: string | null;
 
   /** @format uint32 */
   limit: number;
 
   /** @format uint32 */
   offset: number;
+  timestamp: FromToNumeric;
   userAddress: string | null;
 }
 
@@ -282,6 +362,10 @@ export interface TransactionResponse {
   transactions: Transaction[];
 }
 
+export interface UserActualBalancesResponse {
+  balance: CurrentBalance;
+}
+
 export interface UserBalanceRequest {
   gaugeAddress: string;
   userAddress: string;
@@ -289,4 +373,8 @@ export interface UserBalanceRequest {
 
 export interface UserBalancesResponse {
   historyBalance: HistoryBalance;
+}
+
+export interface UserGaugesRequest {
+  userAddress: string;
 }

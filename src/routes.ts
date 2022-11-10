@@ -92,7 +92,7 @@ export const qubeDaoApiRoutes = {
     epochsVotesSum: new Route('/epochs/:epochNum/votes/sum'),
     epochsLast: new Route('/epochs/last'),
     gaugesBatch: new Route('/gauges/batch'),
-    gaugesSearch: new Route('/gauges/search'),
+    gaugesByUserAddress: new Route('/gauges/get-by-user'),
     mainPage: new Route('/main_page'),
     transactionsSearch: new Route('/transactions/search'),
     whitelistSearch: new Route('/whitelist/search'),
@@ -209,5 +209,8 @@ export const appRoutes = {
     ),
     gaugesItem: new Route<{ address: string }>(
         '/gauges/:address',
+    ),
+    gaugesCalc: new Route(
+        '/gauges/calc',
     ),
 }

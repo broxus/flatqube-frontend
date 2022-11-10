@@ -13,6 +13,9 @@ import { QubeDaoDepositFormStoreProvider } from '@/modules/QubeDao/providers/Qub
 import { useQubeDaoDepositsContext } from '@/modules/QubeDao/providers/QubeDaoDepositsStoreProvider'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import { useQubeDaoTransactionsContext } from '@/modules/QubeDao/providers/QubeDaoTransactionsStoreProvider'
+import { QubeDaoFarmingAlert } from '@/modules/QubeDao/components/QubeDaoDepositForm/components/QubeDaoFarmingAlert'
+import { QubeDaoFarmingAlertDrawer } from '@/modules/QubeDao/components/QubeDaoDepositForm/components/QubeDaoFarmingAlertDrawer'
+import { DrawerRef } from '@/components/common/Drawer'
 
 import styles from './balance.module.scss'
 
@@ -23,6 +26,7 @@ export function QubeDaoBalance(): JSX.Element {
     const depositsStore = useQubeDaoDepositsContext()
     const transactionsStore = useQubeDaoTransactionsContext()
 
+    const drawer = React.useRef<DrawerRef | null>(null)
     const timeoutDeposits = React.useRef<ReturnType<typeof setTimeout>>()
     const timeoutTransactions = React.useRef<ReturnType<typeof setTimeout>>()
 
@@ -72,6 +76,10 @@ export function QubeDaoBalance(): JSX.Element {
         clearTimeout(timeoutTransactions.current)
     }, [])
 
+    const onSend = React.useCallback(() => {
+        drawer.current?.collapse()
+    }, [drawer.current])
+
     return (
         <>
             <Observer>
@@ -83,11 +91,17 @@ export function QubeDaoBalance(): JSX.Element {
                 <div className={styles.balance__content}>
                     <QubeDaoUserBalances />
                     <Media query={{ maxWidth: 959 }}>
-                        <section className={classNames('section', styles.balance__featured_deposit_trigger)}>
-                            <div className="card card--flat card--xsmall">
-                                <QubeDaoDepositFormDrawer onDepositSuccess={onDepositSuccess} />
-                            </div>
-                        </section>
+                        <QubeDaoDepositFormStoreProvider
+                            onSend={onSend}
+                            onTransactionSuccess={onDepositSuccess}
+                        >
+                            <section className={classNames('section', styles.balance__featured_deposit_trigger)}>
+                                <div className="card card--flat card--xsmall">
+                                    <QubeDaoDepositFormDrawer ref={drawer} />
+                                </div>
+                            </section>
+                            <QubeDaoFarmingAlertDrawer />
+                        </QubeDaoDepositFormStoreProvider>
                     </Media>
                     <QubeDaoUserDeposits />
                     <QubeDaoUserTransactions />
@@ -107,6 +121,7 @@ export function QubeDaoBalance(): JSX.Element {
                                 onTransactionSuccess={onDepositSuccess}
                             >
                                 <QubeDaoDepositForm />
+                                <QubeDaoFarmingAlert />
                             </QubeDaoDepositFormStoreProvider>
                         </div>
                     </aside>

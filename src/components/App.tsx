@@ -38,6 +38,7 @@ import Pool from '@/pages/pools/item'
 import GaugesCreate from '@/pages/gauges/create'
 import GaugesList from '@/pages/gauges/index'
 import GaugesItem from '@/pages/gauges/item'
+import GaugesCalc from '@/pages/gauges/calc'
 import BurnLiquidity from '@/pages/pools/burn-liquidity'
 import { appRoutes } from '@/routes'
 import { useWallet } from '@/stores/WalletService'
@@ -135,6 +136,9 @@ export function App(): JSX.Element {
                                 </Route>
                                 <Route exact path={appRoutes.gaugesCreate.path}>
                                     <GaugesCreate />
+                                </Route>
+                                <Route exact path={appRoutes.gaugesCalc.path}>
+                                    <GaugesCalc />
                                 </Route>
                                 <Route exact path={appRoutes.gaugesItem.path}>
                                     <GaugesItem />

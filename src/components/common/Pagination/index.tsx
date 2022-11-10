@@ -38,6 +38,9 @@ export const Pagination = React.memo(({
         if (event.keyCode === 13) {
             let newPage = parseInt(value, 10)
 
+            if (Number.isNaN(newPage)) {
+                return
+            }
             if (newPage > totalPages) {
                 newPage = totalPages
                 setValue(totalPages.toString())

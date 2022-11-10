@@ -1,0 +1,56 @@
+.gaugesCalcBanner {
+    position: relative;
+    z-index: 0;
+    margin: 0 0 40px;
+    padding: 24px;
+    background: #191F3F;
+    display: flex;
+    align-items: center;
+    grid-gap: 24px;
+
+    @media (max-width: 959px) {
+        flex-direction: column;
+        margin: 0 0 16px;
+    }
+
+    &::before {
+        content: '';
+        position: absolute;
+        pointer-events: none;
+        z-index: -1;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('./bg.svg') center center no-repeat;
+        opacity: 0.3;
+    }
+
+    h3 {
+        font-size: 19px;
+        font-weight: 600;
+        line-height: 24px;
+        letter-spacing: 0.1px;
+        margin: 0 0 4px;
+    }
+
+    p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.1px;
+    }
+}
+
+.side {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    grid-gap: 12px;
+
+    @media (max-width: 959px) {
+        align-items: flex-start;
+        width: 100%;
+    }
+}

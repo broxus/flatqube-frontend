@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import type { TokenIconProps } from '@/components/common/TokenIcon'
 import { TokenIcons } from '@/components/common/TokenIcons'
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
-import type { GaugeItem } from '@/modules/QubeDao/types'
+import type { GaugeInfo } from '@/modules/QubeDao/types'
 import { sliceAddress } from '@/utils'
 import { appRoutes } from '@/routes'
 
@@ -12,7 +12,7 @@ import styles from './index.module.scss'
 
 type Props = {
     address: string;
-    gaugeDetails?: GaugeItem['poolTokens'];
+    gaugeDetails?: GaugeInfo['poolTokens'];
     linkable?: boolean;
     size?: TokenIconProps['size'];
 }
