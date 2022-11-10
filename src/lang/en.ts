@@ -1143,7 +1143,7 @@ export default {
     GAUGE_CALC_YOUR_BOOSTED_APR: 'Your boosted APR',
     GAUGE_CALC_FILTER_TITLE: 'Filter',
     GAUGE_CALC_FILTER_ONLY_FAV: 'Only my favorite pools',
-    GAUGE_CALC_FILTER_DEPOSIT: 'LP tokens deposit',
+    GAUGE_CALC_FILTER_DEPOSIT: 'LP tokens deposit in $',
     GAUGE_CALC_FILTER_DEPOSIT_LOCK: 'Deposit lock',
     GAUGE_CALC_FILTER_END_DATE: 'End date: {date}',
     GAUGE_CALC_FILTER_QUBE_DEPOSIT: 'QUBE deposit',
