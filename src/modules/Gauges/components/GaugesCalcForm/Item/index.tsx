@@ -51,7 +51,7 @@ function GaugesCalcFormItemInner({
     )
     const lpLockApr = React.useMemo(
         () => (lpLockBoost && gauge
-            ? new BigNumber(gauge.minApr).times(lpLockBoost).plus(gauge.minApr).toString()
+            ? new BigNumber(gauge.minApr).times(lpLockBoost).toString()
             : undefined),
         [lpLockBoost, gauge?.minApr],
     )
