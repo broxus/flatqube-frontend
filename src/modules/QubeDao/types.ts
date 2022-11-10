@@ -273,33 +273,6 @@ export type QubeDaoEpochVotesSumResponse = {
 }
 
 
-export type QubeDaoGaugeColumn = 'createdAt'
-
-export type QubeDaoGaugesOrdering = {
-    column: QubeDaoGaugeColumn;
-    direction: Direction;
-}
-
-export type QubeDaoGaugesRequest = {
-    gaugeAddress?: string | null;
-    isActive?: boolean | null;
-    limit: number;
-    offset: number;
-    ordering?: QubeDaoGaugesOrdering | null;
-}
-
-export type QubeDaoGaugeResponse = {
-    amount: string;
-    createdAt: number;
-    epochNum: number;
-    gauge: string;
-}
-
-export type QubeDaoGaugesResponse = {
-    gauges: QubeDaoGaugeResponse[];
-    totalCount: number;
-}
-
 export type GaugeItemPoolTokenInfo = {
     amount: string;
     tokenRoot: string;
@@ -311,19 +284,23 @@ export type GaugeItemRewardTokenInfo = {
     tokenSymbol: string;
 }
 
-export type GaugeItem = {
+export type GaugeInfo = {
     address: string;
     depositTokenRoot: string;
-    endTime: number;
+    hasQubeReward: boolean;
     maxApr: string;
-    maxAprChange: string;
     minApr: string;
-    minAprChange: string;
     poolTokens: GaugeItemPoolTokenInfo[];
     rewardTokens: GaugeItemRewardTokenInfo[];
-    startTime: number;
     tvl: string;
-    tvlChange: string;
+}
+
+export type QubeDaoGaugesByUserAddressRequest = {
+    userAddress: string;
+}
+
+export type QubeDaoGaugesByUserAddressResponse = {
+    gauges: GaugeInfo[];
 }
 
 export type QubeDaoGaugeBatchRequest = {
@@ -331,7 +308,7 @@ export type QubeDaoGaugeBatchRequest = {
 }
 
 export type GaugeBatchResponse = {
-    gauges: GaugeItem[];
+    gauges: GaugeInfo[];
 }
 
 

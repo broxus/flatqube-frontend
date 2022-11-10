@@ -16,7 +16,7 @@ import { isAddressValid, TokenAbi, TokenWallet } from '@/misc'
 import { useQubeDaoApi } from '@/modules/QubeDao/hooks/useApi'
 import type { QubeDaoStore } from '@/modules/QubeDao/stores/QubeDaoStore'
 import type {
-    GaugeItem,
+    GaugeInfo,
     SendMessageCallback,
     TransactionCallbacks,
     TransactionFailureReason,
@@ -31,7 +31,7 @@ import {
 } from '@/utils'
 
 export type QubeDaoWhitelistingSuccessResult = {
-    gauge?: GaugeItem;
+    gauge?: GaugeInfo;
 }
 
 export type QubeDaoWhitelistingCallbacks = TransactionCallbacks<
@@ -41,7 +41,7 @@ export type QubeDaoWhitelistingCallbacks = TransactionCallbacks<
 
 export type QubeDaoWhitelistFormStoreData = {
     address: string;
-    gauge?: GaugeItem;
+    gauge?: GaugeInfo;
     gauges: string[];
     price?: string;
 }
@@ -124,7 +124,7 @@ export class QubeDaoWhitelistingFormStore extends BaseStore<
             })
 
             const startLt = this.dao.veContractCachedState?.lastTransactionId?.lt
-            const gauge = { ...this.gauge } as GaugeItem
+            const gauge = { ...this.gauge } as GaugeInfo
 
             const stream = await subscriber
                 .transactions(this.dao.veAddress)

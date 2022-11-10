@@ -35,28 +35,34 @@ export function Tooltip({
     React.useEffect(() => {
         if (visible && target.current && tooltipRef.current) {
             const rect = target.current.getBoundingClientRect()
+            const tooltipRect = tooltipRef.current.getBoundingClientRect()
+
             let { top, left } = rect
 
+            if (alignY === 'top') {
+                top = rect.top - rect.height - tooltipRect.height
+            }
+
             if (alignY === 'bottom') {
-                top = rect.top + rect.height
+                top = rect.bottom
+            }
+
+            if (alignX === 'left') {
+                left = rect.left
             }
 
             if (alignX === 'right') {
-                left = rect.right
+                left = rect.right - tooltipRect.width
             }
 
             if (alignX === 'center') {
-                left = rect.left + (rect.width / 2)
+                left = rect.left + (rect.width / 2) - (tooltipRect.width / 2)
             }
 
-            const tooltipRect = tooltipRef.current.getBoundingClientRect()
-            const leftOffset = window.innerWidth - tooltipRect.width - left - 8
+            left = Math.max(8, left)
+            left = Math.min(window.innerWidth - 8, left)
 
-            if (leftOffset < 0) {
-                left += leftOffset
-            }
-
-            setPosition({ top, left })
+            setPosition({ left, top })
         }
     }, [visible, target.current])
 
@@ -96,16 +102,11 @@ export function Tooltip({
                 ref={tooltipRef}
                 className={classNames('tooltip', {
                     tooltip_active: !!position,
-                    'tooltip_align_top-left': alignX === 'left' && alignY === 'top',
-                    'tooltip_align_top-right': alignX === 'right' && alignY === 'top',
-                    'tooltip_align_top-center': alignX === 'center' && alignY === 'top',
-                    'tooltip_align_bottom-right': alignX === 'right' && alignY === 'bottom',
-                    'tooltip_align_bottom-center': alignX === 'center' && alignY === 'bottom',
                     [`tooltip_size_${size}`]: Boolean(size),
                 })}
                 style={{
-                    top: position ? `${position.top}px` : undefined,
                     left: position ? `${position.left}px` : undefined,
+                    top: position ? `${position.top}px` : undefined,
                     width: width && `${width}px`,
                 }}
             >

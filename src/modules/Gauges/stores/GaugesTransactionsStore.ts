@@ -109,6 +109,10 @@ export class GaugesTransactionsStore {
                 gaugeAddress: this.state.gaugeAddress,
                 limit: this.state.limit,
                 offset: this.state.offset,
+                timestamp: {
+                    from: null,
+                    to: null,
+                },
                 userAddress: this.onlyUser
                     ? this.state.userAddress as string
                     : null,

@@ -5,15 +5,19 @@ import * as luxon from 'luxon'
 import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { GaugeAbi } from '@/misc'
 import { createHandler } from '@/utils'
-import { apiRoutes, gaugesApiRoutes, tokensApiRoutes } from '@/routes'
+import {
+    apiRoutes, gaugesApiRoutes, qubeDaoApiRoutes, tokensApiRoutes,
+} from '@/routes'
 import {
     DepositRequest, DepositResponse, GaugeBatchRequest, GaugeBatchResponse,
     GaugeListRequest, GaugeResponse, RewardRoundRequest, RewardRoundResponse,
     SingleGaugeRequest, SingleGaugeResponse, StatRequest, StatResponse,
     TransactionRequest, TransactionResponse, UserBalanceRequest, UserBalancesResponse,
 } from '@/modules/Gauges/api/models'
-import { GAUGES_API_URL, TOKENS_API_URL } from '@/config'
-import { Duration, RewardDetails, TokenResponse } from '@/modules/Gauges/types'
+import { GAUGES_API_URL, QUBE_API_URL, TOKENS_API_URL } from '@/config'
+import {
+    Duration, QubeDaoMainPageResponse, RewardDetails, TokenResponse,
+} from '@/modules/Gauges/types'
 import { SECONDS_IN_DAY } from '@/constants'
 
 export async function calcBoost(id: string, amount: string, lockTime: string): Promise<string> {
@@ -180,3 +184,8 @@ export const historyBalanceHandler = createHandler(
     gaugesApiRoutes.historyBalance,
     GAUGES_API_URL,
 )<UserBalancesResponse, UserBalanceRequest>()
+
+export const daoMainPageHandler = createHandler(
+    qubeDaoApiRoutes.mainPage,
+    QUBE_API_URL,
+)<QubeDaoMainPageResponse>()

@@ -1,17 +1,26 @@
 import BigNumber from 'bignumber.js'
 import { action, computed, makeObservable } from 'mobx'
+import { toast } from 'react-toastify'
 
 import { QubeDaoMaxLockPeriod, QubeDaoMinLockPeriod } from '@/config'
 import { SECONDS_IN_DAY } from '@/constants'
-import type { QubeDaoDepositCallbacks, QubeDaoStore } from '@/modules/QubeDao/stores/QubeDaoStore'
+import { useQubeDaoApi } from '@/modules/QubeDao/hooks/useApi'
+import type {
+    QubeDaoDepositCallbacks,
+    QubeDaoDepositSuccessResult,
+    QubeDaoStore,
+} from '@/modules/QubeDao/stores/QubeDaoStore'
+import type { GaugeInfo, TransactionSuccessResult } from '@/modules/QubeDao/types'
 import { BaseStore } from '@/stores/BaseStore'
-import { error, isGoodBignumber } from '@/utils'
+import { FavoritePairs } from '@/stores/FavoritePairs'
+import { error, isGoodBignumber, storage } from '@/utils'
 
 
 export type QubeDaoDepositFormStoreData = {
     amount: string;
     lockPeriod: number;
     veMintAmount: string;
+    userGauges: GaugeInfo[];
 }
 
 export type QubeDaoDepositFormStoreState = {
@@ -25,6 +34,10 @@ export type QubeDaoDepositFormStoreCtorOptions = {
 
 export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreData, QubeDaoDepositFormStoreState> {
 
+    protected readonly api = useQubeDaoApi()
+
+    protected readonly favorites: FavoritePairs
+
     constructor(
         protected readonly dao: QubeDaoStore,
         protected readonly options: QubeDaoDepositFormStoreCtorOptions,
@@ -34,6 +47,7 @@ export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreDa
         this.setData(() => ({
             amount: '',
             lockPeriod: QubeDaoMinLockPeriod,
+            userGauges: [],
             veMintAmount: '0',
         }))
 
@@ -50,8 +64,11 @@ export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreDa
             isLockPeriodValid: computed,
             isValid: computed,
             lockPeriod: computed,
+            userGauges: computed,
             veMintAmount: computed,
         })
+
+        this.favorites = new FavoritePairs(storage, dao.wallet, 'favourite_gauges')
     }
 
     public async calculateVeMintAmount(): Promise<void> {
@@ -78,6 +95,28 @@ export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreDa
             return
         }
 
+        const onTransactionSuccess = async (result: TransactionSuccessResult<QubeDaoDepositSuccessResult>) => {
+            if (this.dao.wallet.address !== undefined) {
+                const response = await this.api.gaugesByUserAddress({}, {
+                    method: 'POST',
+                }, { userAddress: this.dao.wallet.address })
+
+                const userGauges = response.gauges.filter(gauge => gauge.hasQubeReward)
+
+                if (userGauges.length === 0) {
+                    this.setData('userGauges', [])
+                    await this.options.callbacks?.onTransactionSuccess?.(result)
+                }
+                else {
+                    toast.dismiss(`toast__${result.callId}`)
+                    this.setData('userGauges', userGauges)
+                }
+            }
+            else {
+                await this.options.callbacks?.onTransactionSuccess?.(result)
+            }
+        }
+
         await this.dao.deposit({
             amount: new BigNumber(this.amount || 0).shiftedBy(this.dao.tokenDecimals).toFixed(),
             lockPeriod: this.lockPeriod * SECONDS_IN_DAY,
@@ -92,7 +131,7 @@ export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreDa
                 })
             },
             onTransactionFailure: this.options.callbacks?.onTransactionFailure,
-            onTransactionSuccess: this.options.callbacks?.onTransactionSuccess,
+            onTransactionSuccess,
         })
     }
 
@@ -102,6 +141,10 @@ export class QubeDaoDepositFormStore extends BaseStore<QubeDaoDepositFormStoreDa
 
     public get lockPeriod(): QubeDaoDepositFormStoreData['lockPeriod'] {
         return this.data.lockPeriod
+    }
+
+    public get userGauges(): QubeDaoDepositFormStoreData['userGauges'] {
+        return this.data.userGauges
     }
 
     public get veMintAmount(): QubeDaoDepositFormStoreData['veMintAmount'] {

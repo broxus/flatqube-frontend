@@ -8,8 +8,8 @@ tags:
 - name: reward_rounds
 - name: transactions
 servers:
-- url: https://qube-farming-test.flatqube.io
-- url: https://qube-farming.flatqube.io
+- url: https://farming-test.flatqube.io/v2
+- url: https://farming.flatqube.io/v2
 paths:
   /reward-rounds/qube:
     post:
@@ -125,6 +125,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GaugeBatchResponse'
+  /gauges/batch-custom-apr:
+    post:
+      tags:
+      - gauges
+      summary: Get gauge list batched with optional custom qube farm speed
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GaugeCustomAprRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaugeBatchResponse'
   /gauges/starred:
     post:
       tags:
@@ -163,6 +182,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SingleGaugeResponse'
+  /gauges/get-by-root:
+    post:
+      tags:
+      - gauges
+      summary: Get gauge by lp root address
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GaugeLpRootRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaugeCompleteResponse'
+  /gauges/get-by-user:
+    post:
+      tags:
+      - gauges
+      summary: Get gauges list by wallet address
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGaugesRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GaugeBatchResponse'
   /gauges/tvl:
     post:
       tags:
@@ -224,7 +281,7 @@ paths:
     post:
       tags:
       - gauges
-      summary: Get user history balance with lb breakdown
+      summary: Get user history balance with lp breakdown
       requestBody:
         required: true
         description: ''
@@ -239,8 +296,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserBalancesResponse'
+  /gauges/user-actual-balance:
+    post:
+      tags:
+      - gauges
+      summary: Get user actual balance with lp breakdown
+      requestBody:
+        required: true
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserBalanceRequest'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActualBalancesResponse'
 components:
   schemas:
+    CurrentBalance:
+      type: object
+      properties:
+        lpAmount:
+          description: Decimal value
+          type: string
+        lpBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoolTokenInfoWithPrice'
+      required:
+      - lpBreakdown
+      - lpAmount
     Deposit:
       type: object
       properties:
@@ -326,6 +415,31 @@ components:
         to:
           description: Decimal value
           type: string
+    FromToNumeric:
+      nullable: true
+      type: object
+      properties:
+        from:
+          nullable: true
+          type: integer
+          format: int64
+        to:
+          nullable: true
+          type: integer
+          format: int64
+      required:
+      - from
+      - to
+    GaugeBatchInfo:
+      type: object
+      properties:
+        gaugeAddress:
+          type: string
+        suggestedQubeFarmingSpeed:
+          description: Decimal value
+          type: string
+      required:
+      - gaugeAddress
     GaugeBatchRequest:
       type: object
       properties:
@@ -341,9 +455,59 @@ components:
         gauges:
           type: array
           items:
+            $ref: '#/components/schemas/GaugeInfo'
+      required:
+      - gauges
+    GaugeCompleteResponse:
+      type: object
+      properties:
+        gauges:
+          type: array
+          items:
             $ref: '#/components/schemas/GaugeItem'
       required:
       - gauges
+    GaugeCustomAprRequest:
+      type: object
+      properties:
+        gauges:
+          type: array
+          items:
+            $ref: '#/components/schemas/GaugeBatchInfo'
+      required:
+      - gauges
+    GaugeInfo:
+      type: object
+      properties:
+        address:
+          type: string
+        depositTokenRoot:
+          type: string
+        maxApr:
+          description: Decimal value
+          type: string
+        minApr:
+          description: Decimal value
+          type: string
+        poolTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/PoolTokenInfo'
+        rewardTokens:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardTokenInfo'
+        tvl:
+          description: Decimal value
+          type: string
+      required:
+      - address
+      - tvl
+      - minApr
+      - maxApr
+      - depositTokenRoot
+      - poolTokens
+      - rewardTokens
     GaugeItem:
       type: object
       properties:
@@ -355,6 +519,8 @@ components:
           nullable: true
           type: integer
           format: uint32
+        hasQubeReward:
+          type: boolean
         isLowBalance:
           type: boolean
         maxApr:
@@ -363,6 +529,12 @@ components:
         maxAprChange:
           description: Decimal value
           type: string
+        maxBoost:
+          type: number
+          format: double
+        maxLockTime:
+          type: integer
+          format: int32
         minApr:
           description: Decimal value
           type: string
@@ -392,12 +564,15 @@ components:
       - depositTokenRoot
       - poolTokens
       - rewardTokens
+      - maxBoost
+      - maxLockTime
       - tvl
       - tvlChange
       - minApr
       - minAprChange
       - maxApr
       - maxAprChange
+      - hasQubeReward
       - isLowBalance
       - startTime
       - endTime
@@ -418,6 +593,8 @@ components:
         offset:
           type: integer
           format: uint32
+        ordering:
+          $ref: '#/components/schemas/Ordering'
         showLowBalance:
           nullable: true
           type: boolean
@@ -434,6 +611,13 @@ components:
       - whitelistUri
       - limit
       - offset
+    GaugeLpRootRequest:
+      type: object
+      properties:
+        lpAddress:
+          type: string
+      required:
+      - lpAddress
     GaugeResponse:
       type: object
       properties:
@@ -465,6 +649,17 @@ components:
       - balance
       - lpBreakdown
       - lastUpdated
+    Ordering:
+      nullable: true
+      type: string
+      enum:
+      - TvlDesc
+      - TvlAsc
+      - MinAprDesc
+      - MinAprAsc
+      - MaxAprDesc
+      - MaxAprAsc
+      example: TvlDesc
     PoolTokenInfo:
       type: object
       properties:
@@ -479,6 +674,24 @@ components:
       - tokenRoot
       - tokenSymbol
       - amount
+    PoolTokenInfoWithPrice:
+      type: object
+      properties:
+        amount:
+          description: Decimal value
+          type: string
+        tokenRoot:
+          type: string
+        tokenSymbol:
+          type: string
+        value:
+          description: Decimal value
+          type: string
+      required:
+      - tokenRoot
+      - tokenSymbol
+      - amount
+      - value
     RewardRound:
       type: object
       properties:
@@ -684,6 +897,7 @@ components:
           items:
             $ref: '#/components/schemas/EventType'
         gaugeAddress:
+          nullable: true
           type: string
         limit:
           type: integer
@@ -691,6 +905,8 @@ components:
         offset:
           type: integer
           format: uint32
+        timestamp:
+          $ref: '#/components/schemas/FromToNumeric'
         userAddress:
           nullable: true
           type: string
@@ -700,6 +916,7 @@ components:
       - offset
       - userAddress
       - gaugeAddress
+      - timestamp
     TransactionResponse:
       type: object
       properties:
@@ -713,6 +930,13 @@ components:
       required:
       - transactions
       - total
+    UserActualBalancesResponse:
+      type: object
+      properties:
+        balance:
+          $ref: '#/components/schemas/CurrentBalance'
+      required:
+      - balance
     UserBalanceRequest:
       type: object
       properties:
@@ -730,3 +954,10 @@ components:
           $ref: '#/components/schemas/HistoryBalance'
       required:
       - historyBalance
+    UserGaugesRequest:
+      type: object
+      properties:
+        userAddress:
+          type: string
+      required:
+      - userAddress

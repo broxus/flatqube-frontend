@@ -1,0 +1,27 @@
+.mobileToolbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1;
+    background: #1E2444;
+    flex-direction: row;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.16);
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+        background: linear-gradient(0deg, rgba(5, 11, 46, 0.12), rgba(5, 11, 46, 0.12)), rgba(255, 255, 255, 0.12);
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+    }
+}
+
+.title {
+    font-size: 18px;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    font-weight: 600;
+}

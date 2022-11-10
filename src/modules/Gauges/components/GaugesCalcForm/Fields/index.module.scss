@@ -1,0 +1,62 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    grid-gap: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 24px;
+
+    hr {
+        opacity: 0.16;
+    }
+
+    &.asPopup {
+        border: none;
+        padding: 0;
+    }
+}
+
+.title {
+    font-size: 18px;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    font-weight: 600;
+}
+
+
+.label {
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.6px;
+    font-weight: 500;
+    margin: 0 0 4px;
+}
+
+.hint {
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.2px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.48);
+    margin: 4px 0 0;
+}
+
+.slider {
+    margin: 0 0 8px;
+
+    @media (max-width: 959px) {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+.prefix {
+    font-size: 14px;
+    letter-spacing: 0.1px;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    grid-gap: 16px;
+}

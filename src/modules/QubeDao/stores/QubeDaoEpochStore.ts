@@ -5,7 +5,7 @@ import { DateTime } from 'luxon'
 
 import { useQubeDaoApi } from '@/modules/QubeDao/hooks/useApi'
 import { QubeDaoStore } from '@/modules/QubeDao/stores/QubeDaoStore'
-import type { GaugeItem, QubeDaoEpochVotesSumResponse } from '@/modules/QubeDao/types'
+import type { GaugeInfo, QubeDaoEpochVotesSumResponse } from '@/modules/QubeDao/types'
 import { BaseStore } from '@/stores/BaseStore'
 import { error, isGoodBignumber } from '@/utils'
 
@@ -15,7 +15,7 @@ export type QubeDaoEpochStoreData = {
     epochNum?: number;
     epochStart: number | null;
     epochVotesSummary: QubeDaoEpochVotesSumResponse[];
-    gaugesDetails: { [gaugeAddress: string]: GaugeItem['poolTokens'] };
+    gaugesDetails: { [gaugeAddress: string]: GaugeInfo['poolTokens'] };
     normalizedDistribution: { [gaugeAddress: string]: string };
     totalDistribution: string;
     totalVeAmount: string;
@@ -503,7 +503,7 @@ export class QubeDaoEpochStore extends BaseStore<QubeDaoEpochStoreData, QubeDaoE
         return isGoodBignumber(value) ? value.toFixed() : '0'
     }
 
-    public gaugeDetails(gauge: string): GaugeItem['poolTokens'] | undefined {
+    public gaugeDetails(gauge: string): GaugeInfo['poolTokens'] | undefined {
         return this.data.gaugesDetails[gauge]
     }
 

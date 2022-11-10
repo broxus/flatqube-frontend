@@ -70,9 +70,16 @@ export function DesktopNav(): JSX.Element {
                     </NavLink>
                 </Nav.Item>
                 <Nav.Item key="farming_v2">
-                    <NavLink to="/gauges">
+                    <NavLink to="/gauges" exact>
                         {intl.formatMessage({
                             id: 'NAV_LINK_TEXT_FARMING_NEW',
+                        })}
+                    </NavLink>
+                </Nav.Item>
+                <Nav.Item key="farming_calc">
+                    <NavLink exact to="/gauges/calc">
+                        {intl.formatMessage({
+                            id: 'NAV_LINK_TEXT_FARMING_CALC',
                         })}
                     </NavLink>
                 </Nav.Item>

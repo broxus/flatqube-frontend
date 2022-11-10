@@ -4,7 +4,7 @@ import { BaseStore } from '@/stores/BaseStore'
 import { useQubeDaoApi } from '@/modules/QubeDao/hooks/useApi'
 import { QubeDaoStore } from '@/modules/QubeDao/stores/QubeDaoStore'
 import type {
-    GaugeItem,
+    GaugeInfo,
     QubeDaoPagination,
     QubeDaoWhitelistGaugeResponse,
     QubeDaoWhitelistOrdering,
@@ -12,7 +12,7 @@ import type {
 
 export type QubeDaoCandidatesStoreData = {
     candidates: QubeDaoWhitelistGaugeResponse[];
-    gaugesDetails: { [gaugeAddress: string]: Pick<GaugeItem, 'poolTokens' | 'tvl'> };
+    gaugesDetails: { [gaugeAddress: string]: Pick<GaugeInfo, 'poolTokens' | 'tvl'> };
 }
 
 export type QubeDaoCandidatesStoreState = {
@@ -131,7 +131,7 @@ export class QubeDaoCandidatesStore extends BaseStore<QubeDaoCandidatesStoreData
         return this.state.pagination
     }
 
-    public gaugeDetails(gauge: string): Pick<GaugeItem, 'poolTokens' | 'tvl'> | undefined {
+    public gaugeDetails(gauge: string): Pick<GaugeInfo, 'poolTokens' | 'tvl'> | undefined {
         return this.data.gaugesDetails[gauge]
     }
 

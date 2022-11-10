@@ -20,8 +20,8 @@ import type {
     QubeDaoEpochVotesResponse,
     QubeDaoEpochVotesSumResponse,
     QubeDaoGaugeBatchRequest,
-    QubeDaoGaugesRequest,
-    QubeDaoGaugesResponse,
+    QubeDaoGaugesByUserAddressRequest,
+    QubeDaoGaugesByUserAddressResponse,
     QubeDaoMainPageResponse,
     QubeDaoTransactionsRequest,
     QubeDaoTransactionsResponse,
@@ -75,10 +75,10 @@ const qubeDaoApi = {
         qubeDaoApiRoutes.gaugesBatch,
         GAUGES_API_URL,
     )<GaugeBatchResponse, QubeDaoGaugeBatchRequest>(),
-    gaugesSearch: createHandler(
-        qubeDaoApiRoutes.gaugesSearch,
-        QUBE_API_URL,
-    )<QubeDaoGaugesResponse, QubeDaoGaugesRequest>(),
+    gaugesByUserAddress: createHandler(
+        qubeDaoApiRoutes.gaugesByUserAddress,
+        GAUGES_API_URL,
+    )<QubeDaoGaugesByUserAddressResponse, QubeDaoGaugesByUserAddressRequest>(),
     mainPage: createHandler(qubeDaoApiRoutes.mainPage, QUBE_API_URL)<QubeDaoMainPageResponse, never>(),
     transactionsSearch: createHandler(
         qubeDaoApiRoutes.transactionsSearch,
