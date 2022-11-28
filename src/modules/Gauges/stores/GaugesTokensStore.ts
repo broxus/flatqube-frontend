@@ -1,11 +1,9 @@
 import { makeAutoObservable, runInAction } from 'mobx'
 import { Mutex } from '@broxus/await-semaphore'
-import { Address } from 'everscale-inpage-provider'
 
 import { TokensListService } from '@/stores/TokensListService'
 import { error } from '@/utils'
-import { Token } from '@/misc'
-import { tokensHandler } from '@/modules/Gauges/utils'
+import { Token, TokenWallet } from '@/misc'
 
 type Data = {
     tokens: {[k: string]: Token | undefined}
@@ -32,19 +30,14 @@ export class GaugesTokensStore {
             }
 
             try {
-                const rawToken = await tokensHandler({
-                    address: root,
-                }, {
-                    method: 'GET',
-                })
+                const rawToken = await TokenWallet.getTokenFullDetails(root)
 
-                const token: Token = {
-                    ...rawToken,
-                    root,
-                    rootOwnerAddress: new Address(rawToken.rootOwnerAddress),
-                }
+                if (rawToken) {
+                    const token: Token = {
+                        ...rawToken,
+                        root,
+                    }
 
-                if (token) {
                     runInAction(() => {
                         this.data.tokens = {
                             ...this.data.tokens,

@@ -1,7 +1,7 @@
 import {
     IReactionDisposer, makeAutoObservable, reaction, runInAction, toJS,
 } from 'mobx'
-import { Address } from 'everscale-inpage-provider'
+import { Address, FullContractState } from 'everscale-inpage-provider'
 import BigNumber from 'bignumber.js'
 
 import { useStaticRpc } from '@/hooks/useStaticRpc'
@@ -73,7 +73,7 @@ export class GaugesDataStore {
         this.data = {}
     }
 
-    public async syncDetails(): Promise<void> {
+    public async syncDetails(cachedState?: FullContractState): Promise<void> {
         let maxLockTime = this.data.maxLockTime ?? '0',
             { ownerAddress, veAddress } = this.data
 
@@ -88,7 +88,7 @@ export class GaugesDataStore {
                 )
                 const details = await rootContract.methods
                     .getDetails({})
-                    .call()
+                    .call({ cachedState })
 
                 maxLockTime = details._maxLockTime
                 ownerAddress = details._owner.toString()
@@ -106,7 +106,7 @@ export class GaugesDataStore {
         })
     }
 
-    public async syncRewardDetails(): Promise<void> {
+    public async syncRewardDetails(cachedState?: FullContractState): Promise<void> {
         let { rewardDetails } = this.data
 
         if (!this.data.id) {
@@ -121,7 +121,7 @@ export class GaugesDataStore {
 
             rewardDetails = await rootContract.methods
                 .getRewardDetails({})
-                .call()
+                .call({ cachedState })
         }
         catch (e) {
             error('DataStore.syncRewardDetails', e)
@@ -132,7 +132,23 @@ export class GaugesDataStore {
         })
     }
 
-    public async syncTokenDetails(): Promise<void> {
+    public async getGaugeContractState(): Promise<FullContractState | undefined> {
+        if (this.data.id) {
+            try {
+                const { state } = await this.staticRpc.getFullContractState({
+                    address: new Address(this.data.id),
+                })
+                return state
+            }
+            catch (e) {
+                error(e)
+                return undefined
+            }
+        }
+        return undefined
+    }
+
+    public async syncTokenDetails(cachedState?: FullContractState): Promise<void> {
         let { tokenDetails } = this.data
 
         if (!this.data.id) {
@@ -145,7 +161,8 @@ export class GaugesDataStore {
                     new Address(this.data.id),
                 )
 
-                tokenDetails = await rootContract.methods.getTokenDetails({}).call()
+                tokenDetails = await rootContract.methods.getTokenDetails({})
+                    .call({ cachedState })
             }
             catch (e) {
                 error('DataStore.syncTokenDetails', e)
@@ -295,11 +312,15 @@ export class GaugesDataStore {
             return
         }
         try {
-            await Promise.allSettled([
+            const [contractState] = await Promise.all([
+                this.getGaugeContractState(),
                 this.syncApi(),
-                this.syncTokenDetails(),
-                this.syncRewardDetails(),
-                this.syncDetails(),
+            ])
+
+            await Promise.allSettled([
+                this.syncTokenDetails(contractState),
+                this.syncRewardDetails(contractState),
+                this.syncDetails(contractState),
             ])
             await Promise.allSettled([
                 this.syncRootToken(),
