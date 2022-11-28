@@ -1,7 +1,7 @@
 import {
     IReactionDisposer, makeAutoObservable, reaction, runInAction,
 } from 'mobx'
-import { Address } from 'everscale-inpage-provider'
+import { Address, FullContractState } from 'everscale-inpage-provider'
 import BigNumber from 'bignumber.js'
 
 import { WalletService } from '@/stores/WalletService'
@@ -104,39 +104,57 @@ export class GaugesUserDataStore {
         this.data = {}
     }
 
-    public async getUserAddress(gauge: string, owner: string): Promise<string | undefined> {
+    public async getGaugeData(gauge: string, owner: string): Promise<[string | undefined, SyncData | undefined]> {
         try {
+            const { state } = await this.staticRpc.getFullContractState({
+                address: new Address(gauge),
+            })
             const rootContract = new this.staticRpc.Contract(
                 GaugeAbi.Root,
                 new Address(gauge),
             )
-            const userAddress = await rootContract.methods
+            const { value0: address } = await rootContract.methods
                 .getGaugeAccountAddress({
                     answerId: 0,
                     user: new Address(owner),
-                }).call()
-            return userAddress.value0.toString()
+                })
+                .call({ cachedState: state })
+            const { value0: syncData } = await rootContract.methods
+                .calcSyncData({})
+                .call({ cachedState: state })
+
+            return [address.toString(), syncData]
         }
         catch (e) {
-            error('UserDataStore.getUserAddress', e)
-            return undefined
+            error('GaugesUserDataStore.getGaugeData', e)
         }
+        return [undefined, undefined]
     }
 
-    public async getBalance(user: string): Promise<string | undefined> {
+    public async getUserData(user: string): Promise<[string | undefined, LockBalanceAverage | undefined]> {
         try {
+            const { state } = await this.staticRpc.getFullContractState({
+                address: new Address(user),
+            })
             const account = new this.staticRpc.Contract(
                 GaugeAbi.Account,
                 new Address(user),
             )
-            const result = await account.methods.getDetails({ answerId: 0 }).call()
-            return result._balance
+            const details = await account.methods
+                .getDetails({ answerId: 0 })
+                .call({ cachedState: state })
+
+            const lockBalanceAverage = await account.methods
+                .calculateLockBalanceAverage({})
+                .call({ cachedState: state })
+
+            return [details._balance, lockBalanceAverage]
         }
         catch (e: any) {
             if (e && e.code !== 2) {
                 error('UserDataStore.getBalance', e)
             }
-            return undefined
+            return [undefined, undefined]
         }
     }
 
@@ -171,70 +189,33 @@ export class GaugesUserDataStore {
         }
     }
 
-    public async getLockBalanceAverage(user: string): Promise<LockBalanceAverage | undefined> {
+    public async getVeData(veAddress: string, owner: string): Promise<[VeAverage | undefined, string | undefined]> {
         try {
-            const accountContract = new this.staticRpc.Contract(
-                GaugeAbi.Account,
-                new Address(user),
-            )
-            const result = await accountContract.methods
-                .calculateLockBalanceAverage({}).call()
-            return result
-        }
-        catch (e: any) {
-            if (e && e.code !== 2) {
-                error('UserDataStore.getLockBalanceAverage', e)
-            }
-            return undefined
-        }
-    }
-
-    public async getVeAverage(veAddress: string): Promise<VeAverage | undefined> {
-        try {
+            const { state } = await this.staticRpc.getFullContractState({
+                address: new Address(veAddress),
+            })
             const voteEscrow = new this.staticRpc.Contract(
                 VoteEscrowAbi.Root,
                 new Address(veAddress),
             )
-            const veAverage = await voteEscrow.methods.calculateAverage({}).call()
-            return veAverage
-        }
-        catch (e) {
-            error('UserDataStore.getVeAverage', e)
-            return undefined
-        }
-    }
 
-    public async getVeAccountAddress(veAddress: string, owner: string): Promise<string | undefined> {
-        try {
-            const voteEscrow = new this.staticRpc.Contract(
-                VoteEscrowAbi.Root,
-                new Address(veAddress),
-            )
-            const result = await voteEscrow.methods.getVoteEscrowAccountAddress({
-                answerId: 0,
-                user: new Address(owner),
-            }).call()
-            return result.value0.toString()
-        }
-        catch (e) {
-            error('UserDataStore.getVeAccountAddress', e)
-            return undefined
-        }
-    }
+            const veAverage = await voteEscrow.methods
+                .calculateAverage({})
+                .call({ cachedState: state })
 
-    public async getSyncData(gauge: string): Promise<SyncData | undefined> {
-        try {
-            const gaugeContract = new this.staticRpc.Contract(
-                GaugeAbi.Root,
-                new Address(gauge),
-            )
-            const result = await gaugeContract.methods.calcSyncData({}).call()
-            return result.value0
+            const { value0 } = await voteEscrow.methods
+                .getVoteEscrowAccountAddress({
+                    answerId: 0,
+                    user: new Address(owner),
+                })
+                .call({ cachedState: state })
+
+            return [veAverage, value0.toString()]
         }
         catch (e) {
-            error('UserDataStore.getSyncData', e)
-            return undefined
+            error(e)
         }
+        return [undefined, undefined]
     }
 
     public async getVeAccountAverage(veAccountAddress: string): Promise<VeAccountAverage | undefined> {
@@ -252,11 +233,25 @@ export class GaugesUserDataStore {
         }
     }
 
+    public async getUserAccountContractState(userAddress: string): Promise<FullContractState | undefined> {
+        try {
+            const { state } = await this.staticRpc.getFullContractState({
+                address: new Address(userAddress),
+            })
+            return state
+        }
+        catch (e) {
+            error(e)
+            return undefined
+        }
+    }
+
     public async getPendingReward(
         userAddress: string,
         veAverage: VeAverage,
         veAccountAverage: VeAccountAverage,
         syncData: SyncData,
+        cachedState?: FullContractState,
     ): Promise<PendingReward | undefined> {
         try {
             const account = new this.staticRpc.Contract(
@@ -270,7 +265,8 @@ export class GaugesUserDataStore {
                     _veQubeAverage: veAverage._veQubeAverage,
                     _veQubeAveragePeriod: veAverage._veQubeAveragePeriod,
                     gauge_sync_data: syncData,
-                }).call()
+                })
+                .call({ cachedState })
             return pendingReward
         }
         catch (e: any) {
@@ -289,6 +285,7 @@ export class GaugesUserDataStore {
         veAverage: VeAverage,
         syncData: SyncData,
         qubeSpeed: string,
+        cachedState?: FullContractState,
     ): Promise<AprBoost | undefined> {
         try {
             const account = new this.staticRpc.Contract(
@@ -302,7 +299,8 @@ export class GaugesUserDataStore {
                     _lockBoostedBalance: lockBalanceAverage._lockBoostedBalance,
                     _veAccBalance: veAccountAverage._veQubeBalance,
                     _veSupply: veAverage?._veQubeBalance,
-                }).call()
+                })
+                .call({ cachedState })
 
             const div = new BigNumber(10).pow(18)
 
@@ -375,7 +373,7 @@ export class GaugesUserDataStore {
                     })
                 }
 
-                const userAddress = await this.getUserAddress(id, owner)
+                const [userAddress, syncData] = await this.getGaugeData(id, owner)
 
                 runInAction(() => {
                     this.data.address = userAddress
@@ -383,15 +381,14 @@ export class GaugesUserDataStore {
                 })
 
                 const [
-                    syncData, veAverage, veAccountAddress, balance, walletBalance,
-                    lockBalanceAverage, historyBalance,
+                    [veAverage, veAccountAddress],
+                    [balance, lockBalanceAverage],
+                    walletBalance,
+                    historyBalance,
                 ] = await Promise.all([
-                    this.getSyncData(id),
-                    this.getVeAverage(veAddress),
-                    this.getVeAccountAddress(veAddress, owner),
-                    userAddress ? await this.getBalance(userAddress) : undefined,
+                    this.getVeData(veAddress, owner),
+                    userAddress ? await this.getUserData(userAddress) : [],
                     this.getWalletBalance(token, owner),
-                    userAddress ? this.getLockBalanceAverage(userAddress) : undefined,
                     GaugesUserDataStore.getHistoryBalance(id, owner),
                 ])
 
@@ -409,6 +406,10 @@ export class GaugesUserDataStore {
                     ? await this.getVeAccountAverage(veAccountAddress)
                     : undefined
 
+                const userAccountContractState = userAddress
+                    ? await this.getUserAccountContractState(userAddress)
+                    : undefined
+
                 const [pendingReward, aprBoost] = await Promise.all([
                     userAddress && veAverage && veAccountAverage && syncData
                         ? this.getPendingReward(
@@ -416,6 +417,7 @@ export class GaugesUserDataStore {
                             veAverage,
                             veAccountAverage,
                             syncData,
+                            userAccountContractState,
                         )
                         : undefined,
                     userAddress && lockBalanceAverage && veAccountAverage && veAverage && syncData
@@ -427,6 +429,7 @@ export class GaugesUserDataStore {
                             veAverage,
                             syncData,
                             qubeTokenSpeed,
+                            userAccountContractState,
                         )
                         : undefined,
                 ])
