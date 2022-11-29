@@ -3,7 +3,8 @@ import BigNumber from 'bignumber.js'
 import classNames from 'classnames'
 import { when } from 'mobx'
 import { Observer } from 'mobx-react-lite'
-import { useIntl } from 'react-intl'
+import { IntlShape, useIntl } from 'react-intl'
+import { BarPrice, BarPrices } from 'lightweight-charts'
 
 import { RateChange } from '@/components/common/RateChange'
 import { Placeholder } from '@/components/common/Placeholder'
@@ -13,8 +14,109 @@ import { AverageLockTime } from '@/modules/QubeDao/components/QubeDaoBaseStats/c
 import { QubeDaoFarmBoostBanner } from '@/modules/QubeDao/components/QubeDaoBaseStats/components/FarmBoostBanner'
 import { badRateStyle, goodRateStyle, RatesChart } from '@/modules/QubeDao/components/QubeDaoBaseStats/components/RatesChart'
 import { formattedTokenAmount } from '@/utils'
+import {
+    SECONDS_IN_DAY, SECONDS_IN_HOUR, SECONDS_IN_MINUTE, SECONDS_IN_MONTH, SECONDS_IN_YEAR,
+} from '@/constants'
 
 import styles from './index.module.scss'
+
+function tokenAmountFormatter(symbol: string): (value: BarPrice | BarPrices | undefined) => string {
+    return (value: BarPrice | BarPrices | undefined) => `${formattedTokenAmount(value?.toString())} ${symbol}`
+}
+
+function averageLockFormatter(intl: IntlShape): (value: BarPrice | BarPrices | undefined) =>string {
+    return (value: BarPrice | BarPrices | undefined): string => {
+        const valueNumber = new BigNumber(value?.toString() ?? 0)
+        const currentValue = valueNumber.shiftedBy(valueNumber.decimalPlaces() ?? 0).toNumber()
+        const months = currentValue >= SECONDS_IN_YEAR
+            ? (currentValue % SECONDS_IN_YEAR) / SECONDS_IN_MONTH
+            : currentValue / SECONDS_IN_MONTH
+        const days = currentValue >= SECONDS_IN_MONTH
+            ? (currentValue % SECONDS_IN_MONTH) / SECONDS_IN_DAY
+            : currentValue / SECONDS_IN_DAY
+        const hours = currentValue >= SECONDS_IN_DAY
+            ? (currentValue % SECONDS_IN_DAY) / SECONDS_IN_HOUR
+            : currentValue / SECONDS_IN_HOUR
+        const minutes = currentValue >= SECONDS_IN_HOUR
+            ? (currentValue % SECONDS_IN_HOUR) / SECONDS_IN_MINUTE
+            : currentValue / SECONDS_IN_MINUTE
+
+        const units = {
+            days: currentValue > SECONDS_IN_DAY ? Math.floor(days) : 0,
+            hours: currentValue > SECONDS_IN_HOUR ? Math.floor(hours) : 0,
+            minutes: currentValue > SECONDS_IN_MINUTE ? Math.floor(minutes) : 0,
+            months: currentValue > SECONDS_IN_MONTH ? Math.floor(months) : 0,
+            years: currentValue > SECONDS_IN_YEAR
+                ? Math.floor(currentValue / SECONDS_IN_YEAR)
+                : 0,
+        }
+
+        switch (true) {
+            case units.years > 0:
+                return intl.formatMessage(
+                    { id: 'QUBE_DAO_STATS_AVERAGE_LOCK_TIME' },
+                    {
+                        days: 0,
+                        hours: 0,
+                        minutes: 0,
+                        months: units.months.toFixed(0),
+                        years: units.years.toFixed(0),
+                    },
+                )
+
+            case units.months > 0:
+                return intl.formatMessage(
+                    { id: 'QUBE_DAO_STATS_AVERAGE_LOCK_TIME' },
+                    {
+                        days: units.days.toFixed(0),
+                        hours: 0,
+                        minutes: 0,
+                        months: units.months.toFixed(0),
+                        years: 0,
+                    },
+                )
+
+            case units.days > 0:
+                return intl.formatMessage(
+                    { id: 'QUBE_DAO_STATS_AVERAGE_LOCK_TIME' },
+                    {
+                        days: units.days.toFixed(0),
+                        hours: units.hours.toFixed(0),
+                        minutes: 0,
+                        months: 0,
+                        years: 0,
+                    },
+                )
+
+            case units.hours > 0:
+                return intl.formatMessage(
+                    { id: 'QUBE_DAO_STATS_AVERAGE_LOCK_TIME' },
+                    {
+                        days: 0,
+                        hours: units.hours.toFixed(0),
+                        minutes: units.minutes.toFixed(0),
+                        months: 0,
+                        years: 0,
+                    },
+                )
+
+            case units.minutes > 0:
+                return intl.formatMessage(
+                    { id: 'QUBE_DAO_STATS_AVERAGE_LOCK_TIME' },
+                    {
+                        days: 0,
+                        hours: 0,
+                        minutes: units.minutes.toFixed(0),
+                        months: 0,
+                        years: 0,
+                    },
+                )
+
+            default:
+                return '—'
+        }
+    }
+}
 
 
 export function QubeDaoBaseStats(): JSX.Element {
@@ -79,6 +181,7 @@ export function QubeDaoBaseStats(): JSX.Element {
                                                         : goodRateStyle
                                                 }
                                                 data={baseStatsStore.tokenBalancesStats}
+                                                legendFormatter={tokenAmountFormatter(daoContext.tokenSymbol)}
                                                 loading={isFetchingBalancesStats}
                                             />
                                         </div>
@@ -109,6 +212,7 @@ export function QubeDaoBaseStats(): JSX.Element {
                                                         ? badRateStyle
                                                         : goodRateStyle
                                                 }
+                                                legendFormatter={averageLockFormatter(intl)}
                                                 data={baseStatsStore.averageLockTimesStats}
                                                 loading={isFetchingDepositsStats}
                                             />

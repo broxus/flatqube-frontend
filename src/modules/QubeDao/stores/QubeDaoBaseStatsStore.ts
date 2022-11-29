@@ -80,9 +80,9 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
             this.setState('isFetchingBalancesStats', true)
 
             const response = await this.api.balancesStatsSearch({}, { method: 'POST' }, {
-                dayGe: Math.ceil(DateTime.local().minus({ day: 9 }).toSeconds()),
+                dayGe: Math.ceil(DateTime.local().minus({ month: 2 }).toSeconds()),
                 dayLe: Math.ceil(DateTime.local().toSeconds()),
-                limit: 21,
+                limit: 30,
                 offset: 0,
                 ordering: {
                     column: 'day',
@@ -109,9 +109,9 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
             this.setState('isFetchingDepositsStats', true)
 
             const response = await this.api.depositsStatsSearch({}, { method: 'POST' }, {
-                dayGe: Math.ceil(DateTime.local().minus({ day: 9 }).toSeconds()),
+                dayGe: Math.ceil(DateTime.local().minus({ month: 2 }).toSeconds()),
                 dayLe: Math.ceil(DateTime.local().toSeconds()),
-                limit: 21,
+                limit: 30,
                 offset: 0,
                 ordering: {
                     column: 'day',
@@ -143,8 +143,8 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
 
         const stats = this.data.balancesStats.slice().sort((a, b) => a.day - b.day)
         const first = stats[0]?.day ?? DateTime.local().toSeconds()
-        const { days = 14 } = DateTime.local().diff(DateTime.fromSeconds(first), ['days', 'hours'])
-        const daysCount = days < 14 ? 14 : days
+        const { days = 28 } = DateTime.local().diff(DateTime.fromSeconds(first), ['days', 'hours'])
+        const daysCount = days < 28 ? 28 : days
 
         const dates = makeArray(daysCount, idx => DateTime.local().minus({ day: daysCount - idx }).toFormat('yyyy-LL-dd'))
 
@@ -176,15 +176,15 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
 
         const statsMap = this.data.depositsStats.slice().reduce<
             Record<string, QubeDaoDepositsStatsResponse['deposits'][number]>
-            >((acc, data) => {
-                acc[DateTime.fromSeconds(data.day).toFormat('yyyy-LL-dd')] = data
-                return acc
-            }, {})
+        >((acc, data) => {
+            acc[DateTime.fromSeconds(data.day).toFormat('yyyy-LL-dd')] = data
+            return acc
+        }, {})
 
         const stats = this.data.depositsStats.slice().sort((a, b) => a.day - b.day)
         const first = stats[0]?.day ?? DateTime.local().toSeconds()
-        const { days = 14 } = DateTime.local().diff(DateTime.fromSeconds(first), ['days', 'hours'])
-        const daysCount = days < 14 ? 14 : days
+        const { days = 28 } = DateTime.local().diff(DateTime.fromSeconds(first), ['days', 'hours'])
+        const daysCount = days < 28 ? 28 : days
 
         const dates = makeArray(daysCount, idx => DateTime.local().minus({ day: daysCount - idx }).toFormat('yyyy-LL-dd'))
 
@@ -219,11 +219,7 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
     public get averageLockTimesStats(): SingleValueData[] {
         return this.depositsStats.map(data => ({
             time: DateTime.fromSeconds(data.day).toObject(),
-            value: parseFloat(formattedTokenAmount(
-                data.averageLockTime,
-                this.dao.tokenDecimals,
-                { digitsSeparator: '' },
-            )),
+            value: data.averageLockTime,
         }))
     }
 
