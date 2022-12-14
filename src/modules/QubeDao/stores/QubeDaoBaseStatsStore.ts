@@ -82,7 +82,7 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
             const response = await this.api.balancesStatsSearch({}, { method: 'POST' }, {
                 dayGe: Math.ceil(DateTime.local().minus({ month: 2 }).toSeconds()),
                 dayLe: Math.ceil(DateTime.local().toSeconds()),
-                limit: 30,
+                limit: 60,
                 offset: 0,
                 ordering: {
                     column: 'day',
@@ -111,7 +111,7 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
             const response = await this.api.depositsStatsSearch({}, { method: 'POST' }, {
                 dayGe: Math.ceil(DateTime.local().minus({ month: 2 }).toSeconds()),
                 dayLe: Math.ceil(DateTime.local().toSeconds()),
-                limit: 30,
+                limit: 60,
                 offset: 0,
                 ordering: {
                     column: 'day',
