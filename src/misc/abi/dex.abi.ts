@@ -563,6 +563,236 @@ export abstract class DexAbi {
                 ],
             },
             {
+                name: 'buildExchangePayload',
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'deploy_wallet_grams', type: 'uint128' },
+                    { name: 'expected_amount', type: 'uint128' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildExchangePayloadV2',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_expectedAmount', type: 'uint128' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_referrer', type: 'address' },
+                    { name: '_successPayload', type: 'optional(cell)' },
+                    { name: '_cancelPayload', type: 'optional(cell)' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildDepositLiquidityPayload',
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'deploy_wallet_grams', type: 'uint128' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildDepositLiquidityPayloadV2',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_expectedAmount', type: 'uint128' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_referrer', type: 'address' },
+                    { name: '_successPayload', type: 'optional(cell)' },
+                    { name: '_cancelPayload', type: 'optional(cell)' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildWithdrawLiquidityPayload',
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'deploy_wallet_grams', type: 'uint128' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildWithdrawLiquidityPayloadV2',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_expectedLeftAmount', type: 'uint128' },
+                    { name: '_expectedRightAmount', type: 'uint128' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_referrer', type: 'address' },
+                    { name: '_successPayload', type: 'optional(cell)' },
+                    { name: '_cancelPayload', type: 'optional(cell)' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildCrossPairExchangePayload',
+                inputs: [
+                    { name: 'id', type: 'uint64' },
+                    { name: 'deploy_wallet_grams', type: 'uint128' },
+                    { name: 'expected_amount', type: 'uint128' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildCrossPairExchangePayloadV2',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_expectedAmount', type: 'uint128' },
+                    { name: '_outcoming', type: 'address' },
+                    { name: '_nextStepIndices', type: 'uint32[]' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'roots', type: 'address[]' }, { name: 'outcoming', type: 'address' }, { name: 'numerator', type: 'uint128' }, { name: 'nextStepIndices', type: 'uint32[]' }], name: '_steps', type: 'tuple[]' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_referrer', type: 'address' },
+                    { name: '_successPayload', type: 'optional(cell)' },
+                    { name: '_cancelPayload', type: 'optional(cell)' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'expectedDepositLiquidity',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                    { name: 'left_amount', type: 'uint128' },
+                    { name: 'right_amount', type: 'uint128' },
+                    { name: 'auto_change', type: 'bool' },
+                ],
+                outputs: [
+                    { components: [{ name: 'step_1_left_deposit', type: 'uint128' }, { name: 'step_1_right_deposit', type: 'uint128' }, { name: 'step_1_lp_reward', type: 'uint128' }, { name: 'step_2_left_to_right', type: 'bool' }, { name: 'step_2_right_to_left', type: 'bool' }, { name: 'step_2_spent', type: 'uint128' }, { name: 'step_2_fee', type: 'uint128' }, { name: 'step_2_received', type: 'uint128' }, { name: 'step_3_left_deposit', type: 'uint128' }, { name: 'step_3_right_deposit', type: 'uint128' }, { name: 'step_3_lp_reward', type: 'uint128' }], name: 'value0', type: 'tuple' },
+                ],
+            },
+            {
+                name: 'depositLiquidity',
+                inputs: [
+                    { name: '_callId', type: 'uint64' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_operations', type: 'tuple[]' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_expected', type: 'tuple' },
+                    { name: '_autoChange', type: 'bool' },
+                    { name: '_accountOwner', type: 'address' },
+                    { name: 'value5', type: 'uint32' },
+                    { name: '_remainingGasTo', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'expectedWithdrawLiquidity',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                    { name: 'lp_amount', type: 'uint128' },
+                ],
+                outputs: [
+                    { name: 'expected_left_amount', type: 'uint128' },
+                    { name: 'expected_right_amount', type: 'uint128' },
+                ],
+            },
+            {
+                name: 'withdrawLiquidity',
+                inputs: [
+                    { name: '_callId', type: 'uint64' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_operation', type: 'tuple' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'value2', type: 'tuple[]' },
+                    { name: '_accountOwner', type: 'address' },
+                    { name: 'value4', type: 'uint32' },
+                    { name: '_remainingGasTo', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'expectedExchange',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                    { name: 'amount', type: 'uint128' },
+                    { name: 'spent_token_root', type: 'address' },
+                ],
+                outputs: [
+                    { name: 'expected_amount', type: 'uint128' },
+                    { name: 'expected_fee', type: 'uint128' },
+                ],
+            },
+            {
+                name: 'expectedSpendAmount',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                    { name: 'receive_amount', type: 'uint128' },
+                    { name: 'receive_token_root', type: 'address' },
+                ],
+                outputs: [
+                    { name: 'expected_amount', type: 'uint128' },
+                    { name: 'expected_fee', type: 'uint128' },
+                ],
+            },
+            {
+                name: 'exchange',
+                inputs: [
+                    { name: '_callId', type: 'uint64' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_operation', type: 'tuple' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_expected', type: 'tuple' },
+                    { name: '_accountOwner', type: 'address' },
+                    { name: 'value4', type: 'uint32' },
+                    { name: '_remainingGasTo', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'crossPoolExchange',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: 'value1', type: 'uint32' },
+                    { name: 'value2', type: 'uint8' },
+                    { name: '_prevPoolTokenRoots', type: 'address[]' },
+                    { name: '_op', type: 'uint8' },
+                    { name: '_spentTokenRoot', type: 'address' },
+                    { name: '_spentAmount', type: 'uint128' },
+                    { name: '_senderAddress', type: 'address' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_remainingGasTo', type: 'address' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_payload', type: 'cell' },
+                    { name: '_notifySuccess', type: 'bool' },
+                    { name: '_successPayload', type: 'cell' },
+                    { name: '_notifyCancel', type: 'bool' },
+                    { name: '_cancelPayload', type: 'cell' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'onAcceptTokensTransfer',
+                inputs: [
+                    { name: '_tokenRoot', type: 'address' },
+                    { name: '_tokensAmount', type: 'uint128' },
+                    { name: '_senderAddress', type: 'address' },
+                    { name: '_senderWallet', type: 'address' },
+                    { name: '_remainingGasTo', type: 'address' },
+                    { name: '_payload', type: 'cell' },
+                ],
+                outputs: [
+                ],
+            },
+            {
                 name: 'getRoot',
                 inputs: [
                     { name: 'answerId', type: 'uint32' },
@@ -631,21 +861,12 @@ export abstract class DexAbi {
                 ],
             },
             {
-                name: 'setFeeParams',
-                inputs: [
-                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
-                    { name: 'send_gas_to', type: 'address' },
-                ],
-                outputs: [
-                ],
-            },
-            {
                 name: 'getFeeParams',
                 inputs: [
                     { name: 'answerId', type: 'uint32' },
                 ],
                 outputs: [
-                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'value0', type: 'tuple' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'referrer_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'value0', type: 'tuple' },
                 ],
             },
             {
@@ -655,14 +876,6 @@ export abstract class DexAbi {
                 ],
                 outputs: [
                     { name: 'accumulatedFees', type: 'uint128[]' },
-                ],
-            },
-            {
-                name: 'withdrawBeneficiaryFee',
-                inputs: [
-                    { name: 'send_gas_to', type: 'address' },
-                ],
-                outputs: [
                 ],
             },
             {
@@ -684,164 +897,18 @@ export abstract class DexAbi {
                 ],
             },
             {
-                name: 'buildExchangePayload',
+                name: 'setFeeParams',
                 inputs: [
-                    { name: 'id', type: 'uint64' },
-                    { name: 'deploy_wallet_grams', type: 'uint128' },
-                    { name: 'expected_amount', type: 'uint128' },
-                ],
-                outputs: [
-                    { name: 'value0', type: 'cell' },
-                ],
-            },
-            {
-                name: 'buildDepositLiquidityPayload',
-                inputs: [
-                    { name: 'id', type: 'uint64' },
-                    { name: 'deploy_wallet_grams', type: 'uint128' },
-                ],
-                outputs: [
-                    { name: 'value0', type: 'cell' },
-                ],
-            },
-            {
-                name: 'buildWithdrawLiquidityPayload',
-                inputs: [
-                    { name: 'id', type: 'uint64' },
-                    { name: 'deploy_wallet_grams', type: 'uint128' },
-                ],
-                outputs: [
-                    { name: 'value0', type: 'cell' },
-                ],
-            },
-            {
-                name: 'buildCrossPairExchangePayload',
-                inputs: [
-                    { name: 'id', type: 'uint64' },
-                    { name: 'deploy_wallet_grams', type: 'uint128' },
-                    { name: 'expected_amount', type: 'uint128' },
-                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
-                ],
-                outputs: [
-                    { name: 'value0', type: 'cell' },
-                ],
-            },
-            {
-                name: 'onAcceptTokensTransfer',
-                inputs: [
-                    { name: 'token_root', type: 'address' },
-                    { name: 'tokens_amount', type: 'uint128' },
-                    { name: 'sender_address', type: 'address' },
-                    { name: 'sender_wallet', type: 'address' },
-                    { name: 'original_gas_to', type: 'address' },
-                    { name: 'payload', type: 'cell' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'referrer_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: '_params', type: 'tuple' },
+                    { name: '_remainingGasTo', type: 'address' },
                 ],
                 outputs: [
                 ],
             },
             {
-                name: 'expectedDepositLiquidity',
+                name: 'withdrawBeneficiaryFee',
                 inputs: [
-                    { name: 'answerId', type: 'uint32' },
-                    { name: 'left_amount', type: 'uint128' },
-                    { name: 'right_amount', type: 'uint128' },
-                    { name: 'auto_change', type: 'bool' },
-                ],
-                outputs: [
-                    { components: [{ name: 'step_1_left_deposit', type: 'uint128' }, { name: 'step_1_right_deposit', type: 'uint128' }, { name: 'step_1_lp_reward', type: 'uint128' }, { name: 'step_2_left_to_right', type: 'bool' }, { name: 'step_2_right_to_left', type: 'bool' }, { name: 'step_2_spent', type: 'uint128' }, { name: 'step_2_fee', type: 'uint128' }, { name: 'step_2_received', type: 'uint128' }, { name: 'step_3_left_deposit', type: 'uint128' }, { name: 'step_3_right_deposit', type: 'uint128' }, { name: 'step_3_lp_reward', type: 'uint128' }], name: 'value0', type: 'tuple' },
-                ],
-            },
-            {
-                name: 'depositLiquidity',
-                inputs: [
-                    { name: 'call_id', type: 'uint64' },
-                    { name: 'left_amount', type: 'uint128' },
-                    { name: 'right_amount', type: 'uint128' },
-                    { name: 'expected_lp_root', type: 'address' },
-                    { name: 'auto_change', type: 'bool' },
-                    { name: 'account_owner', type: 'address' },
-                    { name: 'value6', type: 'uint32' },
                     { name: 'send_gas_to', type: 'address' },
-                ],
-                outputs: [
-                ],
-            },
-            {
-                name: 'expectedWithdrawLiquidity',
-                inputs: [
-                    { name: 'answerId', type: 'uint32' },
-                    { name: 'lp_amount', type: 'uint128' },
-                ],
-                outputs: [
-                    { name: 'expected_left_amount', type: 'uint128' },
-                    { name: 'expected_right_amount', type: 'uint128' },
-                ],
-            },
-            {
-                name: 'withdrawLiquidity',
-                inputs: [
-                    { name: 'call_id', type: 'uint64' },
-                    { name: 'lp_amount', type: 'uint128' },
-                    { name: 'expected_lp_root', type: 'address' },
-                    { name: 'account_owner', type: 'address' },
-                    { name: 'value4', type: 'uint32' },
-                    { name: 'send_gas_to', type: 'address' },
-                ],
-                outputs: [
-                ],
-            },
-            {
-                name: 'expectedExchange',
-                inputs: [
-                    { name: 'answerId', type: 'uint32' },
-                    { name: 'amount', type: 'uint128' },
-                    { name: 'spent_token_root', type: 'address' },
-                ],
-                outputs: [
-                    { name: 'expected_amount', type: 'uint128' },
-                    { name: 'expected_fee', type: 'uint128' },
-                ],
-            },
-            {
-                name: 'expectedSpendAmount',
-                inputs: [
-                    { name: 'answerId', type: 'uint32' },
-                    { name: 'receive_amount', type: 'uint128' },
-                    { name: 'receive_token_root', type: 'address' },
-                ],
-                outputs: [
-                    { name: 'expected_amount', type: 'uint128' },
-                    { name: 'expected_fee', type: 'uint128' },
-                ],
-            },
-            {
-                name: 'exchange',
-                inputs: [
-                    { name: 'call_id', type: 'uint64' },
-                    { name: 'spent_amount', type: 'uint128' },
-                    { name: 'spent_token_root', type: 'address' },
-                    { name: 'receive_token_root', type: 'address' },
-                    { name: 'expected_amount', type: 'uint128' },
-                    { name: 'account_owner', type: 'address' },
-                    { name: 'value6', type: 'uint32' },
-                    { name: 'send_gas_to', type: 'address' },
-                ],
-                outputs: [
-                ],
-            },
-            {
-                name: 'crossPairExchange',
-                inputs: [
-                    { name: 'id', type: 'uint64' },
-                    { name: 'value1', type: 'uint32' },
-                    { name: 'prev_pair_left_root', type: 'address' },
-                    { name: 'prev_pair_right_root', type: 'address' },
-                    { name: 'spent_token_root', type: 'address' },
-                    { name: 'spent_amount', type: 'uint128' },
-                    { name: 'sender_address', type: 'address' },
-                    { name: 'original_gas_to', type: 'address' },
-                    { name: 'deploy_wallet_grams', type: 'uint128' },
-                    { name: 'payload', type: 'cell' },
                 ],
                 outputs: [
                 ],
@@ -849,7 +916,7 @@ export abstract class DexAbi {
             {
                 name: 'checkPair',
                 inputs: [
-                    { name: 'account_owner', type: 'address' },
+                    { name: '_accountOwner', type: 'address' },
                     { name: 'value1', type: 'uint32' },
                 ],
                 outputs: [
@@ -858,26 +925,10 @@ export abstract class DexAbi {
             {
                 name: 'upgrade',
                 inputs: [
-                    { name: 'code', type: 'cell' },
-                    { name: 'new_version', type: 'uint32' },
-                    { name: 'new_type', type: 'uint8' },
-                    { name: 'send_gas_to', type: 'address' },
-                ],
-                outputs: [
-                ],
-            },
-            {
-                name: 'onTokenWallet',
-                inputs: [
-                    { name: 'wallet', type: 'address' },
-                ],
-                outputs: [
-                ],
-            },
-            {
-                name: 'onVaultTokenWallet',
-                inputs: [
-                    { name: 'wallet', type: 'address' },
+                    { name: '_code', type: 'cell' },
+                    { name: '_newVersion', type: 'uint32' },
+                    { name: '_newType', type: 'uint8' },
+                    { name: '_remainingGasTo', type: 'address' },
                 ],
                 outputs: [
                 ],
@@ -885,8 +936,8 @@ export abstract class DexAbi {
             {
                 name: 'liquidityTokenRootDeployed',
                 inputs: [
-                    { name: 'lp_root_', type: 'address' },
-                    { name: 'send_gas_to', type: 'address' },
+                    { name: '_lpRootAddress', type: 'address' },
+                    { name: '_remainingGasTo', type: 'address' },
                 ],
                 outputs: [
                 ],
@@ -895,9 +946,108 @@ export abstract class DexAbi {
                 name: 'liquidityTokenRootNotDeployed',
                 inputs: [
                     { name: 'value0', type: 'address' },
-                    { name: 'send_gas_to', type: 'address' },
+                    { name: '_remainingGasTo', type: 'address' },
                 ],
                 outputs: [
+                ],
+            },
+            {
+                name: 'onTokenWallet',
+                inputs: [
+                    { name: '_wallet', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'onVaultTokenWallet',
+                inputs: [
+                    { name: '_wallet', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'setOracleOptions',
+                inputs: [
+                    { components: [{ name: 'minInterval', type: 'uint8' }, { name: 'minRateDeltaNumerator', type: 'uint128' }, { name: 'minRateDeltaDenominator', type: 'uint128' }, { name: 'cardinality', type: 'uint16' }], name: '_newOptions', type: 'tuple' },
+                    { name: '_remainingGasTo', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'getOracleOptions',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                ],
+                outputs: [
+                    { components: [{ name: 'minInterval', type: 'uint8' }, { name: 'minRateDeltaNumerator', type: 'uint128' }, { name: 'minRateDeltaDenominator', type: 'uint128' }, { name: 'cardinality', type: 'uint16' }], name: 'value0', type: 'tuple' },
+                ],
+            },
+            {
+                name: 'removeLastNPoints',
+                inputs: [
+                    { name: '_count', type: 'uint16' },
+                    { name: '_remainingGasTo', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'getObservation',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                    { name: '_timestamp', type: 'uint32' },
+                ],
+                outputs: [
+                    { components: [{ name: 'timestamp', type: 'uint32' }, { name: 'price0To1Cumulative', type: 'uint256' }, { name: 'price1To0Cumulative', type: 'uint256' }], name: 'value0', type: 'optional(tuple)' },
+                ],
+            },
+            {
+                name: 'observation',
+                inputs: [
+                    { name: '_timestamp', type: 'uint32' },
+                    { name: '_callbackTo', type: 'address' },
+                    { name: '_payload', type: 'cell' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'getRate',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                    { name: '_fromTimestamp', type: 'uint32' },
+                    { name: '_toTimestamp', type: 'uint32' },
+                ],
+                outputs: [
+                    { components: [{ name: 'price0To1', type: 'uint256' }, { name: 'price1To0', type: 'uint256' }, { name: 'fromTimestamp', type: 'uint32' }, { name: 'toTimestamp', type: 'uint32' }], name: 'value0', type: 'optional(tuple)' },
+                    { name: 'value1', type: 'uint128[]' },
+                ],
+            },
+            {
+                name: 'rate',
+                inputs: [
+                    { name: '_fromTimestamp', type: 'uint32' },
+                    { name: '_toTimestamp', type: 'uint32' },
+                    { name: '_callbackTo', type: 'address' },
+                    { name: '_payload', type: 'cell' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'getExpectedAmountByTWAP',
+                inputs: [
+                    { name: 'answerId', type: 'uint32' },
+                    { name: '_amount', type: 'uint128' },
+                    { name: '_tokenRoot', type: 'address' },
+                    { name: '_fromTimestamp', type: 'uint32' },
+                    { name: '_toTimestamp', type: 'uint32' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'uint128' },
                 ],
             },
             {
@@ -913,6 +1063,30 @@ export abstract class DexAbi {
         ],
         events: [
             {
+                name: 'OracleInitialized',
+                inputs: [
+                    { components: [{ name: 'timestamp', type: 'uint32' }, { name: 'price0To1Cumulative', type: 'uint256' }, { name: 'price1To0Cumulative', type: 'uint256' }], name: 'value0', type: 'tuple' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'OracleUpdated',
+                inputs: [
+                    { components: [{ name: 'timestamp', type: 'uint32' }, { name: 'price0To1Cumulative', type: 'uint256' }, { name: 'price1To0Cumulative', type: 'uint256' }], name: 'value0', type: 'tuple' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'OracleOptionsUpdated',
+                inputs: [
+                    { components: [{ name: 'minInterval', type: 'uint8' }, { name: 'minRateDeltaNumerator', type: 'uint128' }, { name: 'minRateDeltaDenominator', type: 'uint128' }, { name: 'cardinality', type: 'uint16' }], name: 'value0', type: 'tuple' },
+                ],
+                outputs: [
+                ],
+            },
+            {
                 name: 'PairCodeUpgraded',
                 inputs: [
                     { name: 'version', type: 'uint32' },
@@ -924,7 +1098,7 @@ export abstract class DexAbi {
             {
                 name: 'FeesParamsUpdated',
                 inputs: [
-                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'referrer_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
                 ],
                 outputs: [
                 ],
@@ -980,24 +1154,16 @@ export abstract class DexAbi {
             { name: '_timestamp', type: 'uint64' },
             { name: '_constructorFlag', type: 'bool' },
             { name: 'platform_code', type: 'cell' },
-            { name: 'root', type: 'address' },
-            { name: 'vault', type: 'address' },
-            { name: 'active', type: 'bool' },
-            { name: 'current_version', type: 'uint32' },
-            { name: 'left_root', type: 'address' },
-            { name: 'right_root', type: 'address' },
-            { name: 'lp_wallet', type: 'address' },
-            { name: 'left_wallet', type: 'address' },
-            { name: 'right_wallet', type: 'address' },
-            { name: 'vault_left_wallet', type: 'address' },
-            { name: 'vault_right_wallet', type: 'address' },
-            { name: 'lp_root', type: 'address' },
-            { name: 'lp_supply', type: 'uint128' },
-            { name: 'left_balance', type: 'uint128' },
-            { name: 'right_balance', type: 'uint128' },
-            { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'fee', type: 'tuple' },
-            { name: 'accumulated_left_fee', type: 'uint128' },
-            { name: 'accumulated_right_fee', type: 'uint128' },
+            { components: [{ name: 'price0To1Cumulative', type: 'uint256' }, { name: 'price1To0Cumulative', type: 'uint256' }], name: '_points', type: 'map(uint32,tuple)' },
+            { name: '_length', type: 'uint16' },
+            { components: [{ name: 'minInterval', type: 'uint8' }, { name: 'minRateDeltaNumerator', type: 'uint128' }, { name: 'minRateDeltaDenominator', type: 'uint128' }, { name: 'cardinality', type: 'uint16' }], name: '_options', type: 'tuple' },
+            { name: '_root', type: 'address' },
+            { name: '_active', type: 'bool' },
+            { name: '_currentVersion', type: 'uint32' },
+            { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'referrer_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: '_fee', type: 'tuple' },
+            { name: '_typeToRootAddresses', type: 'map(uint8,address[])' },
+            { name: '_typeToWalletAddresses', type: 'map(uint8,address[])' },
+            { name: '_typeToReserves', type: 'map(uint8,uint128[])' },
         ],
     } as const
 
@@ -1415,7 +1581,7 @@ export abstract class DexAbi {
                     { name: 'answerId', type: 'uint32' },
                 ],
                 outputs: [
-                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'value0', type: 'tuple' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'referrer_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'value0', type: 'tuple' },
                 ],
             },
             {
@@ -1457,7 +1623,7 @@ export abstract class DexAbi {
             {
                 name: 'setFeeParams',
                 inputs: [
-                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'referrer_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
                 outputs: [
@@ -1483,10 +1649,40 @@ export abstract class DexAbi {
                 ],
             },
             {
+                name: 'buildExchangePayloadV2',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_expectedAmount', type: 'uint128' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_referrer', type: 'address' },
+                    { name: '_successPayload', type: 'optional(cell)' },
+                    { name: '_cancelPayload', type: 'optional(cell)' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
                 name: 'buildDepositLiquidityPayload',
                 inputs: [
                     { name: 'id', type: 'uint64' },
                     { name: 'deploy_wallet_grams', type: 'uint128' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildDepositLiquidityPayloadV2',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_expectedAmount', type: 'uint128' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_referrer', type: 'address' },
+                    { name: '_successPayload', type: 'optional(cell)' },
+                    { name: '_cancelPayload', type: 'optional(cell)' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -1503,12 +1699,46 @@ export abstract class DexAbi {
                 ],
             },
             {
+                name: 'buildWithdrawLiquidityPayloadV2',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_expectedLeftAmount', type: 'uint128' },
+                    { name: '_expectedRightAmount', type: 'uint128' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_referrer', type: 'address' },
+                    { name: '_successPayload', type: 'optional(cell)' },
+                    { name: '_cancelPayload', type: 'optional(cell)' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
                 name: 'buildCrossPairExchangePayload',
                 inputs: [
                     { name: 'id', type: 'uint64' },
                     { name: 'deploy_wallet_grams', type: 'uint128' },
                     { name: 'expected_amount', type: 'uint128' },
                     { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
+                ],
+                outputs: [
+                    { name: 'value0', type: 'cell' },
+                ],
+            },
+            {
+                name: 'buildCrossPairExchangePayloadV2',
+                inputs: [
+                    { name: '_id', type: 'uint64' },
+                    { name: '_deployWalletGrams', type: 'uint128' },
+                    { name: '_expectedAmount', type: 'uint128' },
+                    { name: '_outcoming', type: 'address' },
+                    { name: '_nextStepIndices', type: 'uint32[]' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'roots', type: 'address[]' }, { name: 'outcoming', type: 'address' }, { name: 'numerator', type: 'uint128' }, { name: 'nextStepIndices', type: 'uint32[]' }], name: '_steps', type: 'tuple[]' },
+                    { name: '_recipient', type: 'address' },
+                    { name: '_referrer', type: 'address' },
+                    { name: '_successPayload', type: 'optional(cell)' },
+                    { name: '_cancelPayload', type: 'optional(cell)' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -1541,12 +1771,11 @@ export abstract class DexAbi {
                 name: 'depositLiquidity',
                 inputs: [
                     { name: 'call_id', type: 'uint64' },
-                    { name: 'left_amount', type: 'uint128' },
-                    { name: 'right_amount', type: 'uint128' },
-                    { name: 'expected_lp_root', type: 'address' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_operations', type: 'tuple[]' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_expected', type: 'tuple' },
                     { name: 'auto_change', type: 'bool' },
                     { name: 'account_owner', type: 'address' },
-                    { name: 'value6', type: 'uint32' },
+                    { name: 'value5', type: 'uint32' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
                 outputs: [
@@ -1567,8 +1796,8 @@ export abstract class DexAbi {
                 name: 'withdrawLiquidity',
                 inputs: [
                     { name: 'call_id', type: 'uint64' },
-                    { name: 'lp_amount', type: 'uint128' },
-                    { name: 'expected_lp_root', type: 'address' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_operation', type: 'tuple' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_expected', type: 'tuple[]' },
                     { name: 'account_owner', type: 'address' },
                     { name: 'value4', type: 'uint32' },
                     { name: 'send_gas_to', type: 'address' },
@@ -1604,12 +1833,10 @@ export abstract class DexAbi {
                 name: 'exchange',
                 inputs: [
                     { name: 'call_id', type: 'uint64' },
-                    { name: 'spent_amount', type: 'uint128' },
-                    { name: 'spent_token_root', type: 'address' },
-                    { name: 'receive_token_root', type: 'address' },
-                    { name: 'expected_amount', type: 'uint128' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_operation', type: 'tuple' },
+                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: '_expected', type: 'tuple' },
                     { name: 'account_owner', type: 'address' },
-                    { name: 'value6', type: 'uint32' },
+                    { name: 'value4', type: 'uint32' },
                     { name: 'send_gas_to', type: 'address' },
                 ],
                 outputs: [
@@ -1622,9 +1849,11 @@ export abstract class DexAbi {
                     { name: 'value1', type: 'uint32' },
                     { name: 'value2', type: 'uint8' },
                     { name: 'prev_pool_token_roots', type: 'address[]' },
+                    { name: 'op', type: 'uint8' },
                     { name: 'spent_token_root', type: 'address' },
                     { name: 'spent_amount', type: 'uint128' },
                     { name: 'sender_address', type: 'address' },
+                    { name: 'recipient', type: 'address' },
                     { name: 'original_gas_to', type: 'address' },
                     { name: 'deploy_wallet_grams', type: 'uint128' },
                     { name: 'payload', type: 'cell' },
@@ -1704,7 +1933,7 @@ export abstract class DexAbi {
                     { name: 'answerId', type: 'uint32' },
                 ],
                 outputs: [
-                    { name: 'value0', type: 'optional(uint128)' },
+                    { name: 'value0', type: 'optional(uint256)' },
                 ],
             },
             {
@@ -1750,7 +1979,7 @@ export abstract class DexAbi {
             {
                 name: 'FeesParamsUpdated',
                 inputs: [
-                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
+                    { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'referrer_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'params', type: 'tuple' },
                 ],
                 outputs: [
                 ],
@@ -1816,7 +2045,7 @@ export abstract class DexAbi {
             { name: 'lp_root', type: 'address' },
             { name: 'lp_wallet', type: 'address' },
             { name: 'lp_supply', type: 'uint128' },
-            { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'fee', type: 'tuple' },
+            { components: [{ name: 'denominator', type: 'uint128' }, { name: 'pool_numerator', type: 'uint128' }, { name: 'beneficiary_numerator', type: 'uint128' }, { name: 'referrer_numerator', type: 'uint128' }, { name: 'beneficiary', type: 'address' }, { name: 'threshold', type: 'map(address,uint128)' }], name: 'fee', type: 'tuple' },
             { components: [{ name: 'value', type: 'uint128' }, { name: 'precision', type: 'uint128' }], name: 'A', type: 'tuple' },
         ],
     } as const
