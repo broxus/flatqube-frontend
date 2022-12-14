@@ -86,7 +86,7 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
                 offset: 0,
                 ordering: {
                     column: 'day',
-                    direction: 'ASC',
+                    direction: 'DESC',
                 },
             })
 
@@ -115,7 +115,7 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
                 offset: 0,
                 ordering: {
                     column: 'day',
-                    direction: 'ASC',
+                    direction: 'DESC',
                 },
             })
 
