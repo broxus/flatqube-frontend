@@ -173,7 +173,12 @@ export class CoinSwapStore extends BaseSwapStore<DirectSwapStoreData> {
                 return
             }
 
-            const hasWallet = (await TokenWallet.balance({ wallet: walletAddress })) !== undefined
+            let hasWallet = false
+
+            try {
+                hasWallet = (await TokenWallet.balance({ wallet: walletAddress })) !== undefined
+            }
+            catch (e) {}
 
             const deployGrams = (this.rightToken?.balance === undefined || !hasWallet) ? '100000000' : '0'
             const startLt = this.wallet.contract?.lastTransactionId?.lt
@@ -276,7 +281,12 @@ export class CoinSwapStore extends BaseSwapStore<DirectSwapStoreData> {
                 return
             }
 
-            const hasWallet = (await TokenWallet.balance({ wallet: walletAddress })) !== undefined
+            let hasWallet = false
+
+            try {
+                hasWallet = (await TokenWallet.balance({ wallet: walletAddress })) !== undefined
+            }
+            catch (e) {}
 
             const deployGrams = !hasWallet ? '100000000' : '0'
             const startLt = this.wallet.contract?.lastTransactionId?.lt

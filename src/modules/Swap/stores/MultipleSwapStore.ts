@@ -58,7 +58,12 @@ export class MultipleSwapStore extends CoinSwapStore {
                 return
             }
 
-            const hasWallet = (await TokenWallet.balance({ wallet: walletAddress })) !== undefined
+            let hasWallet = false
+
+            try {
+                hasWallet = (await TokenWallet.balance({ wallet: walletAddress })) !== undefined
+            }
+            catch (e) {}
 
             const deployWalletValue = (this.rightToken?.balance === undefined || !hasWallet) ? '100000000' : '0'
             const startLt = this.wallet.contract?.lastTransactionId?.lt
