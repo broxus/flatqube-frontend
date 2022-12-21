@@ -2,6 +2,7 @@ import {
     comparer,
     IReactionDisposer, makeAutoObservable, reaction, runInAction,
 } from 'mobx'
+import BigNumber from 'bignumber.js'
 
 import { GaugeItem } from '@/modules/Gauges/api/models'
 import { error } from '@/utils'
@@ -90,12 +91,20 @@ export class GaugesListStore {
                 additionalTokenRoots: getImportedTokens(),
                 limit: this.state.limit,
                 maxApr: this.filters.aprMaxFrom || this.filters.aprMaxTo ? {
-                    from: this.filters.aprMaxFrom,
-                    to: this.filters.aprMaxTo,
+                    from: this.filters.aprMaxFrom
+                        ? new BigNumber(this.filters.aprMaxFrom).dividedBy(100).toFixed()
+                        : undefined,
+                    to: this.filters.aprMaxTo
+                        ? new BigNumber(this.filters.aprMaxTo).dividedBy(100).toFixed()
+                        : undefined,
                 } : undefined,
                 minApr: this.filters.aprMinFrom || this.filters.aprMinTo ? {
-                    from: this.filters.aprMinFrom,
-                    to: this.filters.aprMinTo,
+                    from: this.filters.aprMinFrom
+                        ? new BigNumber(this.filters.aprMinFrom).dividedBy(100).toFixed()
+                        : undefined,
+                    to: this.filters.aprMinTo
+                        ? new BigNumber(this.filters.aprMinTo).dividedBy(100).toFixed()
+                        : undefined,
                 } : undefined,
                 offset: this.state.offset,
                 showLowBalance: this.filters.isLowBalance ?? false,
