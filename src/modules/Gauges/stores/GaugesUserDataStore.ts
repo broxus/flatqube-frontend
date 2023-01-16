@@ -304,19 +304,21 @@ export class GaugesUserDataStore {
 
             const div = new BigNumber(10).pow(18)
 
-            const lockBoostMultiplier = new BigNumber(result._lockBoostMultiplier)
+            const lockBoostMultiplierBN = new BigNumber(result._lockBoostMultiplier)
                 .dividedBy(div)
 
-            const qubeBoostMultiplier = new BigNumber(result._veBoostMultiplier)
+            const qubeBoostMultiplierBN = new BigNumber(result._veBoostMultiplier)
                 .dividedBy(div)
 
-            const lockBoostApr = lockBoostMultiplier
-                .minus(1)
-                .multipliedBy(apr)
-                .toFixed()
+            const lockBoostApr = lockBoostMultiplierBN.gt(0)
+                ? lockBoostMultiplierBN
+                    .minus(1)
+                    .multipliedBy(apr)
+                    .toFixed()
+                : '0'
 
-            const qubeBoostApr = new BigNumber(qubeSpeed).gt(0)
-                ? qubeBoostMultiplier
+            const qubeBoostApr = new BigNumber(qubeSpeed).gt(0) && qubeBoostMultiplierBN.gt(0)
+                ? qubeBoostMultiplierBN
                     .minus(1)
                     .multipliedBy(apr)
                     .toFixed()
