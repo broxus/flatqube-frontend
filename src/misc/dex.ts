@@ -288,7 +288,7 @@ export class Dex {
             send_gas_to: creator,
         }).send({
             amount: '10000000000',
-            bounce: false,
+            bounce: true,
             from: creator,
         })).id
     }
