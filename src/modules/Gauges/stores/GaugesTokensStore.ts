@@ -1,5 +1,4 @@
-import { makeAutoObservable, runInAction } from 'mobx'
-import { Mutex } from '@broxus/await-semaphore'
+import { makeAutoObservable, runInAction, when } from 'mobx'
 
 import { TokensListService } from '@/stores/TokensListService'
 import { error } from '@/utils'
@@ -7,13 +6,13 @@ import { Token, TokenWallet } from '@/misc'
 
 type Data = {
     tokens: {[k: string]: Token | undefined}
+    loading: {[k: string]: boolean | undefined}
 }
 
 export class GaugesTokensStore {
 
-    protected syncMutex = new Mutex()
-
     protected data: Data = {
+        loading: {},
         tokens: {},
     }
 
@@ -24,30 +23,43 @@ export class GaugesTokensStore {
     }
 
     public async sync(root: string): Promise<void> {
-        await this.syncMutex.use(async () => {
-            if (this.data.tokens[root]) {
-                return
-            }
+        await when(() => this.tokensList.tokens.length > 0)
+
+        let token = this.data.tokens[root]
+        const loading = this.data.loading[root]
+
+        if (!token && !loading) {
+            runInAction(() => {
+                this.data.loading = {
+                    ...this.data.loading,
+                    [root]: true,
+                }
+            })
 
             try {
                 const rawToken = await TokenWallet.getTokenFullDetails(root)
 
                 if (rawToken) {
-                    const token: Token = {
+                    token = {
                         ...rawToken,
                         root,
                     }
-
-                    runInAction(() => {
-                        this.data.tokens = {
-                            ...this.data.tokens,
-                            [root]: token,
-                        }
-                    })
                 }
             }
             catch (e) {
                 error('TokensStore.syncToken', e)
+            }
+        }
+
+        runInAction(() => {
+            this.data.tokens = {
+                ...this.data.tokens,
+                [root]: token,
+            }
+
+            this.data.loading = {
+                ...this.data.loading,
+                [root]: false,
             }
         })
     }

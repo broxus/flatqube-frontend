@@ -7,7 +7,7 @@ import {
 import { useRpc } from '@/hooks/useRpc'
 import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { TokenAbi } from '@/misc/abi'
-import { debug, sliceAddress } from '@/utils'
+import { debug, error, sliceAddress } from '@/utils'
 import { SupportedInterfaceDetection } from '@/misc/supported-interface-detection'
 
 
@@ -144,14 +144,21 @@ export class TokenWallet {
     }
 
     public static async getTokenFullDetails(root: string): Promise<Token | undefined> {
-        if (!await this.isNewTip3(root)) {
-            return undefined
-        }
-
         const address = new Address(root)
 
+        let state: FullContractState | undefined
 
-        const { state } = await staticRpc.getFullContractState({ address })
+        try {
+            const result = await staticRpc.getFullContractState({ address })
+            state = result.state
+        }
+        catch (e) {
+            error(e)
+        }
+
+        if (!await this.isNewTip3(root, state)) {
+            return undefined
+        }
 
         if (!state) {
             return undefined
@@ -218,10 +225,16 @@ export class TokenWallet {
         })).value0
     }
 
-    public static async isNewTip3(root: string): Promise<boolean> {
+    public static async isNewTip3(root: string, contractState?: FullContractState): Promise<boolean> {
         const address = new Address(root)
 
-        const { state } = await staticRpc.getFullContractState({ address })
+        let state = contractState
+
+        if (!state) {
+            const result = await staticRpc.getFullContractState({ address })
+            state = result.state
+        }
+
         if (!state || !state.isDeployed) {
             return false
         }
@@ -229,7 +242,7 @@ export class TokenWallet {
         return SupportedInterfaceDetection.supports({
             address,
             interfaces: [0x4371d8ed, 0x0b1fd263],
-        })
+        }, state)
     }
 
     public static async send(args = params<{

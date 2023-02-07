@@ -357,7 +357,9 @@ export class GaugesUserDataStore {
 
     public async sync(): Promise<void> {
         try {
-            const { apr, veAddress, id, qubeTokenSpeed } = this.dataStore
+            const {
+                apr, veAddress, id, qubeTokenSpeed,
+            } = this.dataStore
             const token = this.depositToken
             const owner = this.wallet.address
 
@@ -404,13 +406,10 @@ export class GaugesUserDataStore {
                     this.data.veAccountAddress = veAccountAddress
                 })
 
-                const veAccountAverage = veAccountAddress
-                    ? await this.getVeAccountAverage(veAccountAddress)
-                    : undefined
-
-                const userAccountContractState = userAddress
-                    ? await this.getUserAccountContractState(userAddress)
-                    : undefined
+                const [veAccountAverage, userAccountContractState] = await Promise.all([
+                    veAccountAddress ? await this.getVeAccountAverage(veAccountAddress) : undefined,
+                    userAddress ? await this.getUserAccountContractState(userAddress) : undefined,
+                ])
 
                 const [pendingReward, aprBoost] = await Promise.all([
                     userAddress && veAverage && veAccountAverage && syncData
@@ -492,7 +491,7 @@ export class GaugesUserDataStore {
             throw new Error('extraTokens must be defined')
         }
 
-        const getAccountMinGas = async () => {
+        const getAccountMinGas = async (): Promise<string> => {
             try {
                 const account = new this.staticRpc.Contract(
                     GaugeAbi.Account,
@@ -511,7 +510,7 @@ export class GaugesUserDataStore {
             }
         }
 
-        const getVeAccountMinGas = async () => {
+        const getVeAccountMinGas = async (): Promise<string> => {
             try {
                 const veAccount = new this.staticRpc.Contract(
                     VoteEscrowAbi.Account,

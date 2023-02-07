@@ -1,7 +1,8 @@
+/* eslint-disable prefer-destructuring */
 import {
     IReactionDisposer, makeAutoObservable, reaction, runInAction, toJS,
 } from 'mobx'
-import { Address } from 'everscale-inpage-provider'
+import { Address, FullContractState } from 'everscale-inpage-provider'
 import BigNumber from 'bignumber.js'
 
 import { WalletService } from '@/stores/WalletService'
@@ -104,12 +105,32 @@ export class GaugesListDataStore {
         )
 
         let tokenDetails!: TokenDetails,
-            rewardDetails: RewardDetails
+            rewardDetails: RewardDetails,
+            state: FullContractState | undefined
+
         try {
-            [tokenDetails, rewardDetails] = await Promise.all([
-                gauge.methods.getTokenDetails({}).call(),
-                gauge.methods.getRewardDetails({}).call(),
+            const result = await this.staticRpc.getFullContractState({
+                address: new Address(gaugeId),
+            })
+            state = result.state
+        }
+        catch (e) {
+            error('GaugesDataStore.sync', e)
+        }
+
+        try {
+            const result = await Promise.all([
+                gauge.methods.getTokenDetails({}).call({
+                    cachedState: state,
+                }),
+                gauge.methods.getRewardDetails({}).call({
+                    cachedState: state,
+                }),
             ])
+
+            tokenDetails = result[0]
+            rewardDetails = result[1]
+
             tokenDetails._extraTokenData.forEach(item => this.tokens.sync(item.root.toString()))
             this.tokens.sync(tokenDetails._qubeTokenData.root.toString())
         }
@@ -129,19 +150,24 @@ export class GaugesListDataStore {
                     .getGaugeAccountAddress({
                         answerId: 0,
                         user: new Address(this.wallet.address),
-                    }).call()
+                    }).call({
+                        cachedState: state,
+                    })
 
                 const account = new this.staticRpc.Contract(
                     GaugeAbi.Account,
                     userAddress.value0,
                 )
+                const { state: accountState } = await this.staticRpc.getFullContractState({
+                    address: userAddress.value0,
+                })
 
                 const [
                     gaugeDetails, userDetails, syncData,
                 ] = await Promise.all([
-                    gauge.methods.getDetails({}).call(),
-                    account.methods.getDetails({ answerId: 0 }).call(),
-                    gauge.methods.calcSyncData({}).call(),
+                    gauge.methods.getDetails({}).call({ cachedState: state }),
+                    account.methods.getDetails({ answerId: 0 }).call({ cachedState: accountState }),
+                    gauge.methods.calcSyncData({}).call({ cachedState: state }),
                 ])
 
                 const voteEscrow = new this.staticRpc.Contract(
@@ -149,17 +175,21 @@ export class GaugesListDataStore {
                     gaugeDetails._voteEscrow,
                 )
 
+                const { state: voteEscrowState } = await this.staticRpc.getFullContractState({
+                    address: gaugeDetails._voteEscrow,
+                })
+
                 const veAccountAddress = await voteEscrow.methods.getVoteEscrowAccountAddress({
                     answerId: 0,
                     user: new Address(this.wallet.address),
-                }).call()
+                }).call({ cachedState: voteEscrowState })
 
                 const veAccount = new this.staticRpc.Contract(
                     VoteEscrowAbi.Account,
                     veAccountAddress.value0,
                 )
 
-                const veAverage = await voteEscrow.methods.calculateAverage({}).call()
+                const veAverage = await voteEscrow.methods.calculateAverage({}).call({ cachedState: voteEscrowState })
                 const veAccountAverage = await veAccount.methods.calculateVeAverage({}).call()
 
                 const pendingReward = await account.methods.pendingReward({
@@ -168,7 +198,7 @@ export class GaugesListDataStore {
                     _veQubeAverage: veAverage._veQubeAverage,
                     _veQubeAveragePeriod: veAverage._veQubeAveragePeriod,
                     gauge_sync_data: syncData.value0,
-                }).call()
+                }).call({ cachedState: accountState })
 
                 const qubeTokenBalance = tokenDetails._qubeTokenData.balance
                 const extraTokensBalance = tokenDetails._extraTokenData.map(item => item.balance)
