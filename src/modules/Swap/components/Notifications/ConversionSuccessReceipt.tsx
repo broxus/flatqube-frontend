@@ -29,38 +29,38 @@ export function ConversionSuccessReceipt(props: Props): JSX.Element {
                 <div className="notification_token-badge">
                     <TokenIcon
                         key="wrap-icon"
-                        address={result.receivedRoot}
-                        icon={result.receivedIcon}
+                        address={result.input.receivedRoot}
+                        icon={result.input.receivedIcon}
                         size="small"
                     />
                     <div className="notification_token-badge__title">
                         {`+ ${formattedTokenAmount(
-                            result.amount,
-                            result.receivedDecimals,
+                            result.input.amount,
+                            result.input.receivedDecimals,
                             { preserve: true },
-                        )} ${result.receivedSymbol}`}
+                        )} ${result.input.receivedSymbol}`}
                     </div>
                 </div>
             </div>
 
-            {(result.receivedRoot !== undefined || result.txHash !== undefined) && (
+            {(result.input.receivedRoot !== undefined || result.transaction.id.hash !== undefined) && (
                 <div
                     className={classNames('notification-actions', {
                         'notification-actions--large': isMobile(navigator.userAgent),
                     })}
                 >
-                    {result.txHash !== undefined && (
+                    {result.transaction.id.hash !== undefined && (
                         <TransactionExplorerLink
                             className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
-                            id={result.txHash}
+                            id={result.transaction.id.hash}
                             onClick={onClickButton}
                         >
                             {intl.formatMessage({ id: 'SWAP_NOTIFICATION_RECEIPT_TRANSACTION_LINK_TEXT' })}
                         </TransactionExplorerLink>
                     )}
-                    {result.receivedRoot !== undefined && (
+                    {result.input.receivedRoot !== undefined && (
                         <AccountExplorerLink
-                            address={result.receivedRoot}
+                            address={result.input.receivedRoot}
                             className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
                             onClick={onClickButton}
                         >

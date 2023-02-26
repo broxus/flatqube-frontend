@@ -163,6 +163,7 @@
     grid-column-end: 4;
     grid-row-start: 1;
     grid-row-end: 4;
+    padding: 0;
 
     @media (max-width: 1199px) {
         grid-column-start: 1;

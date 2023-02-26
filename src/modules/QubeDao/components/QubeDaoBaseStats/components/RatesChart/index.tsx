@@ -1,51 +1,55 @@
 import * as React from 'react'
-import {
-    AreaSeriesPartialOptions, BarPrice, BarPrices,
+import type {
+    AreaSeriesPartialOptions,
     ChartOptions,
     DeepPartial,
+    IChartApi, LineData,
+    MouseEventHandler,
     SingleValueData,
 } from 'lightweight-charts'
 import { DateTime } from 'luxon'
 
-import { Chart } from '@/modules/Chart'
-import type { ChartApi } from '@/modules/Chart'
+import { Chart, type SeriesApi } from '@/components/common/Chart'
+import { blend } from '@/utils'
 
 import styles from './index.module.scss'
 
 type Props = {
     chartStyles?: AreaSeriesPartialOptions;
     data: SingleValueData[];
-    legendFormatter?: (value: BarPrice | BarPrices | undefined) => string;
+    legendFormatter?: (value: LineData | undefined) => string;
     loading: boolean;
     options?: DeepPartial<ChartOptions>;
 }
 
-export const goodRateStyle = {
+export const goodRateStyle: AreaSeriesPartialOptions = {
     bottomColor: 'rgba(74, 180, 74, 0)',
+    crosshairMarkerBackgroundColor: blend('#c5e4f3', '#191e3e', 0.7),
+    crosshairMarkerBorderColor: '#4AB44A',
     lineColor: '#4AB44A',
     topColor: 'rgba(74, 180, 74, 0.16)',
 }
 
-export const badRateStyle = {
+export const badRateStyle: AreaSeriesPartialOptions = {
     bottomColor: 'rgba(235, 67, 97, 0)',
+    crosshairMarkerBackgroundColor: blend('#c5e4f3', '#191e3e', 0.7),
+    crosshairMarkerBorderColor: '#EB4361',
+    crosshairMarkerBorderWidth: 1,
     lineColor: '#EB4361',
     topColor: 'rgba(235, 67, 97, 0.16)',
 }
 
 const defaultChartStyles: AreaSeriesPartialOptions = {
-    crosshairMarkerVisible:  true,
+    crosshairMarkerVisible: true,
     lastValueVisible: true,
+    lineWidth: 1,
     priceLineVisible: false,
 }
 
 const defaultOptions: DeepPartial<ChartOptions> = {
     grid: {
-        horzLines: {
-            visible: false,
-        },
-        vertLines: {
-            visible: false,
-        },
+        horzLines: { visible: false },
+        vertLines: { visible: false },
     },
     handleScale: false,
     handleScroll: false,
@@ -66,10 +70,24 @@ const defaultOptions: DeepPartial<ChartOptions> = {
 }
 
 
-export function RatesChart({ chartStyles, data, legendFormatter, loading, options }: Props): JSX.Element {
-    const ref = React.useRef<ChartApi>()
+export function RatesChart({
+    chartStyles, data, legendFormatter, loading, options,
+}: Props): JSX.Element {
+    const chart = React.useRef<IChartApi>(null)
+    const series = React.useRef<SeriesApi<'Area'>>(null)
     const [legend, setLegend] = React.useState<any>()
 
+    const onCrosshairMove: MouseEventHandler = params => {
+        if (series.current) {
+            const value = params.seriesData.get(series.current.api()) as LineData
+            setLegend(value ? (legendFormatter?.(value) ?? value?.value.toString()) : undefined)
+        }
+    }
+
+    React.useEffect(() => {
+        chart.current?.applyOptions({ ...options })
+        series.current?.api().applyOptions({ ...chartStyles })
+    }, [chartStyles, loading, options])
 
     React.useEffect(() => {
         try {
@@ -78,34 +96,12 @@ export function RatesChart({ chartStyles, data, legendFormatter, loading, option
                 const from = dates.shift()?.time
                 const to = dates.pop()?.time
                 if (from && to) {
-                    ref.current?.api?.timeScale().setVisibleRange({
-                        from,
-                        to,
-                    })
+                    chart.current?.timeScale().setVisibleRange({ from, to })
                 }
             }
         }
-        catch (e) {
-
-        }
+        catch (e) {}
     }, [data])
-    React.useEffect(() => {
-        ref.current?.api?.applyOptions({ ...options })
-        ref.current?.series?.applyOptions({ ...chartStyles })
-    }, [chartStyles, loading, options])
-    React.useEffect(() => {
-        ref.current?.api?.subscribeCrosshairMove(params => {
-            if (ref.current?.series) {
-                const value = params.seriesPrices.get(ref.current.series)
-                setLegend(value ? (legendFormatter?.(value) ?? value?.toString()) : undefined)
-            }
-        })
-        return () => {
-            ref.current?.api?.unsubscribeCrosshairMove(() => {
-                setLegend(undefined)
-            })
-        }
-    }, [ref.current])
 
     return (
         <div className={styles.chart_wrapper}>
@@ -113,14 +109,18 @@ export function RatesChart({ chartStyles, data, legendFormatter, loading, option
                 {legend}
             </div>
             <Chart
-                ref={ref}
-                chartStyles={defaultChartStyles}
-                data={loading ? [] : data}
-                loading={loading}
-                options={defaultOptions}
-                timeframe="H1"
-                type="Area"
-            />
+                ref={chart}
+                {...defaultOptions}
+                onCrosshairMove={onCrosshairMove}
+            >
+                {data.length === 0 && loading && <Chart.Placeholder />}
+                <Chart.Series
+                    ref={series}
+                    data={data}
+                    {...defaultChartStyles}
+                    type="Area"
+                />
+            </Chart>
         </div>
     )
 }

@@ -16,7 +16,7 @@ export function EpochListPlaceholder(): JSX.Element {
                         <Placeholder height={20} width={130} />
                     </div>
                     <div className="list__cell list__cell--right">
-                        <Placeholder height={24} width={50} />
+                        <Placeholder height={20} width={50} />
                     </div>
                     <div className="list__cell list__cell--right">
                         <Placeholder height={20} width={50} />

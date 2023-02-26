@@ -2,13 +2,24 @@
     display: flex;
     flex-grow: 1;
     height: 100%;
+    position: relative;
+
+    .chart-holder {
+        bottom: 0;
+        height: 100%;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 100%;
+    }
 
     &--loading,
     &--no-data {
         align-items: center;
         justify-content: center;
 
-        > *:not(.chart__no-data-message, .content-loader) {
+        > *:not(.chart__no-data-message, .chart-loader) {
             display: none;
         }
     }
@@ -17,7 +28,7 @@
         opacity: 0.64;
     }
 
-    .content-loader {
+    .chart-loader {
         min-height: 100%;
     }
 }

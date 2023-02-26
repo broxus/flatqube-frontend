@@ -1,0 +1,10 @@
+.pool_tokens_badge {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+
+    :global .token-icons {
+        display: flex;
+        flex: none;
+    }
+}

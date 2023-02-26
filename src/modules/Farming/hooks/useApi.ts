@@ -4,7 +4,7 @@ import {
     FarmingPoolResponse, FarmingPoolsRequest, FarmingPoolsResponse,
     TransactionsRequest, TransactionsResponse,
 } from '@/modules/Farming/types'
-import { CurrencyInfo } from '@/modules/Currencies/types'
+import { CurrencyResponse } from '@/modules/Currencies/types'
 import { apiRoutes, farmingApiRoutes } from '@/routes'
 import { createHandler } from '@/utils'
 
@@ -32,7 +32,7 @@ const farmingApi = {
     currency: createHandler(
         apiRoutes.currency,
         API_URL,
-    )<CurrencyInfo>(),
+    )<CurrencyResponse>(),
 }
 
 export type FarmingApi = typeof farmingApi

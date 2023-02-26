@@ -8,7 +8,7 @@ import './index.scss'
 
 type Props<T> = {
     ascending: T;
-    children: React.ReactChild | React.ReactChild[];
+    children: React.ReactNode;
     descending: T;
     value: T | undefined;
     onSwitch: (value: T) => void;

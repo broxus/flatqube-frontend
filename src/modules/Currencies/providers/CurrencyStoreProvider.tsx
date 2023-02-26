@@ -1,26 +1,26 @@
 import * as React from 'react'
 
 import { CurrencyStore } from '@/modules/Currencies/stores/CurrencyStore'
+import { useTokensCache } from '@/stores/TokensCacheService'
+import { useWallet } from '@/stores/WalletService'
 
-
-type Props = {
-    address: string;
-    children: React.ReactNode;
-}
+export type CurrencyStoreProviderProps = React.PropsWithChildren<{ address: string }>
 
 // @ts-ignore
-export const Context = React.createContext<CurrencyStore>()
+export const CurrencyStoreContext = React.createContext<CurrencyStore>()
 
-export function useCurrencyStore(): CurrencyStore {
-    return React.useContext(Context)
+export function useCurrencyStoreContext(): CurrencyStore {
+    return React.useContext(CurrencyStoreContext)
 }
 
-export function CurrencyStoreProvider({ address, children }: Props): JSX.Element {
-    const store = React.useMemo(() => new CurrencyStore(address), [address])
+export function CurrencyStoreProvider(props: CurrencyStoreProviderProps): JSX.Element {
+    const { address, children } = props
+
+    const context = React.useMemo(() => new CurrencyStore(address, useWallet(), useTokensCache()), [address])
 
     return (
-        <Context.Provider value={store}>
+        <CurrencyStoreContext.Provider value={context}>
             {children}
-        </Context.Provider>
+        </CurrencyStoreContext.Provider>
     )
 }

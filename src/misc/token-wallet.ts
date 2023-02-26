@@ -54,6 +54,10 @@ const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
+/**
+ * @deprecated Use TokenUtils and TokenWalletUtils instead
+ * @param args
+ */
 export class TokenWallet {
 
     public static async walletAddress(args: WalletAddressRequest, state?: FullContractState): Promise<Address> {

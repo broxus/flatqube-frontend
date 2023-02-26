@@ -91,17 +91,19 @@ export function QubeDaoBalance(): JSX.Element {
                 <div className={styles.balance__content}>
                     <QubeDaoUserBalances />
                     <Media query={{ maxWidth: 959 }}>
-                        <QubeDaoDepositFormStoreProvider
-                            onSend={onSend}
-                            onTransactionSuccess={onDepositSuccess}
-                        >
-                            <section className={classNames('section', styles.balance__featured_deposit_trigger)}>
-                                <div className="card card--flat card--xsmall">
-                                    <QubeDaoDepositFormDrawer ref={drawer} />
-                                </div>
-                            </section>
-                            <QubeDaoFarmingAlertDrawer />
-                        </QubeDaoDepositFormStoreProvider>
+                        {matches => (matches ? (
+                            <QubeDaoDepositFormStoreProvider
+                                onSend={onSend}
+                                onTransactionSuccess={onDepositSuccess}
+                            >
+                                <section className={classNames('section', styles.balance__featured_deposit_trigger)}>
+                                    <div className="card card--flat card--xsmall">
+                                        <QubeDaoDepositFormDrawer ref={drawer} />
+                                    </div>
+                                </section>
+                                <QubeDaoFarmingAlertDrawer />
+                            </QubeDaoDepositFormStoreProvider>
+                        ) : null)}
                     </Media>
                     <QubeDaoUserDeposits />
                     <QubeDaoUserTransactions />

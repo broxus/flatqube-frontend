@@ -11,6 +11,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 12px 12px 0;
+    @media only screen and (min-width: 960px) {
+        padding: 24px 24px 0;
+    }
 }
 
 .message,

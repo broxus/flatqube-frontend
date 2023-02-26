@@ -14,4 +14,19 @@
         background-color: rgb(74 180 74 / 16%);
         color: #4ab44a;
     }
+
+    &--warning {
+        background: rgb(230 172 0 / 16%);
+        color: #e6ac00;
+    }
+
+    &--danger {
+        background: rgb(235 67 97 / 16%);
+        color: #eb4361;
+    }
+
+    &--disabled {
+        background: rgb(255 255 255 / 8%);
+        color: rgb(255 255 255 / 48%);
+    }
 }

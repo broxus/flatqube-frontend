@@ -3,13 +3,19 @@ import {
     action,
     computed,
     makeObservable,
+    ObservableMap,
     reaction,
     runInAction,
 } from 'mobx'
 import { Address, Subscription } from 'everscale-inpage-provider'
 
 import { useRpc } from '@/hooks/useRpc'
-import { isAddressValid, Token, TokenWallet } from '@/misc'
+import {
+    isAddressValid,
+    Token,
+    TokenUtils,
+    TokenWalletUtils,
+} from '@/misc'
 import { BaseStore } from '@/stores/BaseStore'
 import { TokensListService, useTokensList } from '@/stores/TokensListService'
 import { useWallet, WalletService } from '@/stores/WalletService'
@@ -32,9 +38,9 @@ export type TokensCacheState = {
     isImporting: boolean;
     isReady: boolean;
     queue: TokenCache[];
-    updatingTokens: Map<string, boolean>;
-    updatingTokensBalance: Map<string, boolean>;
-    updatingTokensWallet: Map<string, boolean>;
+    updatingTokens: ObservableMap<string, boolean>;
+    updatingTokensBalance: ObservableMap<string, boolean>;
+    updatingTokensWallet: ObservableMap<string, boolean>;
 }
 
 export type TokensCacheCtorConfig = {
@@ -68,9 +74,9 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
             isImporting: false,
             isReady: false,
             queue: [],
-            updatingTokens: new Map<string, boolean>(),
-            updatingTokensBalance: new Map<string, boolean>(),
-            updatingTokensWallet: new Map<string, boolean>(),
+            updatingTokens: new ObservableMap<string, boolean>(),
+            updatingTokensBalance: new ObservableMap<string, boolean>(),
+            updatingTokensWallet: new ObservableMap<string, boolean>(),
         })
 
         makeObservable<TokensCacheService, '_byRoot' | '_verifiedByRoot'>(this, {
@@ -145,25 +151,27 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
             wallet: undefined,
         })))
 
+        this.setState('isReady', true)
+
         if (this.options?.withImportedTokens) {
             const importedTokens = getImportedTokens()
 
-            if (importedTokens.length > 0) {
-                importedTokens.forEach(root => {
-                    this.add({ root } as TokenCache)
-                })
+            importedTokens.forEach(root => {
+                this.add({ root } as TokenCache)
+            })
 
-                const results = await Promise.allSettled(
-                    importedTokens.map(root => TokenWallet.getTokenFullDetails(root)),
-                ).then(response => response.map(
-                    r => (r.status === 'fulfilled' ? r.value : undefined),
-                ).filter(e => e !== undefined)) as TokenCache[]
-
-                results.forEach(this.add)
-            }
+            await this.resolveCustomTokens()
         }
+    }
 
-        this.setState('isReady', true)
+    protected async resolveCustomTokens(): Promise<void> {
+        const importedTokens = getImportedTokens()
+
+        if (importedTokens.length > 0) {
+            await Promise.allSettled(
+                importedTokens.map(root => this.syncCustomToken(root, true)),
+            )
+        }
     }
 
     /**
@@ -291,6 +299,12 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         return this.tokensList.isFetching
     }
 
+    public isCustomToken(root: string): boolean {
+        return this.tokensList.tokens.find(
+            token => token.address === root,
+        ) === undefined && !getImportedTokens().includes(root)
+    }
+
     /**
      *
      * @param {string} root
@@ -330,7 +344,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
 
         if (filtered.length === 0 && isAddressValid(query)) {
             try {
-                const token = await TokenWallet.getTokenFullDetails(query)
+                const token = await TokenUtils.getDetails(query)
                 if (token !== undefined) {
                     filtered.push(token)
                 }
@@ -362,7 +376,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
             return
         }
 
-        this.state.updatingTokens.set(root, true)
+        this.setState('updatingTokens', new ObservableMap(this.state.updatingTokens).set(root, true))
 
         if (token.wallet === undefined && !this.isTokenUpdatingWallet(root)) {
             try {
@@ -385,23 +399,24 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         }
 
         this.update(root, 'updatedAt', Date.now())
-        this.state.updatingTokens.set(root, false)
+        this.setState('updatingTokens', new ObservableMap(this.state.updatingTokens).set(root, false))
     }
 
     /**
      * Sync custom token
      * @param {string} root
+     * @param force
      * @returns {Promise<void>}
      */
-    public async syncCustomToken(root: string): Promise<void> {
+    public async syncCustomToken(root: string, force?: boolean): Promise<void> {
         try {
-            if (this.has(root)) {
+            if (!force && this.has(root)) {
                 return
             }
 
-            const token = await TokenWallet.getTokenFullDetails(root)
+            const token = await TokenUtils.getDetails(root)
 
-            if (token === undefined || this.has(token.root)) {
+            if (token === undefined || (!force && this.has(token.root))) {
                 return
             }
 
@@ -419,7 +434,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
      * @returns {Promise<void>}
      */
     public async watch(root?: string, prefix: string = ''): Promise<void> {
-        if (this.wallet.address === undefined || root === undefined) {
+        if (root === undefined) {
             return
         }
 
@@ -430,7 +445,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         }
 
         try {
-            await this.syncToken(root)
+            await this.syncToken(root, true)
         }
         catch (e) {}
 
@@ -484,7 +499,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
      * @returns {Promise<void>}
      */
     public async unwatch(root?: string, prefix: string = ''): Promise<void> {
-        if (this.wallet.address === undefined || root === undefined) {
+        if (root === undefined) {
             return
         }
 
@@ -538,10 +553,10 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         }
 
         try {
-            this.state.updatingTokensBalance.set(root, true)
+            this.setState('updatingTokensBalance', new ObservableMap(this.state.updatingTokensBalance).set(root, true))
 
-            const balance = await TokenWallet.balance({
-                wallet: new Address(token.wallet),
+            const balance = await TokenWalletUtils.balance({
+                tokenWalletAddress: token.wallet,
             })
 
             // Force update
@@ -556,7 +571,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
             this.update(root, 'balance', undefined)
         }
         finally {
-            this.state.updatingTokensBalance.set(root, false)
+            this.setState('updatingTokensBalance', new ObservableMap(this.state.updatingTokensBalance).set(root, false))
         }
     }
 
@@ -577,12 +592,12 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         }
 
         if (token.wallet === undefined) {
-            this.state.updatingTokensWallet.set(root, true)
+            this.setState('updatingTokensWallet', new ObservableMap(this.state.updatingTokensWallet).set(root, true))
 
             try {
-                const address = await TokenWallet.walletAddress({
-                    owner: this.wallet.account.address,
-                    root: new Address(token.root),
+                const address = await TokenWalletUtils.walletAddress({
+                    tokenRootAddress: token.root,
+                    walletOwnerAddress: this.wallet.account.address,
                 })
 
                 // Force update
@@ -596,7 +611,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
                 error('Token wallet address update error', e)
             }
             finally {
-                this.state.updatingTokensWallet.set(root, false)
+                this.setState('updatingTokensWallet', new ObservableMap(this.state.updatingTokensWallet).set(root, false))
             }
         }
     }
@@ -658,7 +673,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
         }
 
         try {
-            const customToken = await TokenWallet.getTokenFullDetails(root)
+            const customToken = await TokenUtils.getDetails(root)
 
             if (customToken) {
                 const filtered = this.queue.filter(token => token.root !== root)

@@ -1,9 +1,13 @@
 import * as React from 'react'
 
-import { PoolsContent } from '@/modules/Pools/components/PoolsContent'
-
-import './index.scss'
+import { AllPools } from '@/modules/Pools/containers/AllPools'
+import { FavoritesPools } from '@/modules/Pools/containers/FavoritesPools'
 
 export function Pools(): JSX.Element {
-    return <PoolsContent />
+    return (
+        <>
+            <FavoritesPools />
+            <AllPools />
+        </>
+    )
 }

@@ -4,6 +4,7 @@ import classNames from 'classnames'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
+import { formattedAmount } from '@/utils'
 
 import './index.scss'
 
@@ -77,7 +78,7 @@ export const Pagination = React.memo(({
                 {intl.formatMessage({
                     id: 'PAGINATION_PAGE_OF',
                 }, {
-                    totalPages,
+                    totalPages: formattedAmount(totalPages),
                 })}
             </div>
             <Button
@@ -86,7 +87,7 @@ export const Pagination = React.memo(({
                 type="icon"
                 onClick={onPrev}
             >
-                <Icon icon="arrowLeft" />
+                <Icon icon="chevronLeft" />
             </Button>
             <Button
                 className="pagination__btn"
@@ -94,7 +95,7 @@ export const Pagination = React.memo(({
                 type="icon"
                 onClick={onNext}
             >
-                <Icon icon="arrowRight" />
+                <Icon icon="chevronRight" />
             </Button>
         </div>
     )

@@ -3,6 +3,7 @@
 .pagination {
     align-items: center;
     display: flex;
+    gap: 10px;
     justify-content: flex-end;
     margin-top: 16px;
 
@@ -17,41 +18,37 @@
 
         border: 1px solid rgb(255 255 255 / 16%);
         color: #fff;
+        cursor: unset;
         font-size: 14px;
         height: 40px;
         letter-spacing: 0.75px;
         line-height: 20px;
-        margin: 0 10px;
         text-align: center;
         width: 64px;
-        cursor: unset;
 
-        &:focus { border-color: #fff; }
+        &:focus { border-color: rgb(197 228 243 / 64%); }
     }
 
     &__btn.btn {
-        background: rgb(197 228 243 / 16%);
+        background-color: rgb(197 228 243 / 16%);
         border: none;
         border-radius: 0;
+        color: #c5e4f3;
         height: 40px;
-        margin-left: 10px;
+        opacity: 1;
         outline: none;
         padding: 0;
         width: 40px;
 
         &:hover:not(:disabled) {
             background-color: #c5e4f3;
-            svg { fill: #293166; }
+            color: #293166;
         }
 
         &:disabled {
-            background-color: rgb(197 228 243 / 16%);
-            color: #c5e4f3;
             cursor: not-allowed;
             opacity: 0.5;
             transition: none;
         }
-
-        svg { fill: #c5e4f3; }
     }
 }

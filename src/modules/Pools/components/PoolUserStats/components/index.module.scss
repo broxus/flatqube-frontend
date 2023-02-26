@@ -1,0 +1,179 @@
+.balances {
+    &__card {
+        padding: 24px !important;
+    }
+
+    &__header {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 24px;
+        margin-bottom: 16px !important;
+    }
+
+    &__usd_equivalent_price {
+        font-size: 24px;
+        letter-spacing: 0.15px;
+        line-height: 28px;
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        font-size: 16px;
+        font-weight: 400;
+        letter-spacing: 0.1px;
+        line-height: 20px;
+        margin-top: 16px;
+        row-gap: 6px;
+
+        > * {
+            align-items: center;
+            column-gap: 12px;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+        }
+    }
+}
+
+.deposit_banner {
+    &__card {
+        background: rgb(173 144 233 / 12%);
+        padding: 24px !important;
+        position: relative;
+    }
+
+    &__note {
+        color: #fff;
+        font-size: 24px;
+        font-weight: 500;
+        line-height: 32px;
+        text-shadow: 0 1px 2px rgb(0 0 0 / 48%);
+    }
+
+    &__content_holder {
+        display: flex;
+        flex-flow: column wrap;
+        gap: 24px;
+        height: 100%;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+    }
+
+    &__bg_icons_holder {
+        bottom: 0;
+        left: 0;
+        overflow: hidden;
+        pointer-events: none;
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 0;
+
+        :global {
+            .token_icon_0_1 {
+                border-radius: 100px;
+                filter: blur(20px);
+                height: 198.08px;
+                left: -107.69px;
+                opacity: 0.5;
+                position: absolute;
+                top: 97.48px;
+                transform: rotate(19.86deg);
+                width: 198.08px;
+            }
+
+            .token_icon_0_2 {
+                border-radius: 100px;
+                filter: blur(6.3359px);
+                height: 92.77px;
+                left: 21.83px;
+                position: absolute;
+                top: -90.62px;
+                transform: rotate(19.86deg);
+                width: 92.77px;
+            }
+
+            .token_icon_0_3 {
+                border-radius: 100px;
+                filter: blur(9.5px);
+                height: 62.62px;
+                left: 68.46px;
+                opacity: 0.2;
+                position: absolute;
+                top: -27.3px;
+                transform: rotate(-2.8deg);
+                width: 62.62px;
+            }
+
+            .token_icon_1_1 {
+                border-radius: 150px;
+                filter: blur(12px);
+                height: 194.31px;
+                position: absolute;
+                right: -56.98px;
+                top: -124.36px;
+                transform: rotate(-3.43deg);
+                width: 194.31px;
+            }
+
+            .token_icon_1_2 {
+                border-radius: 150px;
+                filter: blur(3px);
+                height: 84.53px;
+                position: absolute;
+                right: -14.71px;
+                top: 182.79px;
+                transform: rotate(-13.01deg);
+                width: 84.53px;
+            }
+
+            .token_icon_1_3 {
+                border-radius: 150px;
+                filter: blur(8px);
+                height: 98.49px;
+                opacity: 0.2;
+                position: absolute;
+                right: -29.17px;
+                top: 87.45px;
+                transform: rotate(-22.6deg);
+                width: 98.49px;
+            }
+
+            .token_icon_2_1 {
+                border-radius: 150px;
+                bottom: -14.79px;
+                filter: blur(26.6px);
+                height: 244.53px;
+                opacity: 0.35;
+                position: absolute;
+                right: -44.71px;
+                transform: rotate(-16.01deg);
+                width: 244.53px;
+            }
+
+            .token_icon_2_2 {
+                border-radius: 150px;
+                bottom: -34.36px;
+                filter: blur(12px);
+                height: 144.31px;
+                left: 20.02px;
+                position: absolute;
+                transform: rotate(-3.43deg);
+                width: 144.31px;
+            }
+
+            .token_icon_2_3 {
+                border-radius: 150px;
+                bottom: 92.79px;
+                filter: blur(4.6px);
+                height: 84.53px;
+                position: absolute;
+                right: 94.71px;
+                transform: rotate(-16.01deg);
+                width: 84.53px;
+            }
+        }
+    }
+}

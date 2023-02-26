@@ -6,7 +6,7 @@ import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { SwapDirection } from '@/modules/Swap/types'
-import { formattedTokenAmount } from '@/utils'
+import { formattedTokenAmount, stripHtmlTags } from '@/utils'
 
 import './index.scss'
 
@@ -21,88 +21,19 @@ export function SwapPrice(): JSX.Element | null {
 
     return (
         <div className="form-row swap-price">
-            <div>
-                <Observer>
-                    {() => {
-                        switch (true) {
-                            case formStore.isCrossExchangeOnly:
-                                return (
-                                    <div
-                                        className="btn btn-xs btn-secondary swap-price__exchange-mode-btn"
-                                    >
-                                        {intl.formatMessage({
-                                            id: 'SWAP_PRICE_CROSS_EXCHANGE_MODE_ONLY_LABEL',
-                                        })}
-                                    </div>
-                                )
-
-                            case formStore.isCrossExchangeMode:
-                                return (
-                                    <Button
-                                        size="xs"
-                                        type="secondary"
-                                        className="swap-price__exchange-mode-btn"
-                                        disabled={formStore.isSwapping}
-                                        onClick={formStore.toggleSwapExchangeMode}
-                                    >
-                                        {intl.formatMessage({
-                                            id: 'SWAP_PRICE_DIRECT_EXCHANGE_MODE_LABEL',
-                                        })}
-                                    </Button>
-                                )
-
-                            case (formStore.isCrossExchangeAvailable && formStore.route !== undefined):
-                                return (
-                                    <Button
-                                        size="xs"
-                                        type="secondary"
-                                        className="swap-price__exchange-mode-btn"
-                                        disabled={formStore.isSwapping}
-                                        onClick={formStore.toggleSwapExchangeMode}
-                                    >
-                                        {intl.formatMessage({
-                                            id: !formStore.isEnoughLiquidity
-                                                ? 'SWAP_PRICE_CROSS_EXCHANGE_AVAILABLE_LABEL'
-                                                : 'SWAP_PRICE_CROSS_EXCHANGE_MODE_LABEL',
-                                        })}
-                                    </Button>
-                                )
-
-                            default:
-                                return (
-                                    <div
-                                        className="btn btn-xs btn-secondary swap-price__exchange-mode-btn"
-                                    >
-                                        {intl.formatMessage({
-                                            id: 'SWAP_PRICE_LABEL',
-                                        })}
-                                    </div>
-                                )
-                        }
-                    }}
-                </Observer>
-            </div>
+            <div />
             <div className="swap-price-details">
                 <Observer>
                     {() => {
-                        const { coinSide, multipleSwap, priceDirection } = formStore
-                        const { isEnoughCoinBalance, isEnoughTokenBalance } = multipleSwap
+                        const { coinSide, priceDirection } = formStore
                         const isCurrencyOnLeft = coinSide === 'leftToken'
                         const isCurrencyOnRight = coinSide === 'rightToken'
-                        const leftSymbol = (isCurrencyOnLeft || (!isEnoughTokenBalance && isEnoughCoinBalance))
+                        const leftSymbol = isCurrencyOnLeft
                             ? formStore.wallet.coin.symbol
                             : formStore.leftToken?.symbol
                         const rightSymbol = isCurrencyOnRight
                             ? formStore.wallet.coin.symbol
                             : formStore.rightToken?.symbol
-
-                        let ltrPrice = formStore.isLowTvl ? undefined : formStore.ltrPrice,
-                            rtlPrice = formStore.isLowTvl ? undefined : formStore.rtlPrice
-
-                        if (formStore.isCrossExchangeMode) {
-                            ltrPrice = formStore.crossPairSwap.ltrPrice
-                            rtlPrice = formStore.crossPairSwap.rtlPrice
-                        }
 
                         return priceDirection === SwapDirection.RTL ? (
                             <span
@@ -111,9 +42,9 @@ export function SwapPrice(): JSX.Element | null {
                                     __html: intl.formatMessage({
                                         id: 'SWAP_PRICE_RESULT',
                                     }, {
-                                        leftSymbol,
-                                        rightSymbol,
-                                        value: ltrPrice !== undefined ? formattedTokenAmount(ltrPrice) : '--',
+                                        leftSymbol: stripHtmlTags(leftSymbol ?? ''),
+                                        rightSymbol: stripHtmlTags(rightSymbol ?? ''),
+                                        value: formattedTokenAmount(formStore.ltrPrice),
                                     }, {
                                         ignoreTag: true,
                                     }),
@@ -126,9 +57,9 @@ export function SwapPrice(): JSX.Element | null {
                                     __html: intl.formatMessage({
                                         id: 'SWAP_PRICE_RESULT',
                                     }, {
-                                        leftSymbol: rightSymbol,
-                                        rightSymbol: leftSymbol,
-                                        value: rtlPrice !== undefined ? formattedTokenAmount(rtlPrice) : '--',
+                                        leftSymbol: stripHtmlTags(rightSymbol ?? ''),
+                                        rightSymbol: stripHtmlTags(leftSymbol ?? ''),
+                                        value: formattedTokenAmount(formStore.rtlPrice),
                                     }, {
                                         ignoreTag: true,
                                     }),

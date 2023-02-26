@@ -5,19 +5,18 @@ import { useIntl } from 'react-intl'
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { useSwapFormStoreContext } from '@/modules/Swap/context'
-import { SwapExchangeMode } from '@/modules/Swap/types'
+import { useNotifiedConversionCallbacks } from '@/modules/Swap/hooks/useNotifiedConversionCallbacks'
 
 
 function SubmitButton(): JSX.Element {
     const intl = useIntl()
     const formStore = useSwapFormStoreContext()
+    const conversionCallbacks = useNotifiedConversionCallbacks({})
 
     if (
-        formStore.isPreparing
-        || formStore.isSwapping
-        || formStore.isCalculating
-        || formStore.isLoading
-        || !formStore.tokensCache.isReady
+        formStore.isPreparing === undefined
+        || formStore.isPreparing
+        || formStore.isProcessing
     ) {
         return (
             <Button
@@ -39,12 +38,12 @@ function SubmitButton(): JSX.Element {
     if (formStore.isWrapMode) {
         buttonText = intl.formatMessage({
             id: 'CONVERSION_FORM_WRAP_BTN_TEXT',
-        }, { symbol: formStore.conversion.wallet.coin.symbol })
+        }, { symbol: formStore.wallet.coin.symbol })
     }
     else if (formStore.isUnwrapMode) {
         buttonText = intl.formatMessage({
             id: 'CONVERSION_FORM_UNWRAP_BTN_TEXT',
-        }, { symbol: formStore.conversion.token?.symbol })
+        }, { symbol: formStore.leftToken?.symbol })
     }
 
     switch (true) {
@@ -58,22 +57,17 @@ function SubmitButton(): JSX.Element {
             })
             break
 
-        case formStore.isWrapMode && formStore.conversion.isWrapValid:
+        case formStore.isWrapMode && formStore.isWrapValid:
             buttonProps.disabled = false
             buttonProps.onClick = async () => {
-                await formStore.conversion.wrap()
+                await formStore.wrap(conversionCallbacks)
             }
             break
 
-        case formStore.isUnwrapMode && formStore.conversion.isUnwrapValid:
+        case formStore.isUnwrapMode && formStore.isUnwrapValid:
             buttonProps.disabled = false
             buttonProps.onClick = async () => {
-                if (formStore.exchangeMode === SwapExchangeMode.WRAP_COIN) {
-                    await formStore.conversion.wrap()
-                }
-                else {
-                    await formStore.conversion.unwrap()
-                }
+                await formStore.unwrap(conversionCallbacks)
             }
             break
 

@@ -1,158 +1,92 @@
-import { makeAutoObservable } from 'mobx'
+import { computed, makeObservable } from 'mobx'
 
-import { TokenListURI } from '@/config'
-import {
-    DEFAULT_CURRENCIES_STORE_DATA,
-    DEFAULT_CURRENCIES_STORE_STATE,
-} from '@/modules/Currencies/constants'
-import {
-    CurrenciesRequest,
-    CurrenciesStoreData,
-    CurrenciesStoreState,
-} from '@/modules/Currencies/types'
-import { getImportedTokens, TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
-import { CurrenciesApi, useCurrenciesApi } from '@/modules/Currencies/hooks/useApi'
+import { useCurrenciesApi } from '@/modules/Currencies/hooks/useApi'
+import { CurrenciesOrdering } from '@/modules/Currencies/types'
+import type { CurrenciesPagination, CurrencyResponse } from '@/modules/Currencies/types'
+import { BaseStore } from '@/stores/BaseStore'
+import type { TokensCacheService } from '@/stores/TokensCacheService'
 
+export type CurrenciesStoreData = {
+    currencies: CurrencyResponse[];
+    totalCount: number;
+}
 
-export class CurrenciesStore {
+export type CurrenciesStoreState = {
+    isFetching?: boolean;
+    ordering: CurrenciesOrdering;
+    pagination: CurrenciesPagination;
+}
 
-    /**
-     *
-     * @protected
-     */
-    protected data: CurrenciesStoreData = DEFAULT_CURRENCIES_STORE_DATA
+export class CurrenciesStore extends BaseStore<CurrenciesStoreData, CurrenciesStoreState> {
 
-    /**
-     *
-     * @protected
-     */
-    protected state: CurrenciesStoreState = DEFAULT_CURRENCIES_STORE_STATE
+    protected readonly api = useCurrenciesApi()
 
-    constructor(
-        protected readonly tokensCache: TokensCacheService,
-        protected readonly api: CurrenciesApi,
-    ) {
-        makeAutoObservable(this)
+    constructor(public readonly tokensCache: TokensCacheService) {
+        super()
+
+        this.setData(() => ({ currencies: [] }))
+
+        this.setState(() => ({
+            ordering: CurrenciesOrdering.TvlDescending,
+            pagination: {
+                currentPage: 1,
+                limit: 10,
+                totalCount: 0,
+                totalPages: 0,
+            },
+        }))
+
+        makeObservable(this, {
+            currencies: computed,
+            isFetching: computed,
+        })
     }
 
-    /*
-     * External actions for use it in UI
-     * ----------------------------------------------------------------------------------
-     */
-
-    /**
-     *
-     * @param {keyof CurrenciesStoreData} key
-     * @param {CurrenciesStoreData[K]} value
-     */
-    public changeData<K extends keyof CurrenciesStoreData>(key: K, value: CurrenciesStoreData[K]): void {
-        this.data[key] = value
-    }
-
-    /**
-     *
-     * @param {keyof CurrenciesStoreState} key
-     * @param {CurrenciesStoreState[K]} value
-     */
-    public changeState<K extends keyof CurrenciesStoreState>(key: K, value: CurrenciesStoreState[K]): void {
-        this.state[key] = value
-    }
-
-    public dispose(): void {
-        this.data = DEFAULT_CURRENCIES_STORE_DATA
-        this.state = DEFAULT_CURRENCIES_STORE_STATE
-    }
-
-    /**
-     *
-     */
-    public async load(): Promise<void> {
-        if (this.isLoading) {
+    public async fetch(force?: boolean): Promise<void> {
+        if (!force && this.isFetching) {
             return
         }
 
-        this.changeState('isLoading', true)
+        try {
+            this.setState('isFetching', true)
 
-        const body: CurrenciesRequest = {
-            currencyAddresses: getImportedTokens(),
-            limit: this.limit,
-            offset: this.currentPage >= 1 ? (this.currentPage - 1) * this.limit : 0,
-            ordering: this.ordering,
-            whiteListUri: TokenListURI,
+            const response = await this.api.currencies({}, {}, {
+                currencyAddresses: this.tokensCache.roots,
+                limit: this.pagination.limit,
+                offset: this.pagination.limit * (this.pagination.currentPage - 1),
+                ordering: this.ordering,
+            })
+
+            this.setData('currencies', response.currencies)
+
+            this.setState('pagination', {
+                ...this.pagination,
+                totalCount: response.totalCount,
+                totalPages: Math.ceil(response.totalCount / this.pagination.limit),
+            })
         }
-
-        const result = await this.api.currencies({}, {
-            body: JSON.stringify(body),
-        })
-        this.changeData('currencies', result.currencies)
-        this.changeData('totalCount', result.totalCount)
-        this.changeState('isLoading', false)
+        catch (e) {}
+        finally {
+            this.setState('isFetching', false)
+        }
     }
 
-    /*
-     * Memoized store data values
-     * ----------------------------------------------------------------------------------
-     */
-
-    /**
-     * @returns {CurrenciesStoreData['currencies']}
-     */
     public get currencies(): CurrenciesStoreData['currencies'] {
-        return this.data.currencies.filter(
+        return this.data.currencies/* .filter(
             currency => this.tokensCache.roots.includes(currency.address),
-        )
+        ) */
     }
 
-    /*
-     * Computed values
-     * ----------------------------------------------------------------------------------
-     */
-
-    /**
-     *
-     */
-    public get totalPages(): number {
-        return Math.ceil(this.data.totalCount / this.limit)
+    public get isFetching(): CurrenciesStoreState['isFetching'] {
+        return this.state.isFetching
     }
 
-    /*
-     * Memoized store state values
-     * ----------------------------------------------------------------------------------
-     */
-
-    /**
-     *
-     */
-    public get currentPage(): CurrenciesStoreState['currentPage'] {
-        return this.state.currentPage
-    }
-
-    /**
-     *
-     */
-    public get limit(): CurrenciesStoreState['limit'] {
-        return this.state.limit
-    }
-
-    /**
-     *
-     */
-    public get isLoading(): CurrenciesStoreState['isLoading'] {
-        return this.state.isLoading
-    }
-
-    /**
-     *
-     */
     public get ordering(): CurrenciesStoreState['ordering'] {
         return this.state.ordering
     }
 
-}
+    public get pagination(): CurrenciesStoreState['pagination'] {
+        return this.state.pagination
+    }
 
-
-const Currencies = new CurrenciesStore(useTokensCache(), useCurrenciesApi())
-
-export function useCurrenciesStore(): CurrenciesStore {
-    return Currencies
 }

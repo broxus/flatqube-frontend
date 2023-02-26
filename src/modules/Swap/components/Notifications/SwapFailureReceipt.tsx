@@ -5,7 +5,7 @@ import classNames from 'classnames'
 import { AccountExplorerLink } from '@/components/common/AccountExplorerLink'
 import { TransactionExplorerLink } from '@/components/common/TransactionExplorerLink'
 import type { SwapTransactionReceipt } from '@/modules/Swap/types'
-import { isMobile } from '@/utils'
+import { isMobile, stopEventPropagate } from '@/utils'
 
 
 type Props = {
@@ -18,10 +18,6 @@ export function SwapFailureReceipt(props: Props): JSX.Element {
     const intl = useIntl()
 
     const { message = intl.formatMessage({ id: 'SWAP_NOTIFICATION_FAILURE_NOTE' }), receipt } = props
-
-    const onClickButton = (event: React.MouseEvent<HTMLAnchorElement>) => {
-        event.stopPropagation()
-    }
 
     return (
         <>
@@ -39,7 +35,7 @@ export function SwapFailureReceipt(props: Props): JSX.Element {
                         <TransactionExplorerLink
                             className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
                             id={receipt.hash}
-                            onClick={onClickButton}
+                            onClick={stopEventPropagate}
                         >
                             {intl.formatMessage({ id: 'SWAP_NOTIFICATION_RECEIPT_TRANSACTION_LINK_TEXT' })}
                         </TransactionExplorerLink>
@@ -48,7 +44,7 @@ export function SwapFailureReceipt(props: Props): JSX.Element {
                         <AccountExplorerLink
                             address={receipt.receivedRoot}
                             className={isMobile(navigator.userAgent) ? 'btn btn-link' : 'btn btn-secondary'}
-                            onClick={onClickButton}
+                            onClick={stopEventPropagate}
                         >
                             {intl.formatMessage({ id: 'SWAP_NOTIFICATION_RECEIPT_TOKEN_ROOT_CONTRACT_LINK_TEXT' })}
                         </AccountExplorerLink>

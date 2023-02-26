@@ -8,9 +8,9 @@ export function InstallWallet(): JSX.Element {
 
     return (
         <div className="card card--small card--flat wallet-install-card">
-            <div className="message message_system">
-                <div className="margin-bottom text-center">
-                    <h2 className="text-heading">
+            <div className="message text-center">
+                <div className="margin-bottom">
+                    <h2 className="card-title margin-bottom">
                         {intl.formatMessage({ id: 'WALLET_MIDDLEWARE_INSTALLATION_TITLE' })}
                     </h2>
                     <div

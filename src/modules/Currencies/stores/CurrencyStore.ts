@@ -1,547 +1,258 @@
-import { Time } from 'lightweight-charts'
-import { DateTime } from 'luxon'
-import {
-    action,
-    IReactionDisposer,
-    makeAutoObservable,
-    reaction,
-} from 'mobx'
+import type { LineData, Time } from 'lightweight-charts'
 import uniqBy from 'lodash.uniqby'
+import { DateTime } from 'luxon'
+import { action, computed, makeObservable } from 'mobx'
 
-import { TokenListURI } from '@/config'
-import {
-    CandlestickGraphShape,
-    CommonGraphShape,
-} from '@/modules/Chart/types'
-import {
-    DEFAULT_CURRENCY_STORE_DATA,
-    DEFAULT_CURRENCY_STORE_STATE,
-} from '@/modules/Currencies/constants'
-import {
-    CurrencyGraphRequest,
-    CurrencyStoreData,
-    CurrencyStoreGraphData,
-    CurrencyStoreState,
-} from '@/modules/Currencies/types'
-import { PairsRequest } from '@/modules/Pairs/types'
-import { TransactionsRequest } from '@/modules/Transactions/types'
-import { getImportedTokens, useTokensCache } from '@/stores/TokensCacheService'
-import { parseCurrencyBillions } from '@/utils'
+import { OhlcvData, Timeframe } from '@/modules/Charts/types'
+import { CurrencyResponse, CurrencyStoreGraphs } from '@/modules/Currencies/types'
+import { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
 import { CurrenciesApi, useCurrenciesApi } from '@/modules/Currencies/hooks/useApi'
+import { BaseStore } from '@/stores/BaseStore'
+import { WalletService } from '@/stores/WalletService'
 
 
-export class CurrencyStore {
+export type CurrencyStoreData = {
+    graphs: CurrencyStoreGraphs;
+    currency: CurrencyResponse | undefined;
+}
 
-    /**
-     *
-     * @protected
-     */
-    protected data: CurrencyStoreData = DEFAULT_CURRENCY_STORE_DATA
+export type CurrencyStoreState = {
+    graph: 'prices' | 'tvl' | 'volume'
+    isFetching?: boolean;
+    isFetchingGraph?: boolean;
+    isInitializing?: boolean;
+    notFound?: boolean;
+    timeframe: Timeframe;
+}
 
-    /**
-     *
-     * @protected
-     */
-    protected state: CurrencyStoreState = DEFAULT_CURRENCY_STORE_STATE
+export class CurrencyStore extends BaseStore<CurrencyStoreData, CurrencyStoreState> {
 
     protected readonly api: CurrenciesApi = useCurrenciesApi()
 
-    constructor(protected readonly address: string) {
-        const tokensCache = useTokensCache()
-        this.changeState('isTransactionsLoading', !tokensCache.isReady)
-        this.changeState('isPairsLoading', !tokensCache.isReady)
-        this.changeState('isLoading', !tokensCache.isReady)
+    constructor(
+        public readonly address: string,
+        public readonly wallet: WalletService,
+        public readonly tokensCache: TokensCacheService,
+    ) {
+        super()
 
-        makeAutoObservable(this, {
-            loadPricesGraph: action.bound,
-            loadTvlGraph: action.bound,
-            loadVolumeGraph: action.bound,
-        })
-
-        this.#tokensDisposer = reaction(
-            () => [tokensCache.isFetching, tokensCache.isReady],
-            async ([isFetching, isReady]) => {
-                if (!isFetching && isReady) {
-                    this.changeState('isTransactionsLoading', false)
-                    this.changeState('isPairsLoading', false)
-                    this.changeState('isLoading', false)
-                    try {
-                        await Promise.allSettled([
-                            this.load(),
-                            this.loadPairs(),
-                            this.loadTransactions(),
-                        ])
-                    }
-                    catch (e) {
-
-                    }
-                }
-
+        this.setData({
+            graphs: {
+                prices: null,
+                tvl: null,
+                volume: null,
             },
-            { fireImmediately: true },
-        )
+        })
 
-        this.#timeframeDisposer = reaction(() => this.timeframe, () => {
-            this.changeState('isPricesGraphLoading', false)
-            this.changeState('isTvlGraphLoading', false)
-            this.changeState('isVolumeGraphLoading', false)
-            this.changeData('graphData', DEFAULT_CURRENCY_STORE_DATA.graphData)
+        this.setState(() => ({
+            graph: 'prices',
+            timeframe: 'H1',
+        }))
+
+        makeObservable(this, {
+            fetchPricesGraph: action.bound,
+            fetchTvlGraph: action.bound,
+            fetchVolumeGraph: action.bound,
+            graph: computed,
+            graphs: computed,
+            isFetching: computed,
+            isFetchingGraph: computed,
+            notFound: computed,
+            pricesGraphData: computed,
+            timeframe: computed,
+            tvlGraphData: computed,
+            volumeGraphData: computed,
         })
     }
 
-    /**
-     *
-     * @param {keyof CurrencyStoreData} key
-     * @param {CurrencyStoreData[K]} value
-     */
-    public changeData<K extends keyof CurrencyStoreData>(key: K, value: CurrencyStoreData[K]): void {
-        this.data[key] = value
+    public async init(): Promise<void> {
+        if (this.state.isInitializing) {
+            return
+        }
+
+        this.setState('isInitializing', true)
+
+        await Promise.allSettled([
+            this.currency === undefined ? this.fetch() : undefined,
+            this.graphs.prices == null ? this.fetchPricesGraph() : undefined,
+        ])
+
+        this.setState('isInitializing', false)
     }
 
-    /**
-     *
-     * @param {keyof CurrencyStoreState} key
-     * @param {CurrencyStoreState[K]} value
-     */
-    public changeState<K extends keyof CurrencyStoreState>(key: K, value: CurrencyStoreState[K]): void {
-        this.state[key] = value
-    }
-
-    /**
-     *
-     */
-    public dispose(): void {
-        this.#timeframeDisposer?.()
-    }
-
-    /**
-     *
-     * @param {keyof CurrencyStoreGraphData} key
-     * @param {CurrencyStoreGraphData[K]} value
-     * @protected
-     */
-    protected changeGraphData<K extends keyof CurrencyStoreGraphData>(key: K, value: CurrencyStoreGraphData[K]): void {
-        this.data.graphData[key] = value
-    }
-
-    /**
-     *
-     */
-    public get isLoading(): CurrencyStoreState['isLoading'] {
-        return this.state.isLoading
-    }
-
-    /**
-     *
-     */
-    public async load(): Promise<void> {
-        if (this.isLoading) {
+    protected async fetch(force?: boolean): Promise<void> {
+        if (!force && this.isFetching) {
             return
         }
 
         try {
-            this.changeState('isLoading', true)
+            this.setState('isFetching', true)
 
-            const result = await this.api.currency({
+            const response = await this.api.currency({
                 address: this.address,
-            })
-            this.changeData('currency', result)
+            }, { method: 'POST' })
+
+            this.setData('currency', response)
         }
-        catch (e) {}
+        catch (e) {
+            this.setState('notFound', true)
+        }
         finally {
-            this.changeState('isLoading', false)
+            this.setState('isFetching', false)
         }
     }
 
-    /**
-     *
-     */
     public get currency(): CurrencyStoreData['currency'] {
         return this.data.currency
     }
 
-    /**
-     *
-     */
-    public get formattedVolume24h(): string | undefined {
-        return this.currency?.volume24h
-            ? parseCurrencyBillions(this.currency?.volume24h)
-            : undefined
+    public get graphs(): CurrencyStoreData['graphs'] {
+        return this.data.graphs
     }
 
-    /**
-     *
-     */
-    public get formattedVolume7d(): string | undefined {
-        return this.currency?.volume7d
-            ? parseCurrencyBillions(this.currency?.volume7d)
-            : undefined
-    }
-
-    /**
-     *
-     */
-    public get formattedTvl(): string | undefined {
-        return this.currency?.tvl
-            ? parseCurrencyBillions(this.currency?.tvl)
-            : undefined
-    }
-
-    /**
-     *
-     */
-    public get isPricesGraphLoading(): CurrencyStoreState['isPricesGraphLoading'] {
-        return this.state.isPricesGraphLoading
-    }
-
-    /**
-     *
-     * @param {number} [from]
-     * @param {number} [to]
-     */
-    public async loadPricesGraph(from?: number, to?: number): Promise<void> {
-        if (this.isPricesGraphLoading) {
-            return
-        }
-
-        try {
-            this.changeState('isPricesGraphLoading', true)
-
-            const body: CurrencyGraphRequest = {
-                from: from || DateTime.local().minus({
-                    days: this.timeframe === 'D1' ? 30 : 7,
-                }).toUTC(undefined, {
-                    keepLocalTime: false,
-                }).toMillis(),
-                timeframe: this.timeframe,
-                to: to || DateTime.local().toUTC(undefined, {
-                    keepLocalTime: false,
-                }).toMillis(),
-            }
-            const result = await this.api.currencyPrices({
-                address: this.address,
-            }, {
-                body: JSON.stringify(body),
-            })
-            const data = result.concat(this.graphData.prices ?? [])
-            this.changeGraphData('prices', data.length ? data : null)
-        }
-        catch (e) {}
-        finally {
-            this.changeState('isPricesGraphLoading', false)
-        }
-    }
-
-    /**
-     *
-     */
-    public get isVolumeGraphLoading(): CurrencyStoreState['isVolumeGraphLoading'] {
-        return this.state.isVolumeGraphLoading
-    }
-
-    /**
-     *
-     * @param {number} [from]
-     * @param {number} [to]
-     */
-    public async loadVolumeGraph(from?: number, to?: number): Promise<void> {
-        if (this.isVolumeGraphLoading) {
-            return
-        }
-
-        try {
-            this.changeState('isVolumeGraphLoading', true)
-
-            const body: CurrencyGraphRequest = {
-                from: from || DateTime.local().minus({
-                    days: this.timeframe === 'D1' ? 30 : 7,
-                }).toUTC(undefined, {
-                    keepLocalTime: false,
-                }).toMillis(),
-                timeframe: this.timeframe,
-                to: to || DateTime.local().toUTC(undefined, {
-                    keepLocalTime: false,
-                }).toMillis(),
-            }
-            const result = await this.api.currencyVolume({
-                address: this.address,
-            }, {
-                body: JSON.stringify(body),
-            })
-            const data = result.concat(this.graphData.volume ?? [])
-            this.changeGraphData('volume', data.length ? data : null)
-        }
-        catch (e) {}
-        finally {
-            this.changeState('isVolumeGraphLoading', false)
-        }
-    }
-
-    /**
-     *
-     */
-    public get isTvlGraphLoading(): CurrencyStoreState['isTvlGraphLoading'] {
-        return this.state.isTvlGraphLoading
-    }
-
-    /**
-     *
-     * @param {number} [from]
-     * @param {number} [to]
-     */
-    public async loadTvlGraph(from?: number, to?: number): Promise<void> {
-        if (this.isTvlGraphLoading) {
-            return
-        }
-
-        try {
-            this.changeState('isTvlGraphLoading', true)
-
-            const body: CurrencyGraphRequest = {
-                from: from || DateTime.local().minus({
-                    days: this.timeframe === 'D1' ? 30 : 7,
-                }).toUTC(undefined, {
-                    keepLocalTime: false,
-                }).toMillis(),
-                timeframe: this.timeframe,
-                to: to || DateTime.local().toUTC(undefined, {
-                    keepLocalTime: false,
-                }).toMillis(),
-            }
-            const result = await this.api.currencyTvl({
-                address: this.address,
-            }, {
-                body: JSON.stringify(body),
-            })
-            const data = result.concat(this.graphData.tvl ?? [])
-            this.changeGraphData('tvl', data.length ? data : null)
-        }
-        catch (e) {}
-        finally {
-            this.changeState('isTvlGraphLoading', false)
-        }
-    }
-
-    /**
-     *
-     */
-    public get timeframe(): CurrencyStoreState['timeframe'] {
-        return this.state.timeframe
-    }
-
-    /**
-     *
-     */
     public get graph(): CurrencyStoreState['graph'] {
         return this.state.graph
     }
 
-    /**
-     *
-     */
-    public get graphData(): CurrencyStoreData['graphData'] {
-        return this.data.graphData
+    public get isFetching(): CurrencyStoreState['isFetching'] {
+        return this.state.isFetching
     }
 
-    /**
-     *
-     */
-    public get pricesGraphData(): CandlestickGraphShape[] | null {
-        return this.graphData.prices == null ? [] : this.graphData.prices.map<CandlestickGraphShape>(item => ({
+    public get isFetchingGraph(): CurrencyStoreState['isFetchingGraph'] {
+        return this.state.isFetchingGraph
+    }
+
+    public get notFound(): CurrencyStoreState['notFound'] {
+        return this.state.notFound
+    }
+
+    public get timeframe(): CurrencyStoreState['timeframe'] {
+        return this.state.timeframe
+    }
+
+    public get token(): TokenCache | undefined {
+        return this.tokensCache.get(this.address)
+    }
+
+    public async fetchPricesGraph(from?: number, to?: number): Promise<void> {
+        if (this.isFetchingGraph) {
+            return
+        }
+
+        try {
+            this.setState('isFetchingGraph', true)
+
+            const result = await this.api.currencyPrices({
+                address: this.address,
+            }, {
+                method: 'POST',
+            }, {
+                from: from || DateTime.local().minus({
+                    days: this.timeframe === 'D1' ? 30 : 7,
+                }).toUTC(undefined, {
+                    keepLocalTime: false,
+                }).toMillis(),
+                timeframe: this.timeframe,
+                to: to || DateTime.local().toUTC(undefined, {
+                    keepLocalTime: false,
+                }).toMillis(),
+            })
+            const data = result.concat(this.graphs.prices ?? [])
+            this.setData('graphs', { ...this.data.graphs, prices: data.length > 0 ? data : null })
+        }
+        catch (e) {}
+        finally {
+            this.setState('isFetchingGraph', false)
+        }
+    }
+
+    public async fetchVolumeGraph(from?: number, to?: number): Promise<void> {
+        if (this.isFetchingGraph) {
+            return
+        }
+
+        try {
+            this.setState('isFetchingGraph', true)
+
+            const result = await this.api.currencyVolume({
+                address: this.address,
+            }, {
+                method: 'POST',
+            }, {
+                from: from || DateTime.local().minus({
+                    days: this.timeframe === 'D1' ? 30 : 7,
+                }).toUTC(undefined, {
+                    keepLocalTime: false,
+                }).toMillis(),
+                timeframe: this.timeframe,
+                to: to || DateTime.local().toUTC(undefined, {
+                    keepLocalTime: false,
+                }).toMillis(),
+            })
+            const data = result.concat(this.graphs.volume ?? [])
+            this.setData('graphs', { ...this.data.graphs, volume: data.length > 0 ? data : null })
+        }
+        catch (e) {}
+        finally {
+            this.setState('isFetchingGraph', false)
+        }
+    }
+
+    public async fetchTvlGraph(from?: number, to?: number): Promise<void> {
+        if (this.isFetchingGraph) {
+            return
+        }
+
+        try {
+            this.setState('isFetchingGraph', true)
+
+            const result = await this.api.currencyTvl({
+                address: this.address,
+            }, {
+                method: 'POST',
+            }, {
+                from: from || DateTime.local().minus({
+                    days: this.timeframe === 'D1' ? 30 : 7,
+                }).toUTC(undefined, {
+                    keepLocalTime: false,
+                }).toMillis(),
+                timeframe: this.timeframe,
+                to: to || DateTime.local().toUTC(undefined, {
+                    keepLocalTime: false,
+                }).toMillis(),
+            })
+            const data = result.concat(this.graphs.tvl ?? [])
+            this.setData('graphs', { ...this.data.graphs, tvl: data.length > 0 ? data : null })
+        }
+        catch (e) {}
+        finally {
+            this.setState('isFetchingGraph', false)
+        }
+    }
+
+    public get pricesGraphData(): OhlcvData[] | null {
+        return uniqBy(this.graphs.prices, 'timestamp').map<OhlcvData>(item => ({
             close: parseFloat(item.close),
             high: parseFloat(item.high),
             low: parseFloat(item.low),
             open: parseFloat(item.open),
             time: (item.timestamp / 1000) as Time,
+            volume: parseFloat(item.volume),
         }))
     }
 
-    /**
-     *
-     */
-    public get volumeGraphData(): CommonGraphShape[] {
-        return uniqBy(this.graphData.volume, 'timestamp').map<CommonGraphShape>(item => ({
+    public get volumeGraphData(): LineData[] {
+        return uniqBy(this.graphs.volume, 'timestamp').map<LineData>(item => ({
             time: (item.timestamp / 1000) as Time,
             value: parseFloat(item.data),
         }))
     }
 
-    /**
-     *
-     */
-    public get tvlGraphData(): CommonGraphShape[] {
-        return uniqBy(this.graphData.tvl, 'timestamp').map<CommonGraphShape>(item => ({
+    public get tvlGraphData(): LineData[] {
+        return uniqBy(this.graphs.tvl, 'timestamp').map<LineData>(item => ({
             time: (item.timestamp / 1000) as Time,
             value: parseFloat(item.data),
         }))
     }
-
-    /**
-     *
-     */
-    public get isPairsLoading(): CurrencyStoreState['isPairsLoading'] {
-        return this.state.isPairsLoading
-    }
-
-    /**
-     *
-     */
-    public async loadPairs(): Promise<void> {
-        if (this.isPairsLoading) {
-            return
-        }
-
-        try {
-            this.changeState('isPairsLoading', true)
-
-            const body: PairsRequest = {
-                currencyAddresses: getImportedTokens(),
-                currencyAddress: this.address,
-                limit: this.pairsLimit,
-                offset: this.pairsCurrentPage >= 1 ? (this.pairsCurrentPage - 1) * this.pairsLimit : 0,
-                ordering: this.pairsOrdering,
-                whiteListUri: TokenListURI,
-            }
-
-            const result = await this.api.pairs({}, {
-                body: JSON.stringify(body),
-            })
-            this.changeData('pairsData', result)
-        }
-        catch (e) {}
-        finally {
-            this.changeState('isPairsLoading', false)
-        }
-    }
-
-    /**
-     *
-     */
-    public get relatedPairs(): CurrencyStoreData['pairsData']['pairs'] {
-        return this.data.pairsData.pairs
-    }
-
-    /**
-     *
-     */
-    public get pairsCurrentPage(): CurrencyStoreState['pairsCurrentPage'] {
-        return this.state.pairsCurrentPage
-    }
-
-    /**
-     *
-     */
-    public get pairsLimit(): CurrencyStoreState['pairsLimit'] {
-        return this.state.pairsLimit
-    }
-
-    /**
-     *
-     */
-    public get pairsOrdering(): CurrencyStoreState['pairsOrdering'] {
-        return this.state.pairsOrdering
-    }
-
-    /**
-     *
-     */
-    public get pairsTotalPages(): CurrencyStoreData['pairsData']['totalCount'] {
-        return Math.ceil(this.data.pairsData.totalCount / this.pairsLimit)
-    }
-
-    /**
-     *
-     */
-    public get isTransactionsLoading(): CurrencyStoreState['isTransactionsLoading'] {
-        return this.state.isTransactionsLoading
-    }
-
-    /**
-     *
-     */
-    public async loadTransactions(): Promise<void> {
-        if (this.isTransactionsLoading) {
-            return
-        }
-
-        try {
-            this.changeState('isTransactionsLoading', true)
-
-            const body: TransactionsRequest = {
-                currencyAddresses: getImportedTokens(),
-                currencyAddress: this.address,
-                limit: this.transactionsLimit,
-                offset: this.transactionsCurrentPage >= 1
-                    ? (this.transactionsCurrentPage - 1) * this.transactionsLimit
-                    : 0,
-                ordering: this.transactionsOrdering,
-                whiteListUri: TokenListURI,
-            }
-            if (this.transactionsEvents.length > 0) {
-                body.eventType = this.transactionsEvents
-            }
-
-            const result = await this.api.transactions({}, {
-                body: JSON.stringify(body),
-            })
-
-            this.changeData('transactionsData', result)
-        }
-        catch (e) {}
-        finally {
-            this.changeState('isTransactionsLoading', false)
-        }
-    }
-
-    /**
-     *
-     */
-    public get transactions(): CurrencyStoreData['transactionsData']['transactions'] {
-        return this.data.transactionsData.transactions
-    }
-
-    /**
-     *
-     */
-    public get transactionsEvents(): CurrencyStoreState['transactionsEventsType'] {
-        return this.state.transactionsEventsType
-    }
-
-    /**
-     *
-     */
-    public get transactionsCurrentPage(): CurrencyStoreState['transactionsCurrentPage'] {
-        return this.state.transactionsCurrentPage
-    }
-
-    /**
-     *
-     */
-    public get transactionsLimit(): CurrencyStoreState['transactionsLimit'] {
-        return this.state.transactionsLimit
-    }
-
-    /**
-     *
-     */
-    public get transactionsOrdering(): CurrencyStoreState['transactionsOrdering'] {
-        return this.state.transactionsOrdering
-    }
-
-    /**
-     *
-     */
-    public get transactionsTotalPages(): CurrencyStoreData['transactionsData']['totalCount'] {
-        return Math.ceil(this.data.transactionsData.totalCount / this.transactionsLimit)
-    }
-
-    /*
-     * Internal reaction disposers
-     * ----------------------------------------------------------------------------------
-     */
-
-    #tokensDisposer: IReactionDisposer | undefined
-
-    #timeframeDisposer: IReactionDisposer | undefined
 
 }

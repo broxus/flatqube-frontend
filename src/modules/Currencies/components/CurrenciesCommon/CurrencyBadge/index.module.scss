@@ -1,0 +1,20 @@
+.token_badge {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+
+    &__name {
+        color: rgb(255 255 255 / 48%);
+        font-size: 12px;
+        letter-spacing: 0.4px;
+        line-height: 16px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    :global .token-icons {
+        display: flex;
+        flex: none;
+    }
+}

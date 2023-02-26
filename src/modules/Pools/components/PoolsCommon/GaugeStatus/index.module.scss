@@ -1,0 +1,27 @@
+.status {
+    align-items: center;
+    display: flex;
+    height: 16px;
+    justify-content: center;
+    width: 16px;
+
+    &::after {
+        background: rgb(255 255 255 / 5%);
+        border-radius: 50%;
+        content: '';
+        height: 8px;
+        width: 8px;
+    }
+
+    &.active::after {
+        background: #4ab44a;
+    }
+
+    &.waiting::after {
+        background: #e6ac00;
+    }
+
+    &.ended::after {
+        background: #eb4361;
+    }
+}

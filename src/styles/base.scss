@@ -51,13 +51,23 @@ hr {
     padding: 0;
 }
 
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: 'Faktum Test', 'PT Root Sans', sans-serif;
+}
+
 ul li,
 ol li {
     list-style: none;
 }
 
 a {
-    color: #C5E4F3;
+    color: #c5e4f3;
     outline: none;
     -webkit-tap-highlight-color: rgb(0 0 0 / 0%);
     text-decoration: none;
@@ -76,7 +86,7 @@ a {
     }
 
     &:hover {
-        color: #C5E4F3;
+        color: #c5e4f3;
     }
 
     &[href^='tel:'],

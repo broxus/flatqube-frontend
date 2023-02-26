@@ -1,0 +1,23 @@
+@import '@/styles/variables.scss';
+
+.transactions_list {
+    &.list {
+        --list-grid-template: 150px minmax(25%, 45%) minmax(130px, 160px) minmax(130px, 160px) minmax(130px, 160px);
+
+        min-height: 1px;
+    }
+
+    &__toolbar {
+        align-items: flex-start;
+        display: flex;
+        flex-flow: column wrap;
+        gap: 16px;
+        justify-content: space-between;
+        margin-bottom: 16px;
+
+        @media only screen and (min-width: $breakpoint-small) {
+            align-items: center;
+            flex-flow: row nowrap;
+        }
+    }
+}

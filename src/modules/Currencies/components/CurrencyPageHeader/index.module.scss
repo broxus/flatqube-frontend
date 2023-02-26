@@ -1,0 +1,65 @@
+@import '@/styles/variables.scss';
+
+.currency_header {
+    :global .page_header {
+        &__inner {
+            align-items: flex-start;
+        }
+
+        &__actions {
+            gap: 12px;
+
+            @media only screen and (max-width: $breakpoint-xsmall-max) {
+                background-color: rgb(5 11 46 / 64%);
+                bottom: 0;
+                left: 0;
+                padding: 12px;
+                position: fixed;
+                right: 0;
+                width: 100%;
+                z-index: 100;
+
+                @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+                    -webkit-backdrop-filter: blur(32px);
+                    backdrop-filter: blur(32px);
+                    background: linear-gradient(0deg, rgb(5 11 46 / 12%), rgb(5 11 46 / 12%)), rgb(255 255 255 / 12%);
+                }
+
+                > * {
+                    display: flow-root;
+                    flex: auto;
+                    max-width: 100%;
+                    min-width: 1px;
+                }
+
+                .btn {
+                    height: 44px;
+                    line-height: 44px;
+                }
+            }
+        }
+    }
+
+    &__title_wrapper {
+        align-items: center;
+        column-gap: 12px;
+        display: flex;
+        flex-direction: row;
+    }
+
+    &__title {
+        align-items: center;
+        column-gap: 12px;
+        display: flex;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.1px;
+        line-height: 24px;
+    }
+
+    &__price {
+        align-items: center;
+        column-gap: 12px;
+        display: flex;
+    }
+}

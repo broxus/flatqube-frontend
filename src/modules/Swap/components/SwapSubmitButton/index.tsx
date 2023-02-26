@@ -13,11 +13,10 @@ function SubmitButton(): JSX.Element {
     const formStore = useSwapFormStoreContext()
 
     if (
-        formStore.isPreparing
-        || formStore.isSwapping
+        formStore.isPreparing === undefined
+        || formStore.isPreparing
         || formStore.isCalculating
-        || formStore.isLoading
-        || !formStore.tokensCache.isReady
+        || formStore.isProcessing
     ) {
         return (
             <Button
@@ -54,10 +53,7 @@ function SubmitButton(): JSX.Element {
             })
             break
 
-        case (
-            (formStore.leftAmount.length > 0 || formStore.rightAmount.length > 0)
-            && (formStore.pair === undefined || !formStore.isEnoughLiquidity)
-        ):
+        case (formStore.leftAmount.length > 0 || formStore.rightAmount.length > 0) && formStore.route === undefined:
             buttonProps.disabled = true
             buttonText = intl.formatMessage({
                 id: 'SWAP_BTN_TEXT_NOT_ENOUGH_LIQUIDITY',
@@ -74,9 +70,8 @@ function SubmitButton(): JSX.Element {
 
         case !formStore.isLeftAmountValid:
             buttonProps.disabled = true
-            buttonText = formStore.isMultipleSwapMode ? intl.formatMessage({
+            buttonText = formStore.isComboSwapMode ? intl.formatMessage({
                 id: 'SWAP_BTN_TEXT_INSUFFICIENT_BALANCE',
-            // @ts-ignore need react 18
             }) : intl.formatMessage({
                 id: 'SWAP_BTN_TEXT_INSUFFICIENT_TOKEN_BALANCE',
             }, {
@@ -100,7 +95,7 @@ function SubmitButton(): JSX.Element {
             break
 
         default:
-            buttonProps.disabled = !formStore.isValid || formStore.isLoading
+            buttonProps.disabled = !formStore.isValid || formStore.isProcessing
     }
 
     return (

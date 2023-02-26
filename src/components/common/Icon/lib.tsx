@@ -49,7 +49,7 @@ const library = t({
     everWalletIcon: ({ ratio, ...props }) => <svg {...defaultProps} {...props} viewBox="0 0 1024 1024" {...getSize(20, 20, ratio)}><rect width="1024" height="1024" rx="512" fill="#050B2E" className="uk-preserve"/><path d="M391.935 256L160 490.49H537.022V864L768 632.859V256H391.935Z" fill="#C5E4F3" className="uk-preserve"/></svg>,
 
     menu: ({ ratio, ...props }) => <svg {...defaultProps} {...props} viewBox="0 0 24 24" {...getSize(20, 20, ratio)}><path fillRule="evenodd" clipRule="evenodd" d="M22 5V7H2V5H22Z" fill="currentColor"/><path fillRule="evenodd" clipRule="evenodd" d="M22 11V13H2V11H22Z" fill="currentColor"/><path fillRule="evenodd" clipRule="evenodd" d="M22 17V19H2V17H22Z" fill="currentColor"/></svg>,
-    arrowDown: ({ ratio, ...props }) => <svg {...defaultProps} {...props} viewBox="0 0 20 20" {...getSize(20, 20, ratio)}><path d="M10 13L5 8H15L10 13Z" fill="white" fillOpacity="0.48"/></svg>,
+    arrowDown: ({ ratio, ...props }) => <svg {...defaultProps} {...props} viewBox="0 0 20 20" {...getSize(20, 20, ratio)}><path d="M10 13L5 8H15L10 13Z" fill="currentColor"/></svg>,
     arrowLeft: ({ ratio, ...props }) => <svg {...defaultProps} {...props} viewBox="0 0 6 12" {...getSize(12, 6, ratio)}><path fill="currentColor" d="M-2.62268e-07 6L6 0L6 12L-2.62268e-07 6Z" /></svg>,
     arrowRight: ({ ratio, ...props }) => <svg {...defaultProps} {...props} viewBox="0 0 6 12" {...getSize(12, 6, ratio)}><path fill="currentColor" d="M6 6L0 12L-5.24537e-07 0L6 6Z" /></svg>,
     externalLink: ({ ratio, ...props }) => <svg {...defaultProps} {...props} viewBox="0 0 512 512" {...getSize(20, 20, ratio)}><path d="M511.5,0.9v255.5h-34.4V63.2L159.4,381l-24.2-24.2L457.6,34.4H256V0h255.5V0.9z M374.9,477.6H34.8V137.5 h223.9v-34.4H0.5V512h408.9V249h-34.4V477.6z" fill="currentColor" strokeWidth={1.6}/></svg>,
@@ -96,18 +96,12 @@ const library = t({
             </svg>
         )
     },
-    delete: ({ ratio, ...props }) => (
-        <svg {...defaultProps} {...props} {...getSize(20, 20, ratio)} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    delete: ({ ratio, ...props }) => <svg {...defaultProps} {...props} {...getSize(20, 20, ratio)} viewBox="0 0 20 20">
             <path d="M2.5 3H8V2C8 1.5 8.5 1 9 1H11C11.5 1 12 1.5 12 2V3H17.5V5H2.5V3Z" fill="currentColor" />
             <path fillRule="evenodd" clipRule="evenodd" d="M4 6L5 19H15L16 6H4ZM7.75 16L7.5 9H9V16H7.75ZM12.5 9L12.25 16H11V9H12.5Z" fill="currentColor" />
-        </svg>
-    ),
-    share: ({ ratio, ...props }) => (
-        <svg {...defaultProps} {...props} {...getSize(20, 20, ratio)} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15.9282 8C16.8087 9.52513 17.1614 11.2982 16.9316 13.0442C16.7017 14.7902 15.9021 16.4116 14.6569 17.6569C13.4116 18.9021 11.7902 19.7017 10.0442 19.9316C8.2982 20.1614 6.52514 19.8087 5 18.9282C3.47487 18.0477 2.2829 16.6885 1.60896 15.0615C0.93503 13.4344 0.816794 11.6305 1.27259 9.92945C1.72839 8.22838 2.73275 6.72525 4.12991 5.65317C5.52706 4.5811 7.23892 4 9 4L9 12L15.9282 8Z" fill="currentColor" fillOpacity="0.48"/>
-            <path d="M11 0C12.4043 1.6746e-08 13.7838 0.36965 15 1.0718C16.2162 1.77394 17.2261 2.78385 17.9282 4L11 8V0Z" fill="currentColor"/>
-        </svg>
-    )
+        </svg>,
+    share: ({ ratio, ...props }) => <svg {...defaultProps} {...props} {...getSize(20, 20, ratio)} viewBox="0 0 20 20"><path d="M15.9282 8C16.8087 9.52513 17.1614 11.2982 16.9316 13.0442C16.7017 14.7902 15.9021 16.4116 14.6569 17.6569C13.4116 18.9021 11.7902 19.7017 10.0442 19.9316C8.2982 20.1614 6.52514 19.8087 5 18.9282C3.47487 18.0477 2.2829 16.6885 1.60896 15.0615C0.93503 13.4344 0.816794 11.6305 1.27259 9.92945C1.72839 8.22838 2.73275 6.72525 4.12991 5.65317C5.52706 4.5811 7.23892 4 9 4L9 12L15.9282 8Z" fill="currentColor" fillOpacity="0.48"/><path d="M11 0C12.4043 1.6746e-08 13.7838 0.36965 15 1.0718C16.2162 1.77394 17.2261 2.78385 17.9282 4L11 8V0Z" fill="currentColor"/></svg>,
+    swapLeftArrow: ({ ratio, ...props }) => <svg{...defaultProps} {...props} {...getSize(20, 21, ratio)} viewBox="0 0 21 20"><path d="M14.6001 5L19.6001 10M19.6001 10L14.6001 15M19.6001 10H0.600098" stroke="currentColor" strokeOpacity={0.48} strokeWidth={1.6}/></svg>,
 })
 
 export default library

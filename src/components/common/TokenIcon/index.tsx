@@ -11,7 +11,7 @@ export type TokenIconProps = {
     className?: string;
     icon?: string;
     name?: string;
-    size?: 'small' | 'xsmall' | 'medium';
+    size?: 'small' | 'xsmall' | 'medium' | 'large';
 }
 
 

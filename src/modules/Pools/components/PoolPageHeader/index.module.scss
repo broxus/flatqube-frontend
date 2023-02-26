@@ -1,0 +1,85 @@
+@import '@/styles/variables.scss';
+
+.pool_header {
+    :global .page_header {
+        &__inner {
+            align-items: flex-start;
+        }
+
+        &__title_wrapper {
+            width: 100%;
+        }
+
+        &__title {
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        &__actions {
+            gap: 12px;
+
+            @media only screen and (max-width: $breakpoint-xsmall-max) {
+                background-color: rgb(5 11 46 / 64%);
+                bottom: 0;
+                flex-wrap: wrap;
+                left: 0;
+                padding: 12px;
+                position: fixed;
+                right: 0;
+                width: 100%;
+                z-index: 100;
+
+                @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+                    -webkit-backdrop-filter: blur(32px);
+                    backdrop-filter: blur(32px);
+                    background: linear-gradient(0deg, rgb(5 11 46 / 12%), rgb(5 11 46 / 12%)), rgb(255 255 255 / 12%);
+                }
+
+                > * {
+                    display: flow-root;
+                    flex: auto;
+                    max-width: 100%;
+                    min-width: 1px;
+                    width: fit-content;
+                }
+
+                > *:nth-child(3) {
+                    order: -1;
+                    width: 100%;
+                }
+
+                .btn {
+                    height: 44px;
+                    line-height: 44px;
+                }
+            }
+        }
+    }
+
+    &__tokens_prices {
+        align-items: center;
+        display: flex;
+        flex-flow: column wrap;
+        gap: 6px;
+        margin-top: 14px;
+
+        > * {
+            justify-content: flex-start;
+            width: 100%
+        }
+
+        @media only screen and (min-width: $breakpoint-xsmall) {
+            flex-flow: row nowrap;
+
+            > * {
+                justify-content: center;
+                width: auto;
+            }
+        }
+
+        @media only screen and (min-width: $breakpoint-small) {
+            gap: 24px;
+        }
+
+    }
+}

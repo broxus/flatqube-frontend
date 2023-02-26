@@ -1,46 +1,105 @@
 import {
-    IReactionDisposer,
-    makeAutoObservable,
+    action,
+    computed,
+    makeObservable,
     reaction,
-    runInAction,
+    toJS,
 } from 'mobx'
-import { Address, TransactionId } from 'everscale-inpage-provider'
+import type { IReactionDisposer } from 'mobx'
+import type { Address, FullContractState, Transaction } from 'everscale-inpage-provider'
+import { Subscription } from 'everscale-inpage-provider'
 
-import { Dex, getDexAccount } from '@/misc'
-import { useWallet, WalletService } from '@/stores/WalletService'
-import { debounce, timeoutPromise } from '@/utils'
+import { DexRootAddress } from '@/config'
+import { useStaticRpc } from '@/hooks'
+import { DexAccountUtils, DexUtils, getFullContractState } from '@/misc'
+import { BaseStore } from '@/stores/BaseStore'
+import { useWallet } from '@/stores/WalletService'
+import type { WalletService } from '@/stores/WalletService'
+import {
+    addressesComparer,
+    debug,
+    error,
+    throttle,
+} from '@/utils'
 
 export type Balances = Map<string, string>
 
 export type DexAccountData = {
-    address?: string;
+    address?: Address;
     balances?: Balances;
     wallets?: Map<string, Address>;
 }
 
-
-const DEFAULT_DEX_ACCOUNT_DATA: DexAccountData = {
-    address: undefined,
-    balances: undefined,
-    wallets: undefined,
+export type DexAccountState = {
+    accountState?: FullContractState;
+    dexState?: FullContractState;
 }
 
 
-export class DexAccountService {
+const staticRpc = useStaticRpc()
 
-    /**
-     * Current data of the DEX account
-     * @type {DexAccountData}
-     * @protected
-     */
-    protected data: DexAccountData = DEFAULT_DEX_ACCOUNT_DATA
+export class DexAccountService extends BaseStore<DexAccountData, DexAccountState> {
 
-    constructor(protected readonly wallet: WalletService) {
-        makeAutoObservable(this)
+    constructor(
+        public readonly dexRootAddress: Address | string,
+        protected readonly wallet: WalletService,
+    ) {
+        super()
 
-        this.#walletAccountDisposer = reaction(() => this.wallet.address, () => {
-            this.data = DEFAULT_DEX_ACCOUNT_DATA
+        this.setData(() => ({
+            address: undefined,
+            balances: undefined,
+            wallets: undefined,
+        }))
+
+        debug('DexAccountService.constructor')
+
+        makeObservable<DexAccountService, 'handleAccountChange' | 'handleWalletAccountChange'>(this, {
+            accountState: computed,
+            address: computed,
+            balances: computed,
+            dexState: computed,
+            handleAccountChange: action.bound,
+            handleWalletAccountChange: action.bound,
+            wallets: computed,
         })
+    }
+
+    public async init(): Promise<void> {
+        this.accountDisposer = reaction(() => this.address, this.handleAccountChange, {
+            equals: addressesComparer,
+            fireImmediately: true,
+        })
+
+        this.walletAccountDisposer = reaction(() => this.wallet.account?.address, this.handleWalletAccountChange, {
+            equals: addressesComparer,
+            fireImmediately: true,
+        })
+
+        try {
+            const state = await getFullContractState(this.dexRootAddress)
+            this.setState('dexState', state)
+            debug('Sync DEX Root Contract state', state)
+        }
+        catch (e) {
+            error('Sync DEX state error', e)
+        }
+    }
+
+    public async dispose(): Promise<void> {
+        debug('DexAccountService.dispose', this.toJSON())
+        this.setData(() => ({
+            address: undefined,
+            balances: undefined,
+            wallets: undefined,
+        }))
+        this.setState(() => ({
+            accountState: undefined,
+            dexState: undefined,
+        }))
+        this.accountDisposer?.()
+        this.walletAccountDisposer?.()
+        await this.unsubscribe()
     }
 
     /**
@@ -48,27 +107,36 @@ export class DexAccountService {
      * @returns {Promise<void>}
      */
     public async connect(): Promise<void> {
-        if (!this.wallet.address) {
+        if (this.wallet.address === undefined) {
             return
         }
 
-        const address = await getDexAccount(this.wallet.address)
+        const address = await DexAccountUtils.address(
+            this.dexRootAddress,
+            this.wallet.address,
+            this.state.dexState,
+        )
 
-        runInAction(() => {
-            this.data.address = address
-        })
+        if (!addressesComparer(address, this.address)) {
+            this.setData('address', address)
+            debug('DEX Account has been connected', address?.toString())
+        }
     }
 
     /**
      * Manually create DEX account
-     * @returns {Promise<TransactionId | undefined>}
+     * @returns {Promise<Transaction | undefined>}
      */
-    public async create(): Promise<TransactionId | undefined> {
-        if (!this.wallet.address) {
+    public async create(): Promise<Transaction | undefined> {
+        if (this.wallet.address === undefined) {
             return undefined
         }
 
-        return Dex.createAccount(new Address(this.wallet.address))
+        const message = await DexUtils.deployAccount(this.dexRootAddress, {
+            dexAccountOwnerAddress: this.wallet.address,
+        })
+
+        return message.transaction
     }
 
     /**
@@ -76,40 +144,17 @@ export class DexAccountService {
      * @returns {Promise<void>}
      */
     public async connectOrCreate(): Promise<void> {
-        if (!this.wallet.address) {
+        if (this.wallet.address === undefined) {
             return
         }
 
         await this.connect()
 
-        if (!this.address) {
+        if (this.address === undefined) {
             await this.create()
         }
 
         await this.connect()
-    }
-
-    public async checkConnect(timeout: number = 60000): Promise<void> {
-        return timeoutPromise<void>(new Promise((resolve, reject) => {
-            const check = debounce(async () => {
-                if (this.isConnected) {
-                    resolve()
-                    return
-                }
-
-                try {
-                    await this.connect()
-                }
-                catch (e) {
-                    reject(e)
-                }
-                finally {
-                    check()
-                }
-            }, 5000)
-
-            check()
-        }), timeout)
     }
 
     /**
@@ -117,95 +162,74 @@ export class DexAccountService {
      * @returns {Promise<void>}
      */
     public async connectAndSync(): Promise<void> {
-        if (!this.wallet.address) {
+        if (this.wallet.address === undefined) {
             return
         }
 
         await this.connect()
 
-        if (!this.address) {
+        if (this.address === undefined) {
             return
         }
 
-        await this.sync()
-    }
-
-    public async sync(): Promise<void> {
-        await this.syncBalances()
-        await this.syncWallets()
-        this.runBalancesUpdater()
+        await Promise.all([
+            this.syncBalances(),
+            this.syncWallets(),
+        ])
     }
 
     /**
      * Sync DEX account balances
      * @returns {Promise<void>}
      */
-    public async syncBalances(): Promise<void> {
-        if (!this.wallet.account || !this.address) {
+    public async syncBalances(force?: boolean): Promise<void> {
+        if (this.address === undefined) {
             return
         }
 
-        const balances = await Dex.accountBalances(new Address(this.address))
+        const balances = await DexAccountUtils.balances(
+            this.address,
+            force ? undefined : toJS(this.state.accountState),
+        )
 
-        runInAction(() => {
-            this.data.balances = balances
-        })
+        this.setData('balances', balances)
     }
 
     /**
      * Sync DEX account wallets
      * @returns {Promise<void>}
      */
-    public async syncWallets(): Promise<void> {
-        if (!this.wallet.account || !this.address) {
+    public async syncWallets(force?: boolean): Promise<void> {
+        if (this.address === undefined) {
             return
         }
 
-        const wallets = await Dex.accountWallets(new Address(this.address))
-
-        runInAction(() => {
-            this.data.wallets = wallets
-        })
-    }
-
-    /**
-     * Withdraw token by the given root address and amount
-     * @param {string} root
-     * @param {string} amount
-     * @param {string} callId
-     * @returns {Promise<void>}
-     */
-    public async withdrawToken(root: string, amount: string, callId: string): Promise<void> {
-        if (!this.wallet.address || !this.address || !root || !amount || !callId) {
-            return
-        }
-
-        await Dex.withdrawAccountTokens(
-            new Address(this.address),
-            new Address(root),
-            new Address(this.wallet.address),
-            amount,
-            callId,
+        const wallets = await DexAccountUtils.wallets(
+            this.address,
+            force ? undefined : toJS(this.state.accountState),
         )
+
+        this.setData('wallets', wallets)
     }
 
     /**
      * Returns account wallet by the given account root address
-     * @param {string} root
+     * @param {string} address
      */
-    public getAccountWallet(root: string | undefined): Address | undefined {
-        if (!root) {
-            return undefined
-        }
-        return this.wallets?.get(root)
+    public getAccountWallet(address: Address | string): Address | undefined {
+        return this.wallets?.get(address.toString())
     }
 
-    public getBalance(address: Address): string | undefined {
+    /**
+     *
+     * @param address
+     */
+    public getBalance(address: Address | string): string | undefined {
         return this.balances?.get(address.toString())
     }
 
     /**
-     * Returns DEX account address
+     * Returns DEX user account address
      */
     public get address(): DexAccountData['address'] {
         return this.data.address
@@ -225,47 +249,120 @@ export class DexAccountService {
         return this.data.wallets
     }
 
-    public get isConnected(): boolean {
-        return Boolean(this.address)
+    public get accountState(): DexAccountState['accountState'] {
+        return this.state.accountState
     }
 
-    /**
-     *
-     */
-    public stopBalancesUpdater(): void {
-        if (this.#balancesInterval !== undefined) {
-            clearInterval(this.#balancesInterval)
-            this.#balancesInterval = undefined
+    public get dexState(): DexAccountState['dexState'] {
+        return this.state.dexState
+    }
+
+    protected async handleAccountChange(address?: Address): Promise<void> {
+        if (address === undefined) {
+            await this.unsubscribe()
+            return
+        }
+
+        try {
+            const state = await getFullContractState(address)
+            this.setState('accountState', state)
+            debug('Sync DEX Account Contract state', state)
+        }
+        catch (e) {
+            error('Get full Contract state error', e)
         }
     }
 
-    /**
-     * @protected
-     */
-    protected runBalancesUpdater(): void {
-        this.stopBalancesUpdater()
+    protected async handleWalletAccountChange(address?: Address, prevAddress?: Address): Promise<void> {
+        if (!addressesComparer(address, prevAddress)) {
+            await this.unsubscribe()
 
-        this.#balancesInterval = setInterval(async () => {
-            await this.syncBalances()
-        }, 5000)
+            this.setData(() => ({
+                address: undefined,
+                balances: undefined,
+                wallets: undefined,
+            }))
+            this.setState(() => ({
+                accountState: undefined,
+            }))
+        }
     }
 
-    /**
-     *
-     * @private
-     */
-    #walletAccountDisposer: IReactionDisposer | undefined
+    public async subscribe(): Promise<void> {
+        if (this.wallet.address === undefined) {
+            return
+        }
 
-    /**
-     *
-     * @private
-     */
-    #balancesInterval: ReturnType<typeof setInterval> | undefined
+        const address = this.address || await DexUtils.getExpectedAccountAddress(
+            this.dexRootAddress,
+            this.wallet.address,
+            toJS(this.state.dexState),
+        )
+
+        if (address === undefined) {
+            return
+        }
+
+        try {
+            this.contractSubscriber = await staticRpc.subscribe(
+                'contractStateChanged',
+                { address },
+            )
+            debug('Subscribe to DEX Account Contract changes', address.toString())
+
+            this.contractSubscriber.on('data', throttle(async event => {
+                debug(
+                    '%cRPC%c The DEX Account `contractStateChanged` event was captured',
+                    'font-weight: bold; background: #4a5772; color: #fff; border-radius: 2px; padding: 3px 6.5px',
+                    'color: #c5e4f3',
+                    event,
+                )
+
+                const state = await getFullContractState(event.address)
+
+                this.setState('accountState', state)
+
+                await this.connect()
+
+                if (this.address !== undefined) {
+                    await Promise.allSettled([
+                        this.syncWallets(),
+                        this.syncBalances(),
+                    ])
+                }
+            }, 1000))
+        }
+        catch (e) {
+            error('Contract subscribe error', e)
+            this.contractSubscriber = undefined
+        }
+    }
+
+    public async unsubscribe(): Promise<void> {
+        if (this.contractSubscriber !== undefined) {
+            if (this.address !== undefined) {
+                try {
+                    debug('Unsubscribe from DEX Account Contract changes')
+                    await this.contractSubscriber.unsubscribe()
+                }
+                catch (e) {
+                    error('DEX Account contract unsubscribe error', e)
+                }
+            }
+            this.contractSubscriber = undefined
+        }
+    }
+
+    protected contractSubscriber: Subscription<'contractStateChanged'> | undefined
+
+    protected accountDisposer: IReactionDisposer | undefined
+
+    protected walletAccountDisposer: IReactionDisposer | undefined
 
 }
 
 
-const DexAccount = new DexAccountService(useWallet())
+const DexAccount = new DexAccountService(DexRootAddress, useWallet())
 
 export function useDexAccount(): DexAccountService {
     return DexAccount

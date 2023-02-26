@@ -1,143 +1,155 @@
 import * as React from 'react'
 import classNames from 'classnames'
-import { observer } from 'mobx-react-lite'
+import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
+import Media from 'react-media'
 
-import { useCurrencyStore } from '@/modules/Currencies/providers/CurrencyStoreProvider'
-import { TransactionsList } from '@/modules/Transactions/components'
-import { EventTypeFilter, TransactionsOrdering } from '@/modules/Transactions/types'
+import { Checkbox } from '@/components/common/Checkbox'
+import { PanelLoader } from '@/components/common/PanelLoader'
+import { Tabs } from '@/components/common/Tabs'
+import { TransactionsListCard } from '@/modules/Currencies/components/CurrencyTransactions/components/TransactionListCard'
+import { TransactionsListEmpty } from '@/modules/Currencies/components/CurrencyTransactions/components/TransactionsListEmpty'
+import { TransactionsListHeader } from '@/modules/Currencies/components/CurrencyTransactions/components/TransactionsListHeader'
+import { TransactionsListItem } from '@/modules/Currencies/components/CurrencyTransactions/components/TransactionsListItem'
+import { TransactionsListPagination } from '@/modules/Currencies/components/CurrencyTransactions/components/TransactionsListPagination'
+import { TransactionsListPlaceholder } from '@/modules/Currencies/components/CurrencyTransactions/components/TransactionsListPlaceholder'
+import { useCurrencyTransactionsStoreContext } from '@/modules/Currencies/providers'
+import { CurrencyTransactionEventType } from '@/modules/Currencies/types'
 
+import styles from './index.module.scss'
 
-/* eslint-disable jsx-a11y/anchor-is-valid */
-function Transactions(): JSX.Element {
+export function CurrencyTransactions(): JSX.Element {
     const intl = useIntl()
-    const store = useCurrencyStore()
 
-    const onNextPage = async () => {
-        if (store.transactionsCurrentPage < store.transactionsTotalPages) {
-            store.changeState('transactionsCurrentPage', store.transactionsCurrentPage + 1)
-            await store.loadTransactions()
-        }
+    const transactionsStore = useCurrencyTransactionsStoreContext()
+
+    const switchToAll = async () => {
+        transactionsStore.setState({
+            eventType: [],
+            pagination: {
+                ...transactionsStore.pagination,
+                currentPage: 1,
+            },
+        })
+        await transactionsStore.fetch(true)
     }
 
-    const onPrevPage = async () => {
-        if (store.transactionsCurrentPage > 1) {
-            store.changeState('transactionsCurrentPage', store.transactionsCurrentPage - 1)
-            await store.loadTransactions()
-        }
+    const switchToSwap = async () => {
+        transactionsStore.setState({
+            eventType: [CurrencyTransactionEventType.Swap],
+            pagination: {
+                ...transactionsStore.pagination,
+                currentPage: 1,
+            },
+        })
+        await transactionsStore.fetch(true)
     }
 
-    const onChangePage = async (value: number) => {
-        store.changeState('transactionsCurrentPage', value)
-        await store.loadTransactions()
+    const switchToDeposit = async () => {
+        transactionsStore.setState({
+            eventType: [CurrencyTransactionEventType.Deposit],
+            pagination: {
+                ...transactionsStore.pagination,
+                currentPage: 1,
+            },
+        })
+        await transactionsStore.fetch(true)
     }
 
-    const onSwitchOrdering = async (value: TransactionsOrdering) => {
-        store.changeState('transactionsOrdering', value)
-        store.changeState('transactionsCurrentPage', 1)
-        await store.loadTransactions()
+    const switchToWithdraw = async () => {
+        transactionsStore.setState({
+            eventType: [CurrencyTransactionEventType.Withdraw],
+            pagination: {
+                ...transactionsStore.pagination,
+                currentPage: 1,
+            },
+        })
+        await transactionsStore.fetch(true)
     }
 
-    const onSwitchEvent = (value: EventTypeFilter) => async () => {
-        if (value === 'all') {
-            store.changeState('transactionsEventsType', [])
-        }
-        else if (value === 'swaps') {
-            store.changeState('transactionsEventsType', ['swaplefttoright', 'swaprighttoleft'])
-        }
-        else if (value === 'deposit') {
-            store.changeState('transactionsEventsType', ['deposit'])
-        }
-        else if (value === 'withdraw') {
-            store.changeState('transactionsEventsType', ['withdraw'])
-        }
-        store.changeState('transactionsCurrentPage', 1)
-        await store.loadTransactions()
+    const toggleUserTransactions = async () => {
+        transactionsStore.setState('onlyUserTransactions', !transactionsStore.onlyUserTransactions)
+        await transactionsStore.fetch(true)
     }
 
     return (
-        <section className="section">
-            <header className="section__header">
-                <h2 className="section-title">
-                    {intl.formatMessage({
-                        id: 'CURRENCY_TRANSACTIONS_LIST_HEADER_TITLE',
-                    })}
-                </h2>
-                <div className="section__header-actions">
-                    <ul className="tabs">
-                        <li
-                            className={classNames({
-                                active: store.transactionsEvents.length === 0,
+        <Observer>
+            {() => (
+                <>
+                    <div className={styles.transactions_list__toolbar}>
+                        <Tabs
+                            items={[{
+                                active: transactionsStore.eventType.length === 0,
+                                label: intl.formatMessage({ id: 'POOL_TRANSACTIONS_LIST_EVENT_FILTER_ALL' }),
+                                onClick: switchToAll,
+                            }, {
+                                active: transactionsStore.isSwapEventType,
+                                label: intl.formatMessage({ id: 'POOL_TRANSACTIONS_LIST_EVENT_FILTER_SWAPS' }),
+                                onClick: switchToSwap,
+                            }, {
+                                active: transactionsStore.isDepositEventType,
+                                label: intl.formatMessage({ id: 'POOL_TRANSACTIONS_LIST_EVENT_FILTER_DEPOSITS' }),
+                                onClick: switchToDeposit,
+                            }, {
+                                active: transactionsStore.isWithdrawEventType,
+                                label: intl.formatMessage({ id: 'POOL_TRANSACTIONS_LIST_EVENT_FILTER_WITHDRAWS' }),
+                                onClick: switchToWithdraw,
+                            }]}
+                        />
+                        <Checkbox
+                            checked={transactionsStore.onlyUserTransactions}
+                            label={intl.formatMessage({
+                                id: 'POOL_TRANSACTIONS_LIST_USER_ONLY_FILTER_CHECKBOX_LABEL',
                             })}
-                        >
-                            <a onClick={onSwitchEvent('all')}>
-                                {intl.formatMessage({
-                                    id: 'TRANSACTIONS_LIST_EVENT_ALL',
-                                })}
-                            </a>
-                        </li>
-                        <li
-                            className={classNames({
-                                active: (
-                                    store.transactionsEvents.length === 2
-                                    && store.transactionsEvents.includes('swaplefttoright')
-                                    && store.transactionsEvents.includes('swaprighttoleft')
-                                ),
-                            })}
-                        >
-                            <a onClick={onSwitchEvent('swaps')}>
-                                {intl.formatMessage({
-                                    id: 'TRANSACTIONS_LIST_EVENT_SWAPS',
-                                })}
-                            </a>
-                        </li>
-                        <li
-                            className={classNames({
-                                active: (
-                                    store.transactionsEvents.length === 1
-                                    && store.transactionsEvents.includes('deposit')
-                                ),
-                            })}
-                        >
-                            <a onClick={onSwitchEvent('deposit')}>
-                                {intl.formatMessage({
-                                    id: 'TRANSACTIONS_LIST_EVENT_DEPOSIT',
-                                })}
-                            </a>
-                        </li>
-                        <li
-                            className={classNames({
-                                active: (
-                                    store.transactionsEvents.length === 1
-                                    && store.transactionsEvents.includes('withdraw')
-                                ),
-                            })}
-                        >
-                            <a onClick={onSwitchEvent('withdraw')}>
-                                {intl.formatMessage({
-                                    id: 'TRANSACTIONS_LIST_EVENT_WITHDRAW',
-                                })}
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </header>
+                            onChange={toggleUserTransactions}
+                        />
+                    </div>
 
-            <TransactionsList
-                isLoading={store.isTransactionsLoading}
-                ordering={store.transactionsOrdering}
-                transactions={store.transactions}
-                onSwitchOrdering={onSwitchOrdering}
-                pagination={{
-                    currentPage: store.transactionsCurrentPage,
-                    totalPages: store.transactionsTotalPages,
-                    onNext: onNextPage,
-                    onPrev: onPrevPage,
-                    onSubmit: onChangePage,
-                }}
-            />
-        </section>
+                    <div className="card card--flat card--xsmall">
+                        <div className={classNames('list', styles.transactions_list, styles.list)}>
+                            <Media query={{ minWidth: 640 }}>
+                                {matches => (matches && transactionsStore.transactions.length > 0 ? (
+                                    <TransactionsListHeader />
+                                ) : null)}
+                            </Media>
+
+                            {(() => {
+                                const isFetching = (
+                                    transactionsStore.isFetching === undefined
+                                    || transactionsStore.isFetching
+                                )
+
+                                switch (true) {
+                                    case isFetching && transactionsStore.transactions.length === 0:
+                                        return <TransactionsListPlaceholder />
+
+                                    case transactionsStore.transactions.length > 0: {
+                                        return (
+                                            <PanelLoader loading={isFetching}>
+                                                {transactionsStore.transactions.map(tx => (
+                                                    <Media key={tx.messageHash} query={{ minWidth: 640 }}>
+                                                        {matches => (matches
+                                                            ? <TransactionsListItem transaction={tx} />
+                                                            : <TransactionsListCard transaction={tx} />
+                                                        )}
+                                                    </Media>
+                                                ))}
+                                            </PanelLoader>
+                                        )
+                                    }
+
+                                    default:
+                                        return <TransactionsListEmpty />
+                                }
+                            })()}
+                        </div>
+
+                        {transactionsStore.pagination && transactionsStore.pagination.totalPages > 1 && (
+                            <TransactionsListPagination />
+                        )}
+                    </div>
+                </>
+            )}
+        </Observer>
     )
 }
-
-export const CurrencyTransactions = observer(Transactions)

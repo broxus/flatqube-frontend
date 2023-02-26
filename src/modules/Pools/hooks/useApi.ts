@@ -1,18 +1,30 @@
-import { FARMING_POOL_API_URL } from '@/config'
-import { FarmingPoolsResponse } from '@/modules/Farming/types'
-import { PairResponse } from '@/modules/Pairs/types'
-import { apiRoutes, farmingApiRoutes } from '@/routes'
+import { API_V2_URL, GAUGES_API_URL } from '@/config'
+import type {
+    PoolGraphRequest,
+    PoolGraphResponse,
+    PoolRelatedGaugesRequest,
+    PoolRelatedGaugesResponse,
+    PoolResponse,
+    PoolsRequest,
+    PoolsResponse,
+    PoolTransactionsRequest,
+    PoolTransactionsResponse,
+} from '@/modules/Pools/types'
+import { apiRoutes, gaugesApiRoutes } from '@/routes'
 import { createHandler } from '@/utils'
-import { TransactionsInfoResponse } from '@/modules/Transactions/types'
 
+/* eslint-disable sort-keys,max-len */
 const poolsApi = {
-    farmingPools: createHandler(farmingApiRoutes.farmingPools, FARMING_POOL_API_URL)<FarmingPoolsResponse>(),
-    pair: createHandler(apiRoutes.pair)<PairResponse>(),
-    transactions: createHandler(apiRoutes.transactions)<TransactionsInfoResponse>(),
+    currenciesUsdtPrices: createHandler(apiRoutes.currenciesUsdtPrices)<Record<string, string>, { currency_addresses: string[] }>(),
+    pool: createHandler(apiRoutes.pool, API_V2_URL)<PoolResponse>(),
+    pools: createHandler(apiRoutes.pools, API_V2_URL)<PoolsResponse, PoolsRequest>(),
+    poolOhlcv: createHandler(apiRoutes.poolOhlcv, API_V2_URL)<PoolGraphResponse, PoolGraphRequest>(),
+    relatedGauges: createHandler(gaugesApiRoutes.gaugeByLpRoot, GAUGES_API_URL)<PoolRelatedGaugesResponse, PoolRelatedGaugesRequest>(),
+    transactions: createHandler(apiRoutes.transactions, API_V2_URL)<PoolTransactionsResponse, PoolTransactionsRequest>(),
 }
 
-type PoolsApi = typeof poolsApi
+export type PoolsApi = typeof poolsApi
 
-export function useApi(): PoolsApi {
+export function usePoolsApi(): PoolsApi {
     return poolsApi
 }

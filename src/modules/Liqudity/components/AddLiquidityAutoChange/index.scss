@@ -1,0 +1,39 @@
+.add-liquidity-auto-change {
+    background: rgb(255 255 255 / 10%);
+    margin: 16px 0;
+    padding: 10px;
+
+    &:last-child { margin-bottom: 0; }
+
+    &__wrap {
+        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    &__inner {
+        align-items: flex-start;
+        display: flex;
+        flex-flow: column wrap;
+    }
+
+    &__title {
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.75px;
+        line-height: 18px;
+        margin: 5px 0;
+    }
+
+    &__note {
+        flex-grow: 1;
+        font-size: 12px;
+        letter-spacing: 0.4px;
+        line-height: 16px;
+    }
+
+    .pool-switcher {
+        flex-shrink: 0;
+        margin: 6px 14px 6px 10px;
+    }
+}

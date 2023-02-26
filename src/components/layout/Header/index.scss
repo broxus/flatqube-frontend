@@ -1,8 +1,22 @@
+@import '@/styles/variables.scss';
+
 .header {
     align-items: center;
+    background: rgb(5 11 46 / 90%);
     display: flex;
     gap: 40px;
     justify-content: space-between;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+
+    @supports (-webkit-backdrop-filter: none) or (backdrop-filter: none) {
+        -webkit-backdrop-filter: blur(64px);
+        backdrop-filter: blur(64px);
+        background: none;
+        box-shadow: 0 0 0 1px rgb(255 255 255 / 8%);
+    }
 
     .navbar {
         justify-content: space-between;
@@ -10,6 +24,29 @@
         .navbar-item,
         .navbar-toggle {
             min-height: 64px;
+        }
+
+        @media only screen and (max-width: $breakpoint-xsmall-max) {
+            .wallet {
+                &:not(.wallet--connected) {
+                    .wallet__inner {
+                        display: none;
+                    }
+                }
+            }
+        }
+        @media only screen and (max-width: 359px) {
+            .wallet {
+                &.wallet--connected { display: none; }
+            }
+
+            .device-drawer-header-inner {
+                &.wallet--connected {
+                    .wallet__user-avatar {
+                        display: none;
+                    }
+                }
+            }
         }
     }
 
@@ -22,5 +59,24 @@
         display: flex;
         gap: 24px;
         justify-content: space-between;
+    }
+}
+
+@media only screen and (max-width: 359px) {
+    .device-drawer-header-inner {
+        .wallet.wallet--connected {
+            .wallet__user-avatar {
+                display: none;
+            }
+        }
+    }
+}
+
+.device-drawer-content-inner {
+    box-sizing: border-box;
+    padding-bottom: 60px;
+    &::-webkit-scrollbar {
+        height: 0 !important;
+        width: 0 !important;
     }
 }

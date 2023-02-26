@@ -1,4 +1,5 @@
 export * from '@/modules/Currencies/components/CurrenciesList'
-export * from '@/modules/Currencies/components/CurrencyPairs'
+export * from '@/modules/Currencies/components/CurrencyPageHeader'
+export * from '@/modules/Currencies/components/CurrencyRelatedPools'
+export * from '@/modules/Currencies/components/CurrencyStats'
 export * from '@/modules/Currencies/components/CurrencyTransactions'
-export * from '@/modules/Currencies/components/Stats'

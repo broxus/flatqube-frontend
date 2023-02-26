@@ -1,4 +1,4 @@
-import { makeAutoObservable } from 'mobx'
+import { action, makeAutoObservable, toJS } from 'mobx'
 
 import { useWallet, WalletService } from '@/stores/WalletService'
 import {
@@ -35,7 +35,10 @@ export class FavoritePairs {
         protected readonly storageKey: string,
     ) {
         this.syncWithStorage()
-        makeAutoObservable(this)
+        makeAutoObservable(this, {
+            add: action.bound,
+            remove: action.bound,
+        })
 
         window.addEventListener('storage', e => {
             if (e.key === this.storageKey) {
@@ -58,7 +61,7 @@ export class FavoritePairs {
         return Boolean(addresses.find(item => item.address === address))
     }
 
-    public add(address: string, name?: string): void {
+    public add(address: string, name?: string, silent?: boolean): void {
         if (!this.wallet.address) {
             return
         }
@@ -71,10 +74,13 @@ export class FavoritePairs {
         this.state.data[this.wallet.address] = this.state.data[this.wallet.address]
             ? [...this.state.data[this.wallet.address], newItem]
             : [newItem]
-        this.saveToStorage()
+
+        if (!silent) {
+            this.saveToStorage()
+        }
     }
 
-    public remove(address: string): void {
+    public remove(address: string, silent?: boolean): void {
         if (!this.wallet.address) {
             return
         }
@@ -86,7 +92,10 @@ export class FavoritePairs {
         const index = this.state.data[this.wallet.address]
             .findIndex(item => item.address === address)
         this.state.data[this.wallet.address].splice(index, 1)
-        this.saveToStorage()
+
+        if (!silent) {
+            this.saveToStorage()
+        }
     }
 
     public toggle(address: string, name?: string): void {
@@ -96,6 +105,15 @@ export class FavoritePairs {
         else {
             this.add(address, name)
         }
+    }
+
+    public clear(): void {
+        if (!this.wallet.address) {
+            return
+        }
+
+        delete this.state.data[this.wallet.address]
+        this.saveToStorage()
     }
 
     public saveToStorage(): void {
@@ -187,7 +205,7 @@ export class FavoritePairs {
             return []
         }
 
-        return this.state.data[this.wallet.address] || []
+        return toJS(this.state.data[this.wallet.address] || [])
     }
 
     public get addresses(): string[] {
@@ -212,5 +230,12 @@ const favoriteFarmings = new FavoritePairs(
     'favorite_farmings',
 )
 
+const favoritePools = new FavoritePairs(
+    storageInstance,
+    useWallet(),
+    'favorite_pools',
+)
+
 export const useFavoritePairs = (): FavoritePairs => favoritePairs
 export const useFavoriteFarmings = (): FavoritePairs => favoriteFarmings
+export const useFavoritePools = (): FavoritePairs => favoritePools

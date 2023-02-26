@@ -3,6 +3,16 @@
     width: 32px;
 
     &_size {
+        &_large {
+            height: 44px;
+            width: 44px;
+        }
+
+        &_medium {
+            height: 32px;
+            width: 32px;
+        }
+
         &_small {
             height: 24px;
             width: 24px;

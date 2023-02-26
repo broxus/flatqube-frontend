@@ -3,7 +3,7 @@ import * as React from 'react'
 
 import { DEFAULT_SLIPPAGE_VALUE } from '@/modules/Swap/constants'
 import { useSwapFormStoreContext } from '@/modules/Swap/context'
-import { isGoodBignumber } from '@/utils'
+import { debounce, isGoodBignumber } from '@/utils'
 
 
 type SwapSettingsShape = {
@@ -28,7 +28,7 @@ export function useSwapSettings(): SwapSettingsShape {
     const [isOpen, setOpen] = React.useState(false)
 
     const show = () => {
-        if (formStore.isSwapping) {
+        if (formStore.isProcessing) {
             return
         }
         setOpen(true)
@@ -55,6 +55,11 @@ export function useSwapSettings(): SwapSettingsShape {
         }
     }
 
+    const onKeyPress = React.useCallback(debounce(async () => {
+        await formStore.recalculate(true)
+        formStore.setState('isCalculating', false)
+    }, 1000), [formStore.isCalculating])
+
     const onChange: React.ChangeEventHandler<HTMLInputElement> = async event => {
         let { value } = event.target
         value = value.replace(/[,]/g, '.')
@@ -69,6 +74,7 @@ export function useSwapSettings(): SwapSettingsShape {
         value = value.replace(/[.]+/g, '.')
         value = value.replace(/(?!- )[^0-9.]/g, '')
         await formStore.changeSlippage(value)
+        await onKeyPress()
     }
 
     React.useEffect(() => {

@@ -7,18 +7,15 @@ export abstract class EverAbi {
         functions: [
             {
                 name: 'constructor',
-                inputs: [
-                ],
-                outputs: [
-                ],
+                inputs: [],
+                outputs: [],
             },
             {
                 name: 'onWeverWallet',
                 inputs: [
                     { name: '_weverWallet', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'buildExchangePayload',
@@ -28,6 +25,8 @@ export abstract class EverAbi {
                     { name: 'deployWalletValue', type: 'uint128' },
                     { name: 'expectedAmount', type: 'uint128' },
                     { name: 'amount', type: 'uint128' },
+                    { name: 'referrer', type: 'address' },
+                    { name: 'outcoming', type: 'optional(address)' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -36,12 +35,27 @@ export abstract class EverAbi {
             {
                 name: 'buildCrossPairExchangePayload',
                 inputs: [
-                    { name: 'pair', type: 'address' },
+                    { name: 'pool', type: 'address' },
                     { name: 'id', type: 'uint64' },
                     { name: 'deployWalletValue', type: 'uint128' },
                     { name: 'expectedAmount', type: 'uint128' },
-                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
+                    { name: 'outcoming', type: 'address' },
+                    { name: 'nextStepIndices', type: 'uint32[]' },
+                    {
+                        components: [
+                            { name: 'amount', type: 'uint128' }, {
+                                name: 'pool',
+                                type: 'address',
+                            }, { name: 'outcoming', type: 'address' }, {
+                                name: 'numerator',
+                                type: 'uint128',
+                            }, { name: 'nextStepIndices', type: 'uint32[]' },
+                        ],
+                        name: 'steps',
+                        type: 'tuple[]',
+                    },
                     { name: 'amount', type: 'uint128' },
+                    { name: 'referrer', type: 'address' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -57,8 +71,7 @@ export abstract class EverAbi {
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'onAcceptTokensBurn',
@@ -69,37 +82,32 @@ export abstract class EverAbi {
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'weverRoot',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverRoot', type: 'address' },
                 ],
             },
             {
                 name: 'weverVault',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverVault', type: 'address' },
                 ],
             },
             {
                 name: 'everToTip3',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'everToTip3', type: 'address' },
                 ],
             },
             {
                 name: 'weverWallet',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverWallet', type: 'address' },
                 ],
@@ -111,8 +119,7 @@ export abstract class EverAbi {
             { key: 3, name: 'weverVault', type: 'address' },
             { key: 4, name: 'everToTip3', type: 'address' },
         ],
-        events: [
-        ],
+        events: [],
         fields: [
             { name: '_pubkey', type: 'uint256' },
             { name: '_timestamp', type: 'uint64' },
@@ -132,18 +139,15 @@ export abstract class EverAbi {
         functions: [
             {
                 name: 'constructor',
-                inputs: [
-                ],
-                outputs: [
-                ],
+                inputs: [],
+                outputs: [],
             },
             {
                 name: 'onWeverWallet',
                 inputs: [
                     { name: '_weverWallet', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'buildExchangePayload',
@@ -152,6 +156,8 @@ export abstract class EverAbi {
                     { name: 'id', type: 'uint64' },
                     { name: 'deployWalletValue', type: 'uint128' },
                     { name: 'expectedAmount', type: 'uint128' },
+                    { name: 'referrer', type: 'address' },
+                    { name: 'outcoming', type: 'optional(address)' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -160,11 +166,30 @@ export abstract class EverAbi {
             {
                 name: 'buildCrossPairExchangePayload',
                 inputs: [
-                    { name: 'pair', type: 'address' },
+                    { name: 'pool', type: 'address' },
                     { name: 'id', type: 'uint64' },
                     { name: 'deployWalletValue', type: 'uint128' },
                     { name: 'expectedAmount', type: 'uint128' },
-                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
+                    { name: 'outcoming', type: 'address' },
+                    { name: 'nextStepIndices', type: 'uint32[]' },
+                    {
+                        components: [
+                            { name: 'amount', type: 'uint128' },
+                            {
+                                name: 'pool',
+                                type: 'address',
+                            },
+                            { name: 'outcoming', type: 'address' },
+                            {
+                                name: 'numerator',
+                                type: 'uint128',
+                            },
+                            { name: 'nextStepIndices', type: 'uint32[]' },
+                        ],
+                        name: 'steps',
+                        type: 'tuple[]',
+                    },
+                    { name: 'referrer', type: 'address' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -178,21 +203,19 @@ export abstract class EverAbi {
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'onAcceptTokensTransfer',
                 inputs: [
                     { name: 'tokenRoot', type: 'address' },
                     { name: 'amount', type: 'uint128' },
-                    { name: 'value2', type: 'address' },
+                    { name: 'sender', type: 'address' },
                     { name: 'value3', type: 'address' },
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'onAcceptTokensBurn',
@@ -203,29 +226,25 @@ export abstract class EverAbi {
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'weverRoot',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverRoot', type: 'address' },
                 ],
             },
             {
                 name: 'weverVault',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverVault', type: 'address' },
                 ],
             },
             {
                 name: 'weverWallet',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverWallet', type: 'address' },
                 ],
@@ -245,8 +264,7 @@ export abstract class EverAbi {
                     { name: 'id', type: 'uint64' },
                     { name: 'user', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapEverToTip3Success',
@@ -256,8 +274,7 @@ export abstract class EverAbi {
                     { name: 'amount', type: 'uint128' },
                     { name: 'tokenRoot', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapEverToTip3Partial',
@@ -267,8 +284,7 @@ export abstract class EverAbi {
                     { name: 'amount', type: 'uint128' },
                     { name: 'tokenRoot', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapEverToTip3Cancel',
@@ -277,8 +293,7 @@ export abstract class EverAbi {
                     { name: 'id', type: 'uint64' },
                     { name: 'amount', type: 'uint128' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapTip3EverSuccessTransfer',
@@ -287,8 +302,7 @@ export abstract class EverAbi {
                     { name: 'id', type: 'uint64' },
                     { name: 'amount', type: 'uint128' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapTip3EverCancelTransfer',
@@ -298,8 +312,7 @@ export abstract class EverAbi {
                     { name: 'amount', type: 'uint128' },
                     { name: 'tokenRoot', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapEverWeverToTip3Unwrap',
@@ -307,8 +320,7 @@ export abstract class EverAbi {
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
         ],
         fields: [
@@ -329,18 +341,15 @@ export abstract class EverAbi {
         functions: [
             {
                 name: 'constructor',
-                inputs: [
-                ],
-                outputs: [
-                ],
+                inputs: [],
+                outputs: [],
             },
             {
                 name: 'onWeverWallet',
                 inputs: [
                     { name: '_weverWallet', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'buildExchangePayload',
@@ -348,6 +357,8 @@ export abstract class EverAbi {
                     { name: 'pair', type: 'address' },
                     { name: 'id', type: 'uint64' },
                     { name: 'expectedAmount', type: 'uint128' },
+                    { name: 'referrer', type: 'address' },
+                    { name: 'outcoming', type: 'optional(address)' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -356,11 +367,24 @@ export abstract class EverAbi {
             {
                 name: 'buildCrossPairExchangePayload',
                 inputs: [
-                    { name: 'pair', type: 'address' },
+                    { name: 'pool', type: 'address' },
                     { name: 'id', type: 'uint64' },
                     { name: 'deployWalletValue', type: 'uint128' },
                     { name: 'expectedAmount', type: 'uint128' },
-                    { components: [{ name: 'amount', type: 'uint128' }, { name: 'root', type: 'address' }], name: 'steps', type: 'tuple[]' },
+                    { name: 'outcoming', type: 'address' },
+                    { name: 'nextStepIndices', type: 'uint32[]' },
+                    {
+                        components: [
+                            { name: 'amount', type: 'uint128' },
+                            { name: 'pool', type: 'address' },
+                            { name: 'outcoming', type: 'address' },
+                            { name: 'numerator', type: 'uint128' },
+                            { name: 'nextStepIndices', type: 'uint32[]' },
+                        ],
+                        name: 'steps',
+                        type: 'tuple[]',
+                    },
+                    { name: 'referrer', type: 'address' },
                 ],
                 outputs: [
                     { name: 'value0', type: 'cell' },
@@ -371,13 +395,12 @@ export abstract class EverAbi {
                 inputs: [
                     { name: 'tokenRoot', type: 'address' },
                     { name: 'amount', type: 'uint128' },
-                    { name: 'value2', type: 'address' },
+                    { name: 'sender', type: 'address' },
                     { name: 'value3', type: 'address' },
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'onAcceptTokensBurn',
@@ -388,29 +411,25 @@ export abstract class EverAbi {
                     { name: 'user', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'weverRoot',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverRoot', type: 'address' },
                 ],
             },
             {
                 name: 'weverVault',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverVault', type: 'address' },
                 ],
             },
             {
                 name: 'weverWallet',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'weverWallet', type: 'address' },
                 ],
@@ -430,8 +449,7 @@ export abstract class EverAbi {
                     { name: 'id', type: 'uint64' },
                     { name: 'user', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapEverToTip3Success',
@@ -441,8 +459,7 @@ export abstract class EverAbi {
                     { name: 'amount', type: 'uint128' },
                     { name: 'tokenRoot', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapEverToTip3Partial',
@@ -452,8 +469,7 @@ export abstract class EverAbi {
                     { name: 'amount', type: 'uint128' },
                     { name: 'tokenRoot', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapEverToTip3Cancel',
@@ -462,8 +478,7 @@ export abstract class EverAbi {
                     { name: 'id', type: 'uint64' },
                     { name: 'amount', type: 'uint128' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapTip3EverSuccessTransfer',
@@ -472,8 +487,7 @@ export abstract class EverAbi {
                     { name: 'id', type: 'uint64' },
                     { name: 'amount', type: 'uint128' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapTip3EverCancelTransfer',
@@ -483,8 +497,7 @@ export abstract class EverAbi {
                     { name: 'amount', type: 'uint128' },
                     { name: 'tokenRoot', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'SwapEverWeverToTip3Unwrap',
@@ -492,8 +505,7 @@ export abstract class EverAbi {
                     { name: 'user', type: 'address' },
                     { name: 'id', type: 'uint64' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
         ],
         fields: [
@@ -522,48 +534,54 @@ export abstract class EverAbi {
                     { name: 'settings_deploy_wallet_grams', type: 'uint128' },
                     { name: 'initial_balance', type: 'uint128' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'receiveTokenWalletAddress',
                 inputs: [
                     { name: 'wallet', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'drain',
                 inputs: [
                     { name: 'receiver', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'setConfiguration',
                 inputs: [
-                    { components: [{ name: 'root_tunnel', type: 'address' }, { name: 'root', type: 'address' }, { name: 'receive_safe_fee', type: 'uint128' }, { name: 'settings_deploy_wallet_grams', type: 'uint128' }, { name: 'initial_balance', type: 'uint128' }], name: '_configuration', type: 'tuple' },
+                    {
+                        components: [
+                            { name: 'root_tunnel', type: 'address' }, {
+                                name: 'root',
+                                type: 'address',
+                            }, { name: 'receive_safe_fee', type: 'uint128' }, {
+                                name: 'settings_deploy_wallet_grams',
+                                type: 'uint128',
+                            }, { name: 'initial_balance', type: 'uint128' },
+                        ],
+                        name: '_configuration',
+                        type: 'tuple',
+                    },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'withdraw',
                 inputs: [
                     { name: 'amount', type: 'uint128' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'grant',
                 inputs: [
                     { name: 'amount', type: 'uint128' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'wrap',
@@ -573,8 +591,7 @@ export abstract class EverAbi {
                     { name: 'gas_back_address', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'onAcceptTokensTransfer',
@@ -586,60 +603,63 @@ export abstract class EverAbi {
                     { name: 'remainingGasTo', type: 'address' },
                     { name: 'payload', type: 'cell' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'transferOwnership',
                 inputs: [
                     { name: 'newOwner', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
             {
                 name: 'renounceOwnership',
-                inputs: [
-                ],
-                outputs: [
-                ],
+                inputs: [],
+                outputs: [],
             },
             {
                 name: '_randomNonce',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: '_randomNonce', type: 'uint256' },
                 ],
             },
             {
                 name: 'owner',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'owner', type: 'address' },
                 ],
             },
             {
                 name: 'configuration',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
-                    { components: [{ name: 'root_tunnel', type: 'address' }, { name: 'root', type: 'address' }, { name: 'receive_safe_fee', type: 'uint128' }, { name: 'settings_deploy_wallet_grams', type: 'uint128' }, { name: 'initial_balance', type: 'uint128' }], name: 'configuration', type: 'tuple' },
+                    {
+                        components: [
+                            { name: 'root_tunnel', type: 'address' }, {
+                                name: 'root',
+                                type: 'address',
+                            }, { name: 'receive_safe_fee', type: 'uint128' }, {
+                                name: 'settings_deploy_wallet_grams',
+                                type: 'uint128',
+                            }, { name: 'initial_balance', type: 'uint128' },
+                        ],
+                        name: 'configuration',
+                        type: 'tuple',
+                    },
                 ],
             },
             {
                 name: 'token_wallet',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'token_wallet', type: 'address' },
                 ],
             },
             {
                 name: 'total_wrapped',
-                inputs: [
-                ],
+                inputs: [],
                 outputs: [
                     { name: 'total_wrapped', type: 'uint128' },
                 ],
@@ -655,8 +675,7 @@ export abstract class EverAbi {
                     { name: 'previousOwner', type: 'address' },
                     { name: 'newOwner', type: 'address' },
                 ],
-                outputs: [
-                ],
+                outputs: [],
             },
         ],
         fields: [
@@ -665,7 +684,19 @@ export abstract class EverAbi {
             { name: '_constructorFlag', type: 'bool' },
             { name: '_randomNonce', type: 'uint256' },
             { name: 'owner', type: 'address' },
-            { components: [{ name: 'root_tunnel', type: 'address' }, { name: 'root', type: 'address' }, { name: 'receive_safe_fee', type: 'uint128' }, { name: 'settings_deploy_wallet_grams', type: 'uint128' }, { name: 'initial_balance', type: 'uint128' }], name: 'configuration', type: 'tuple' },
+            {
+                components: [
+                    { name: 'root_tunnel', type: 'address' }, {
+                        name: 'root',
+                        type: 'address',
+                    }, { name: 'receive_safe_fee', type: 'uint128' }, {
+                        name: 'settings_deploy_wallet_grams',
+                        type: 'uint128',
+                    }, { name: 'initial_balance', type: 'uint128' },
+                ],
+                name: 'configuration',
+                type: 'tuple',
+            },
             { name: 'token_wallet', type: 'address' },
             { name: 'total_wrapped', type: 'uint128' },
         ],

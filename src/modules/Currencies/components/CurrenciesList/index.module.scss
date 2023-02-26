@@ -1,0 +1,22 @@
+@import '@/styles/variables.scss';
+
+.currencies_list {
+    &.list {
+        --list-grid-template: minmax(150px, 40%) minmax(80px, 160px);
+
+        @media (min-width: $breakpoint-small) {
+            --list-grid-template: minmax(30%, 60%) minmax(100px, 120px) minmax(100px, 120px) minmax(100px, 120px);
+        }
+
+        @media (min-width: $breakpoint-medium) {
+            --list-grid-template: 40px minmax(30%, 60%) minmax(100px, 180px) minmax(100px, 180px) minmax(100px, 180px);
+        }
+
+        min-height: 1px;
+
+        :global {
+            .list__header { height: 42px; }
+            .list__row { height: 62px; }
+        }
+    }
+}

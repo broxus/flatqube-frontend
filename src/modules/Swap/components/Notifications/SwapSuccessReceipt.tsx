@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl'
 import { AccountExplorerLink } from '@/components/common/AccountExplorerLink'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { TransactionExplorerLink } from '@/components/common/TransactionExplorerLink'
-import { SwapTransactionReceipt } from '@/modules/Swap/types'
+import type { SwapTransactionReceipt } from '@/modules/Swap/types'
 import { formattedTokenAmount, isMobile } from '@/utils'
 
 
@@ -36,7 +36,6 @@ export function SwapSuccessReceipt(props: Props): JSX.Element {
                         {`+ ${formattedTokenAmount(
                             receipt.amount,
                             receipt.receivedDecimals,
-                            { preserve: true },
                         )} ${receipt.receivedSymbol}`}
                     </div>
                 </div>

@@ -14,9 +14,9 @@ export function ConnectWallet({ message }: Props): JSX.Element {
 
     return (
         <div className="card card--small card--flat wallet-connect-card">
-            <div className="message message_system">
-                <div className="margin-bottom text-center">
-                    <h2 className="text-heading">
+            <div className="message text-center">
+                <div className="margin-bottom">
+                    <h2 className="card-title">
                         {intl.formatMessage({ id: 'WALLET_MIDDLEWARE_CONNECTION_TITLE' })}
                     </h2>
                     {message && (
@@ -25,12 +25,13 @@ export function ConnectWallet({ message }: Props): JSX.Element {
                 </div>
 
                 <Button
-                    size="lg"
+                    size="md"
                     type="primary"
                     onClick={wallet.connect}
                 >
-                    {intl.formatMessage({ id: 'EVER_WALLET_CONNECT_BTN_TEXT' })}
+                    {intl.formatMessage({ id: 'WALLET_CONNECT_BTN_TEXT' })}
                 </Button>
+
             </div>
         </div>
     )

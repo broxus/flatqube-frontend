@@ -1,84 +1,75 @@
 import * as React from 'react'
-import { useIntl } from 'react-intl'
+import classNames from 'classnames'
+import { reaction } from 'mobx'
+import { Observer } from 'mobx-react-lite'
 
-import { OrderingSwitcher } from '@/components/common/OrderingSwitcher'
 import { PanelLoader } from '@/components/common/PanelLoader'
-import { Item } from '@/modules/Currencies/components/CurrenciesList/Item'
-import { CurrenciesOrdering, CurrencyInfo } from '@/modules/Currencies/types'
-import { Placeholder } from '@/modules/Currencies/components/CurrenciesList/Placeholder'
-import { makeArray, uniqueId } from '@/utils'
+import { CurrenciesListHeader } from '@/modules/Currencies/components/CurrenciesList/components/CurrenciesListHeader'
+import { CurrenciesListPlaceholder } from '@/modules/Currencies/components/CurrenciesList/components/CurrenciesListPlaceholder'
+import { CurrenciesListItem } from '@/modules/Currencies/components/CurrenciesList/components/CurrenciesListItem'
+import { CurrenciesListEmpty } from '@/modules/Currencies/components/CurrenciesList/components/CurrenciesListEmpty'
+import { CurrenciesListPagination } from '@/modules/Currencies/components/CurrenciesList/components/CurrenciesListPagination'
+import { useCurrenciesStoreContext } from '@/modules/Currencies/providers'
 
-import './index.scss'
+import styles from './index.module.scss'
 
+export function CurrenciesList(): JSX.Element {
+    const currenciesStore = useCurrenciesStoreContext()
 
-type Props = {
-    currencies: CurrencyInfo[];
-    isLoading: boolean;
-    offset: number;
-    ordering: CurrenciesOrdering | undefined;
-    onSwitchOrdering: (value: CurrenciesOrdering) => void;
-}
-
-
-export function CurrenciesList({
-    currencies,
-    isLoading,
-    offset = 0,
-    ordering,
-    onSwitchOrdering,
-}: Props): JSX.Element {
-    const intl = useIntl()
-
-    const placeholder = React.useRef(makeArray(10, uniqueId))
+    React.useEffect(() => reaction(
+        () => currenciesStore.tokensCache.isReady,
+        async isTokensCacheReady => {
+            if (isTokensCacheReady) {
+                await currenciesStore.fetch()
+            }
+        },
+        { delay: 50, fireImmediately: true },
+    ), [])
 
     return (
-        <div className="currencies-list list">
-            <div className="list__header">
-                <div className="list__cell list__cell--left visible@m">#</div>
-                <div className="list__cell list__cell--left">
-                    {intl.formatMessage({
-                        id: 'CURRENCIES_LIST_HEADER_NAME_CELL',
-                    })}
-                </div>
-                <div className="list__cell list__cell--right">
-                    {intl.formatMessage({
-                        id: 'CURRENCIES_LIST_HEADER_PRICE_CELL',
-                    })}
-                </div>
-                <div className="list__cell list__cell--right visible@s">
-                    {intl.formatMessage({
-                        id: 'CURRENCIES_LIST_HEADER_VOLUME24_CELL',
-                    })}
-                </div>
-                <div className="list__cell list__cell--right visible@s">
-                    <OrderingSwitcher
-                        ascending="tvlascending"
-                        descending="tvldescending"
-                        value={ordering}
-                        onSwitch={onSwitchOrdering}
-                    >
-                        {intl.formatMessage({
-                            id: 'CURRENCIES_LIST_HEADER_TVL_CELL',
-                        })}
-                    </OrderingSwitcher>
-                </div>
-            </div>
+        <Observer>
+            {() => (
+                <div className="card card--flat card--xsmall">
+                    <div className={classNames('list', styles.currencies_list, styles.list)}>
+                        {currenciesStore.currencies.length > 0 && (
+                            <CurrenciesListHeader />
+                        )}
 
-            {isLoading && currencies.length === 0 ? (
-                placeholder.current.map(key => (
-                    <Placeholder key={key} />
-                ))
-            ) : (
-                <PanelLoader loading={isLoading && currencies.length > 0}>
-                    {currencies.map((currency, idx) => (
-                        <Item
-                            key={currency.address}
-                            currency={currency}
-                            idx={offset + idx + 1}
-                        />
-                    ))}
-                </PanelLoader>
+                        {(() => {
+                            const isFetching = currenciesStore.isFetching === undefined || currenciesStore.isFetching
+
+                            switch (true) {
+                                case isFetching && currenciesStore.currencies.length === 0:
+                                    return <CurrenciesListPlaceholder />
+
+                                case currenciesStore.currencies.length > 0: {
+                                    return (
+                                        <PanelLoader loading={isFetching}>
+                                            {currenciesStore.currencies.map((currency, idx) => (
+                                                <CurrenciesListItem
+                                                    key={currency.address}
+                                                    idx={(
+                                                        currenciesStore.pagination.limit
+                                                        * (currenciesStore.pagination.currentPage - 1)
+                                                    ) + idx + 1}
+                                                    currency={currency}
+                                                />
+                                            ))}
+                                        </PanelLoader>
+                                    )
+                                }
+
+                                default:
+                                    return <CurrenciesListEmpty />
+                            }
+                        })()}
+                    </div>
+
+                    {currenciesStore.pagination && currenciesStore.pagination.totalPages > 1 && (
+                        <CurrenciesListPagination />
+                    )}
+                </div>
             )}
-        </div>
+        </Observer>
     )
 }

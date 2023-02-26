@@ -9,6 +9,7 @@ import { HeaderDrawer } from '@/components/layout/Header/HeaderDrawer'
 import { LangSwitcher } from '@/components/layout/LangSwitcher'
 import { Logo } from '@/components/layout/Logo'
 import { EverWallet } from '@/modules/Accounts'
+import { appRoutes } from '@/routes'
 
 import './index.scss'
 
@@ -21,7 +22,7 @@ export function Header(): JSX.Element {
                     {match => match && (
                         <>
                             <Navbar.Item>
-                                <Link to="/" className="logo">
+                                <Link to={appRoutes.home.makeUrl()} className="logo">
                                     <Logo />
                                 </Link>
                             </Navbar.Item>
@@ -40,7 +41,7 @@ export function Header(): JSX.Element {
                             {() => (
                                 <>
                                     <Navbar.Item>
-                                        <Link to="/" className="logo">
+                                        <Link to={appRoutes.home.makeUrl()} className="logo">
                                             <Logo ratio={0.9} />
                                         </Link>
                                     </Navbar.Item>

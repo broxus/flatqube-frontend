@@ -1,0 +1,12 @@
+.pools_list {
+    &.list {
+        --list-grid-template: 40px minmax(200px, 40%) minmax(120px, 15%) minmax(120px, 15%) minmax(120px, 15%) minmax(120px, 15%);
+
+        min-height: 1px;
+
+        :global {
+            .list__header { height: 42px; }
+            .list__row { height: 62px; }
+        }
+    }
+}

@@ -1,15 +1,21 @@
+@import '@/styles/variables.scss';
+
 .swap-price {
-    align-items: center;
-    column-gap: 10px;
+    align-items: flex-end !important;
     display: flex;
-    flex-flow: row nowrap;
+    flex-flow: column-reverse wrap;
     font-size: 12px;
-    justify-content: space-between;
+    gap: 10px;
     letter-spacing: 0.6px;
     line-height: 16px;
     margin-left: 0 !important;
     margin-right: 0 !important;
     min-height: 28px;
+
+    @media only screen and (min-width: $breakpoint-xsmall) {
+        align-items: center !important;
+        flex-flow: row nowrap;
+    }
 
     &-details {
         align-items: center;
@@ -40,14 +46,16 @@
         &:not(:hover) {
             background: linear-gradient(0deg, rgb(5 11 46 / 12%), rgb(5 11 46 / 12%)), rgb(255 255 255 / 12%);
         }
-
-        &:hover { color: #293166; }
     }
 
     div.btn.swap-price__exchange-mode-btn {
+        align-items: center;
         background: linear-gradient(0deg, rgb(5 11 46 / 12%), rgb(5 11 46 / 12%)), rgb(255 255 255 / 12%);
         color: #fff !important;
         cursor: default;
+        display: flex;
+        flex-flow: row nowrap;
+        gap: 10px;
     }
 }
 

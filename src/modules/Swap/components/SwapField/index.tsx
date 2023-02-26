@@ -173,7 +173,7 @@ function Field({
                                 className="form-btn-max"
                                 disabled={props.disabled}
                                 size="xs"
-                                type="secondary"
+                                type="link"
                                 onClick={props.onMaximize}
                             >
                                 Max

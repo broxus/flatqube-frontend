@@ -1,4 +1,4 @@
-import { AddressLiteral } from 'everscale-inpage-provider'
+import { Address, AddressLiteral } from 'everscale-inpage-provider'
 
 
 export const WrapGas = '1000000000' // <= 1 EVER
@@ -11,7 +11,7 @@ export const QubeDaoMaxLockPeriod = 1460
 
 export const DexRootAddress = new AddressLiteral('0:5eb5713ea9b4a0f3a13bc91b282cde809636eb1e68d2fcb6427b9ad78a5a9008')
 
-export const EverToTip3Address = new AddressLiteral('0:8ebe12dd57e0bec16d84135f82743ea4b5bf65c0fd9e526cbfa1d10d2f0f1402')
+export const EverToTip3Address = new AddressLiteral('0:223217628e2a5eaaa38923ca60cff3877a3be4f366c35417952091becf2332ea')
 
 export const Tip3ToEverAddress = new AddressLiteral('0:959c96f962cfba25e0d5117492a2b0e2f6a349d1a7b094494a9fe5c258fc4755')
 
@@ -37,16 +37,34 @@ export const VoteEscrowAddress = new AddressLiteral('0:8317ae7ee92d748500e179843
 
 export const GaugeFactoryAddress = new AddressLiteral('0:9509c21b9b098f6c47af3ce4b013da335ed96cb24367ba8de5b07001a1702441')
 
+export const SwapReferrerAddress = new AddressLiteral('0:7a43a08e77dcc2bd7ce2f5f6798dbb84af9c8443e8bfb60c27e125033fef1760')
+
 export const TokenListURI = 'https://raw.githubusercontent.com/broxus/flatqube-assets/master/manifest.json'
 
 export const MinWalletVersion = '0.2.31'
 
 export const API_URL = 'https://api.flatqube.io/v1'
 
+export const API_V2_URL = 'https://api.flatqube.io/v2'
+
 export const FARMING_POOL_API_URL = 'https://farming.flatqube.io/v1'
 
 export const QUBE_API_URL = 'https://qube.flatqube.io/v1'
 
-export const GAUGES_API_URL = 'https://farming-test.flatqube.io/v2'
+export const GAUGES_API_URL = 'https://farming.flatqube.io/v2'
 
 export const TOKENS_API_URL = 'https://tokens.everscan.io/v1'
+
+export const NPoolsList = new Map<
+    string /* pool lp token root */,
+    { poolAddress: Address, roots: { address: Address }[] }
+>([
+    ['0:155dfc30972a91b1737a3c75f8077f6d4f6c871753c1866407efaf43c3687723', {
+        poolAddress: new AddressLiteral('0:71bbd09511797ba170911677f9300633a1143472c279b5b1bd6bd46cb666f929'),
+        roots: [
+            { address: new AddressLiteral('0:2d963fb029bf321d25c207f7c786dffa030387106861a9912b2d5e1cd90590ea') },
+            { address: new AddressLiteral('0:84f7dc464665ee5be3c0e4065afa509041eaa9cded1308cdd29560dd630cdbf7') },
+            { address: new AddressLiteral('0:b8b76afb475cbd64786d2c693fe8b182797c4b47194fa5f25749ee673e478b06') },
+        ],
+    }],
+])

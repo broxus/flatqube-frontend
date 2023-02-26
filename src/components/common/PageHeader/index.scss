@@ -1,4 +1,10 @@
 .page_header {
+    margin-bottom: 24px;
+
+    @media only screen and (min-width: 640px) {
+        margin-bottom: 0;
+    }
+
     &__inner {
         display: flex;
         flex-flow: column wrap;
@@ -27,8 +33,11 @@
     }
 
     &__title {
-        font-size: 24px;
+        align-items: center;
+        display: flex;
+        font-size: 28px;
         font-weight: bold;
+        gap: 12px;
         letter-spacing: 0;
         line-height: 32px;
 

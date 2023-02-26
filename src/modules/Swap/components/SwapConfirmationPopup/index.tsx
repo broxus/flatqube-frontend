@@ -9,6 +9,7 @@ import { Icon } from '@/components/common/Icon'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { SwapBill } from '@/modules/Swap/components/SwapBill'
 import { useSwapFormStoreContext } from '@/modules/Swap/context'
+import { useNotifiedSwapCallbacks } from '@/modules/Swap/hooks/useNotifiedSwapCallbacks'
 
 import './index.scss'
 
@@ -16,16 +17,17 @@ import './index.scss'
 function ConfirmationPopup(): JSX.Element {
     const intl = useIntl()
     const formStore = useSwapFormStoreContext()
+    const swapCallbacks = useNotifiedSwapCallbacks({})
 
-    const [minExpectedAmount, setMinExpectedAmount] = React.useState(formStore.swap.minExpectedAmount)
-    const [leftAmount, setLeftAmount] = React.useState(formStore.swap.leftAmount)
-    const [rightAmount, setRightAmount] = React.useState(formStore.swap.rightAmount)
+    const [minExpectedAmount, setMinExpectedAmount] = React.useState(formStore.bill.minExpectedAmount)
+    const [leftAmount, setLeftAmount] = React.useState(formStore.leftAmount)
+    const [rightAmount, setRightAmount] = React.useState(formStore.rightAmount)
     const [isChanged, setChangedTo] = React.useState(false)
 
     const onUpdate = () => {
-        setMinExpectedAmount(formStore.swap.minExpectedAmount)
-        setLeftAmount(formStore.swap.leftAmount)
-        setRightAmount(formStore.swap.rightAmount)
+        setMinExpectedAmount(formStore.bill.minExpectedAmount)
+        setLeftAmount(formStore.leftAmount)
+        setRightAmount(formStore.rightAmount)
         setChangedTo(false)
     }
 
@@ -35,26 +37,40 @@ function ConfirmationPopup(): JSX.Element {
 
     const onSubmit = async () => {
         formStore.setState('isConfirmationAwait', false)
-        await formStore.submit()
+
+        switch (true) {
+            // case formStore.isWithdrawOneCoinMode:
+            //     await formStore.withdrawOneCoin(swapCallbacks)
+            //     break
+            //
+            // case formStore.isDepositOneCoinMode:
+            //     await formStore.depositOneCoin(swapCallbacks)
+            //     break
+
+            default:
+                await formStore.swap(swapCallbacks)
+        }
     }
 
     React.useEffect(() => reaction(() => [
-        formStore.swap.leftAmount,
-        formStore.swap.rightAmount,
-        formStore.swap.minExpectedAmount,
+        formStore.leftAmount,
+        formStore.rightAmount,
+        formStore.bill.minExpectedAmount,
     ], ([
         nextLeftAmount,
         nextRightAmount,
         nextMinExpectedAmount,
     ]) => {
-        setChangedTo(
-            (
-                nextLeftAmount !== leftAmount
-                || nextRightAmount !== rightAmount
-                || nextMinExpectedAmount !== minExpectedAmount
-            ),
-        )
-    }), [])
+        setChangedTo((
+            nextLeftAmount !== leftAmount
+            || nextRightAmount !== rightAmount
+            || nextMinExpectedAmount !== minExpectedAmount
+        ))
+    }), [
+        leftAmount,
+        rightAmount,
+        minExpectedAmount,
+    ])
 
     return ReactDOM.createPortal(
         <div className="popup">
@@ -168,34 +184,25 @@ function ConfirmationPopup(): JSX.Element {
                 {isChanged ? (
                     <div className="alert">
                         <div>
-                            <strong>Update a rate to swap the tokens</strong>
+                            <strong>
+                                {intl.formatMessage({ id: 'SWAP_RATE_CHANGED_TITLE' })}
+                            </strong>
                             <p>
-                                The rate has changed. You can’t swap the tokens at the previous rate.
+                                {intl.formatMessage({ id: 'SWAP_RATE_CHANGED_NOTE' })}
                             </p>
                         </div>
                         <div>
                             <Button
-                                size="xs"
-                                type="ghost"
+                                size="md"
+                                type="empty"
                                 onClick={onUpdate}
                             >
-                                Update a rate
+                                {intl.formatMessage({ id: 'SWAP_RATE_CHANGED_BTN_TEXT' })}
                             </Button>
                         </div>
                     </div>
                 ) : (
-                    <SwapBill
-                        key="bill"
-                        fee={formStore.swap.fee}
-                        isCrossExchangeAvailable={formStore.isCrossExchangeAvailable}
-                        isCrossExchangeMode={formStore.isCrossExchangeMode}
-                        leftToken={formStore.leftToken}
-                        minExpectedAmount={minExpectedAmount}
-                        priceImpact={formStore.swap.priceImpact}
-                        rightToken={formStore.rightToken}
-                        slippage={formStore.swap.slippage}
-                        tokens={formStore.route?.tokens}
-                    />
+                    <SwapBill key="bill" />
                 )}
 
                 <Button

@@ -11,6 +11,7 @@ import { useTokensCache } from '@/stores/TokensCacheService'
 import './index.scss'
 
 type Props = {
+    disabled?: boolean;
     root?: string;
     onOpen?: () => void;
     onClose?: () => void;
@@ -20,6 +21,7 @@ type Props = {
 }
 
 export function TokenSelector({
+    disabled,
     root,
     onOpen,
     onClose,
@@ -68,11 +70,12 @@ export function TokenSelector({
     return (
         <>
             <Button
-                onClick={open}
+                disabled={disabled}
                 className={classNames('token-selector', {
                     'token-selector_dirty': Boolean(token),
                     [`token-selector_size_${size}`]: Boolean(size),
                 })}
+                onClick={open}
             >
                 <span
                     className="token-selector__value"

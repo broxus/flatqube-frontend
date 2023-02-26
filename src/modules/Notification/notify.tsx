@@ -62,6 +62,7 @@ export function notify(
                     title={title}
                 />
             ),
+            toastId,
             ...toastOptions,
         })
         return toastId

@@ -34,7 +34,7 @@ export function QubeDaoDepositForm(): JSX.Element {
         await debouncedCalculation()
     }, [])
 
-    const onChangeLockPeriod = React.useCallback<<T>(value: T) => void>(async value => {
+    const onChangeLockPeriod = React.useCallback<(<T>(value: T) => void)>(async value => {
         const lockPeriod = Number(value || 0)
         depositForm.setData('lockPeriod', lockPeriod)
         if (isGoodBignumber(depositForm.amount)) {

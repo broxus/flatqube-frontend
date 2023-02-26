@@ -9,13 +9,17 @@ type Props = {
     checked?: boolean
     label?: string
     disabled?: boolean;
-    onChange?: (checked: boolean) => void
+    value?: any;
+    style?: React.CSSProperties;
+    onChange?: (checked: boolean, value?: any) => void
 }
 
 export function Checkbox({
     checked,
     label,
     disabled,
+    value,
+    style,
     onChange,
 }: Props): JSX.Element {
     return (
@@ -23,15 +27,16 @@ export function Checkbox({
             className={classNames('checkbox', {
                 checkbox_disabled: disabled,
             })}
+            style={style}
         >
             <input
                 type="checkbox"
                 disabled={disabled}
                 checked={Boolean(checked)}
-                onChange={() => onChange && onChange(!checked)}
+                onChange={() => onChange && onChange(!checked, value)}
             />
             <div className="checkbox__icon">
-                <Icon icon="check" />
+                <Icon icon="check" ratio={1.5} />
             </div>
             <div>{label}</div>
         </label>

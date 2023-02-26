@@ -90,7 +90,7 @@
         display: flex;
         font-size: 14px;
         justify-content: space-between;
-        letter-spacing: 0.75px;
+        letter-spacing: 0.25px;
         line-height: 20px;
         margin-bottom: 4px;
 
@@ -102,6 +102,7 @@
     }
 
     &__footer-label {
+        display: block !important;
         padding: 0 !important;
     }
 
@@ -191,10 +192,10 @@
 
     &:hover {
         background-color: rgb(197 228 243 / 100%);
-        color: #000;
+        color: #050b2e;
 
         .form-select__arrow {
-            svg { fill: #000; }
+            color: #050b2e;
         }
     }
 
@@ -215,23 +216,20 @@
     }
 
     &__txt {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 500;
         letter-spacing: 0.25px;
         line-height: 20px;
     }
 
     &__arrow {
+        color: rgb(197 228 243 / 48%);
         flex-shrink: 0;
         height: 24px;
         line-height: normal;
         margin-left: 4px;
+        transition: color 0.15s ease-in-out;
         width: 24px;
-
-        svg {
-            fill: #c5e4f3;
-            transition: fill 0.15s ease-in-out;
-        }
     }
 
     &.disabled,
@@ -304,9 +302,9 @@ button.form-submit {
     &__name {
         color: #fff;
         flex-grow: 1;
-        font-size: 18px;
+        font-size: 15px;
         font-weight: 500;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.25px;
         line-height: 20px;
         max-width: 100px;
         overflow: hidden;
@@ -329,13 +327,18 @@ button.form-submit {
     }
 
     &__arrow {
+        color: rgb(255 255 255 / 48%);
         flex-shrink: 0;
         height: 24px;
         line-height: normal;
         margin-right: -4px;
+        transition: color 0.15s ease-in-out;
         width: 24px;
+    }
 
-        svg { fill: #fff; }
+    &:hover &__arrow,
+    &:focus &__arrow {
+        color: #fff;
     }
 
     &.disabled,
@@ -348,7 +351,7 @@ button.form-submit {
 .btn.form-btn-max {
     font-size: 12px;
     line-height: 18px;
-    margin: 0 12px;
+    margin: 0 12px 0 0;
     min-height: 20px;
-    padding: 0 10px;
+    padding: 0 5px;
 }

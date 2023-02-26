@@ -1,10 +1,11 @@
-import { makeAutoObservable, runInAction } from 'mobx'
+import { computed, makeObservable } from 'mobx'
 
 import { TokenListURI } from '@/config'
+import { BaseStore } from '@/stores/BaseStore'
 import { error } from '@/utils'
 
 
-export type TonToken = {
+export type EverToken = {
     name: string;
     chainId: number;
     symbol: string;
@@ -16,7 +17,7 @@ export type TonToken = {
     version?: number;
 }
 
-export type TonTokenListManifest = {
+export type EverTokenListManifest = {
     name: string;
     version: {
         major: number;
@@ -25,11 +26,11 @@ export type TonTokenListManifest = {
     };
     keywords: string[];
     timestamp: string;
-    tokens: TonToken[];
+    tokens: EverToken[];
 }
 
 export type TokensListData = {
-    tokens: TonToken[];
+    tokens: EverToken[];
 }
 
 export type TokensListState = {
@@ -38,28 +39,17 @@ export type TokensListState = {
 }
 
 
-export class TokensListService {
-
-    /**
-     * Current state of the token list data
-     * @type {TokensListData}
-     * @protected
-     */
-    protected data: TokensListData = {
-        tokens: [],
-    }
-
-    /**
-     * Current state of the token list
-     * @type {TokensListState}
-     * @protected
-     */
-    protected state: TokensListState = {
-        isFetching: false,
-    }
+export class TokensListService extends BaseStore<TokensListData, TokensListState> {
 
     constructor(public readonly uri: string) {
-        makeAutoObservable(this)
+        super()
+        this.setState(() => ({ isFetching: false }))
+        makeObservable(this, {
+            isFetching: computed,
+            roots: computed,
+            time: computed,
+            tokens: computed,
+        })
     }
 
     /**
@@ -70,25 +60,19 @@ export class TokensListService {
             return
         }
 
-        this.state.isFetching = true
+        this.setState('isFetching', true)
 
-        fetch(this.uri, {
-            method: 'GET',
-        }).then(
+        fetch(this.uri, { method: 'GET' }).then(
             value => value.json(),
-        ).then((value: TonTokenListManifest) => {
-            runInAction(() => {
-                this.data.tokens = value.tokens
-                this.state = {
-                    isFetching: false,
-                    time: new Date().getTime(),
-                }
+        ).then((value: EverTokenListManifest) => {
+            this.setData('tokens', value.tokens)
+            this.setState({
+                isFetching: false,
+                time: new Date().getTime(),
             })
         }).catch(reason => {
             error('Cannot load token list', reason)
-            runInAction(() => {
-                this.state.isFetching = false
-            })
+            this.setState('isFetching', false)
         })
     }
 
@@ -107,10 +91,17 @@ export class TokensListService {
     }
 
     /**
-     * Returns computed Ton tokens list
+     * Returns computed Ever tokens list
      */
-    public get tokens(): TonToken[] {
+    public get tokens(): EverToken[] {
         return this.data.tokens
+    }
+
+    /**
+     * Returns computed list of the addresses of the manifest tokens
+     */
+    public get roots(): string[] {
+        return this.data.tokens.map(({ address }) => address)
     }
 
 }

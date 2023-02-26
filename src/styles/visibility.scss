@@ -6,12 +6,12 @@
 }
 
 /* Phone landscape and bigger */
-@media (max-width: $breakpoint-small) {
+@media (min-width: $breakpoint-small) {
     .hidden\@s { display: none !important; }
 }
 
 /* Tablet landscape and bigger */
-@media (max-width: $breakpoint-medium) {
+@media (min-width: $breakpoint-medium) {
     .hidden\@m { display: none !important; }
 }
 
@@ -46,3 +46,12 @@
 }
 
 .invisible { visibility: hidden !important; }
+
+@media (hover: none) {
+    .hidden-touch { display: none !important; }
+}
+
+/* Hide if primary pointing device supports hover, e.g. mice. */
+@media (hover) {
+    .hidden-notouch { display: none !important; }
+}

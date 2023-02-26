@@ -3,4 +3,14 @@
     display: flex;
     flex-flow: row nowrap;
     gap: 8px;
+
+    &__icon {
+        display: flex;
+        min-width: 20px;
+    }
+
+    &__label {
+        letter-spacing: 0;
+        white-space: nowrap;
+    }
 }

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
 
-import TransactionsListEmptyBg from '@/modules/Transactions/assets/TransactionsListEmptyBg.png'
+import TransactionsListEmptyBg from '@/assets/TransactionsListEmpty.svg'
 
 import styles from './index.module.scss'
 
@@ -9,10 +9,16 @@ export function TransactionsListEmpty(): JSX.Element {
     const intl = useIntl()
 
     return (
-        <div className={styles.transactions_list__empty_message}>
-            <img src={TransactionsListEmptyBg} alt="" />
-            <h3>{intl.formatMessage({ id: 'QUBE_DAO_USER_TRANSACTIONS_LIST_EMPTY' })}</h3>
-            <p>{intl.formatMessage({ id: 'QUBE_DAO_USER_TRANSACTIONS_LIST_EMPTY_NOTE' })}</p>
+        <div className={styles.list__empty_message}>
+            <div className="margin-bottom">
+                <img src={TransactionsListEmptyBg} alt="" />
+            </div>
+            <h3 className={styles.list__empty_message__title}>
+                {intl.formatMessage({ id: 'QUBE_DAO_USER_TRANSACTIONS_LIST_EMPTY' })}
+            </h3>
+            <div className={styles.list__empty_message__note}>
+                {intl.formatMessage({ id: 'QUBE_DAO_USER_TRANSACTIONS_LIST_EMPTY_NOTE' })}
+            </div>
         </div>
     )
 }

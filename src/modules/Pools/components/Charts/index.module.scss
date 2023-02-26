@@ -1,0 +1,79 @@
+@import '@/styles/variables.scss';
+
+.currencies {
+    align-items: center;
+    display: flex;
+    gap: 18px;
+    padding: 16px 24px;
+}
+
+.chart {
+    position: relative;
+
+    @media only screen and (min-width: $breakpoint-small) {
+        &_actions {
+            padding: 24px 24px 0;
+        }
+
+        :global {
+            .chart {
+                min-height: 300px;
+            }
+        }
+    }
+
+    @media only screen and (min-width: $breakpoint-medium) {
+        :global {
+            .chart {
+                min-height: 400px !important;
+            }
+        }
+    }
+}
+
+.tooltip {
+    background: rgb(40 42 55 / 90%);
+    border-radius: 2px;
+    box-shadow: 0 8px 16px rgb(43 51 56 / 8%);
+    box-sizing: border-box;
+    display: none;
+    padding: 10px;
+    position: absolute;
+    z-index: 1000;
+
+    @supports ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
+        -webkit-backdrop-filter: blur(32px);
+        backdrop-filter: blur(32px);
+        background: linear-gradient(0deg, rgb(5 11 46 / 12%), rgb(5 11 46 / 12%)), rgb(255 255 255 / 12%);
+    }
+}
+
+.tooltip_wrapper {
+    align-items: flex-start;
+    display: flex;
+    flex-flow: column wrap;
+    gap: 6px;
+}
+
+.tooltip_date {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.tooltip_item {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    font-size: 12px;
+    gap: 24px;
+    justify-content: space-between;
+    line-height: 16px;
+    width: 100%;
+}
+
+.tooltip_currency {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 6px;
+}

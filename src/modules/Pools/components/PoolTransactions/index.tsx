@@ -1,105 +1,155 @@
 import * as React from 'react'
+import classNames from 'classnames'
+import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
+import Media from 'react-media'
 
-import { SectionTitle } from '@/components/common/SectionTitle'
-import { TransactionsList } from '@/modules/Transactions/components'
-import { usePagination } from '@/hooks/usePagination'
-import { useApi } from '@/modules/Pools/hooks/useApi'
-import { EventType, TransactionInfo, TransactionsOrdering } from '@/modules/Transactions/types'
+import { Checkbox } from '@/components/common/Checkbox'
+import { PanelLoader } from '@/components/common/PanelLoader'
 import { Tabs } from '@/components/common/Tabs'
-import { error } from '@/utils'
+import { TransactionsListCard } from '@/modules/Pools/components/PoolTransactions/components/TransactionsListCard'
+import { TransactionsListEmpty } from '@/modules/Pools/components/PoolTransactions/components/TransactionsListEmpty'
+import { TransactionsListHeader } from '@/modules/Pools/components/PoolTransactions/components/TransactionsListHeader'
+import { TransactionsListItem } from '@/modules/Pools/components/PoolTransactions/components/TransactionsListItem'
+import { TransactionsListPagination } from '@/modules/Pools/components/PoolTransactions/components/TransactionsListPagination'
+import { TransactionsListPlaceholder } from '@/modules/Pools/components/PoolTransactions/components/TransactionsListPlaceholder'
+import { usePoolTransactionsStoreContext } from '@/modules/Pools/context'
+import { PoolTransactionEventType } from '@/modules/Pools/types'
 
-const LIMIT = 10
+import styles from './index.module.scss'
 
-type Props = {
-    poolAddress: string,
-    userAddress: string,
-}
-
-export function PoolTransactions({
-    poolAddress,
-    userAddress,
-}: Props): JSX.Element {
-    const api = useApi()
+export function PoolTransactions(): JSX.Element {
     const intl = useIntl()
-    const pagination = usePagination()
-    const [loading, setLoading] = React.useState(true)
-    const [transactions, setTransactions] = React.useState<TransactionInfo[]>([])
-    const [totalCount, setTotalCount] = React.useState(0)
-    const [eventTypes, setEventTypes] = React.useState<EventType[]>(['deposit', 'withdraw'])
-    const [ordering, setOrdering] = React.useState<TransactionsOrdering>('blocktimedescending')
-    const totalPages = Math.ceil(totalCount / LIMIT)
-    const { currentPage } = pagination
 
-    const getData = async () => {
-        setLoading(true)
-        try {
-            const data = await api.transactions({}, {
-                body: JSON.stringify({
-                    ordering,
-                    poolAddress,
-                    userAddress,
-                    limit: LIMIT,
-                    offset: currentPage > 0 ? (currentPage - 1) * LIMIT : 0,
-                    eventType: eventTypes.length ? eventTypes : undefined,
-                }),
-            })
-            setTransactions(data.transactions)
-            setTotalCount(data.totalCount)
-        }
-        catch (e) {
-            error(e)
-        }
-        setLoading(false)
+    const transactionsStore = usePoolTransactionsStoreContext()
+
+    const switchToAll = async () => {
+        transactionsStore.setState({
+            eventType: [],
+            pagination: {
+                ...transactionsStore.pagination,
+                currentPage: 1,
+            },
+        })
+        await transactionsStore.fetch(true)
     }
 
-    React.useEffect(() => {
-        pagination.onSubmit(1)
-    }, [eventTypes])
+    const switchToSwap = async () => {
+        transactionsStore.setState({
+            eventType: [PoolTransactionEventType.Swap],
+            pagination: {
+                ...transactionsStore.pagination,
+                currentPage: 1,
+            },
+        })
+        await transactionsStore.fetch(true)
+    }
 
-    React.useEffect(() => {
-        getData()
-    }, [currentPage, eventTypes, ordering])
+    const switchToDeposit = async () => {
+        transactionsStore.setState({
+            eventType: [PoolTransactionEventType.Deposit],
+            pagination: {
+                ...transactionsStore.pagination,
+                currentPage: 1,
+            },
+        })
+        await transactionsStore.fetch(true)
+    }
+
+    const switchToWithdraw = async () => {
+        transactionsStore.setState({
+            eventType: [PoolTransactionEventType.Withdraw],
+            pagination: {
+                ...transactionsStore.pagination,
+                currentPage: 1,
+            },
+        })
+        await transactionsStore.fetch(true)
+    }
+
+    const toggleUserTransactions = async () => {
+        transactionsStore.setState('onlyUserTransactions', !transactionsStore.onlyUserTransactions)
+        await transactionsStore.fetch(true)
+    }
 
     return (
-        <>
-            <div className="pools-sub-header">
-                <SectionTitle size="small">
-                    {intl.formatMessage({
-                        id: 'TRANSACTIONS_LIST_TITLE',
-                    })}
-                </SectionTitle>
+        <Observer>
+            {() => (
+                <>
+                    <div className={styles.transactions_list__toolbar}>
+                        <Tabs
+                            items={[{
+                                active: transactionsStore.eventType.length === 0,
+                                label: intl.formatMessage({ id: 'POOL_TRANSACTIONS_LIST_EVENT_FILTER_ALL' }),
+                                onClick: switchToAll,
+                            }, {
+                                active: transactionsStore.isSwapEventType,
+                                label: intl.formatMessage({ id: 'POOL_TRANSACTIONS_LIST_EVENT_FILTER_SWAPS' }),
+                                onClick: switchToSwap,
+                            }, {
+                                active: transactionsStore.isDepositEventType,
+                                label: intl.formatMessage({ id: 'POOL_TRANSACTIONS_LIST_EVENT_FILTER_DEPOSITS' }),
+                                onClick: switchToDeposit,
+                            }, {
+                                active: transactionsStore.isWithdrawEventType,
+                                label: intl.formatMessage({ id: 'POOL_TRANSACTIONS_LIST_EVENT_FILTER_WITHDRAWS' }),
+                                onClick: switchToWithdraw,
+                            }]}
+                        />
+                        <Checkbox
+                            checked={transactionsStore.onlyUserTransactions}
+                            label={intl.formatMessage({
+                                id: 'POOL_TRANSACTIONS_LIST_USER_ONLY_FILTER_CHECKBOX_LABEL',
+                            })}
+                            onChange={toggleUserTransactions}
+                        />
+                    </div>
 
-                <Tabs
-                    items={[{
-                        label: intl.formatMessage({ id: 'TRANSACTIONS_LIST_EVENT_ALL' }),
-                        active: eventTypes.length === 2,
-                        onClick: () => setEventTypes(['deposit', 'withdraw']),
-                    }, {
-                        label: intl.formatMessage({ id: 'TRANSACTIONS_LIST_EVENT_DEPOSIT' }),
-                        active: eventTypes.length === 1 && eventTypes.includes('deposit'),
-                        onClick: () => setEventTypes(['deposit']),
-                    }, {
-                        label: intl.formatMessage({ id: 'TRANSACTIONS_LIST_EVENT_WITHDRAW' }),
-                        active: eventTypes.length === 1 && eventTypes.includes('withdraw'),
-                        onClick: () => setEventTypes(['withdraw']),
-                    }]}
-                />
-            </div>
+                    <div className="card card--flat card--xsmall">
+                        <div className={classNames('list', styles.transactions_list, styles.list)}>
+                            <Media query={{ minWidth: 640 }}>
+                                {matches => (matches && transactionsStore.transactions.length > 0 ? (
+                                    <TransactionsListHeader />
+                                ) : null)}
+                            </Media>
 
-            <TransactionsList
-                isLoading={loading}
-                ordering={ordering}
-                transactions={transactions}
-                onSwitchOrdering={setOrdering}
-                pagination={{
-                    totalPages,
-                    currentPage,
-                    onNext: pagination.onNext,
-                    onPrev: pagination.onPrev,
-                    onSubmit: pagination.onSubmit,
-                }}
-            />
-        </>
+                            {(() => {
+                                const isFetching = (
+                                    transactionsStore.isFetching === undefined
+                                    || transactionsStore.isFetching
+                                )
+
+                                switch (true) {
+                                    case isFetching && transactionsStore.transactions.length === 0:
+                                        return <TransactionsListPlaceholder />
+
+                                    case transactionsStore.transactions.length > 0: {
+                                        return (
+                                            <PanelLoader loading={isFetching}>
+                                                {transactionsStore.transactions.map(tx => (
+                                                    <Media key={tx.messageHash} query={{ minWidth: 640 }}>
+                                                        {matches => (matches
+                                                            ? <TransactionsListItem transaction={tx} />
+                                                            : <TransactionsListCard transaction={tx} />
+                                                        )}
+                                                    </Media>
+                                                ))}
+                                            </PanelLoader>
+                                        )
+                                    }
+
+                                    default:
+                                        return <TransactionsListEmpty />
+                                }
+                            })()}
+                        </div>
+
+                        {transactionsStore.pagination && transactionsStore.pagination.totalPages > 1 && (
+                            <TransactionsListPagination />
+                        )}
+                    </div>
+                </>
+            )}
+        </Observer>
     )
 }

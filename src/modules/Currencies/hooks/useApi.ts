@@ -1,18 +1,28 @@
+import { API_V2_URL } from '@/config'
+import type {
+    CurrenciesRequest,
+    CurrenciesResponse,
+    CurrencyGraphRequest,
+    CurrencyResponse,
+    CurrencyTransactionsRequest,
+    CurrencyTransactionsResponse,
+} from '@/modules/Currencies/types'
+import type { OhlcvGraphModel, TvlGraphModel, VolumeGraphModel } from '@/modules/Charts/types'
+import type { PoolsRequest, PoolsResponse } from '@/modules/Pools/types'
 import { apiRoutes } from '@/routes'
 import { createHandler } from '@/utils'
-import { CurrenciesResponse, CurrencyResponse } from '@/modules/Currencies/types'
-import { OhlcvGraphModel, TvlGraphModel, VolumeGraphModel } from '@/modules/Chart/types'
-import { PairsResponse } from '@/modules/Pairs/types'
-import { TransactionsInfoResponse } from '@/modules/Transactions/types'
 
 const currenciesApi = {
-    currencies: createHandler(apiRoutes.currencies)<CurrenciesResponse>(),
+    currencies: createHandler(apiRoutes.currencies)<CurrenciesResponse, CurrenciesRequest>(),
     currency: createHandler(apiRoutes.currency)<CurrencyResponse>(),
-    currencyPrices: createHandler(apiRoutes.currencyPrices)<OhlcvGraphModel[]>(),
-    currencyVolume: createHandler(apiRoutes.currencyVolume)<VolumeGraphModel[]>(),
-    currencyTvl: createHandler(apiRoutes.currencyTvl)<TvlGraphModel[]>(),
-    pairs: createHandler(apiRoutes.pairs)<PairsResponse>(),
-    transactions: createHandler(apiRoutes.transactions)<TransactionsInfoResponse>(),
+    currencyPrices: createHandler(apiRoutes.currencyPrices)<OhlcvGraphModel[], CurrencyGraphRequest>(),
+    currencyTvl: createHandler(apiRoutes.currencyTvl)<TvlGraphModel[], CurrencyGraphRequest>(),
+    currencyVolume: createHandler(apiRoutes.currencyVolume)<VolumeGraphModel[], CurrencyGraphRequest>(),
+    relatedPools: createHandler(apiRoutes.pools, API_V2_URL)<PoolsResponse, PoolsRequest>(),
+    transactions: createHandler(apiRoutes.transactions, API_V2_URL)<
+        CurrencyTransactionsResponse,
+        CurrencyTransactionsRequest
+    >(),
 }
 
 

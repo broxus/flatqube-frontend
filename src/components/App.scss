@@ -2,11 +2,13 @@
 
 .wrapper {
     align-items: stretch;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     min-height: 100vh;
     overflow-x: hidden;
+    padding-top: 64px;
     position: relative;
     width: 100%;
 }

@@ -1,0 +1,12 @@
+.remove_liquidity {
+    align-items: center;
+    display: flex;
+    gap: 24px;
+
+    &__symbol {
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        line-height: 28px;
+    }
+}

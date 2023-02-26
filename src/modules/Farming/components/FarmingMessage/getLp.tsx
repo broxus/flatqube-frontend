@@ -91,7 +91,7 @@ function FarmingMessageGetLpInner(): JSX.Element | null {
                     </Button>
 
                     <Button
-                        link={appRoutes.poolCreate.makeUrl({
+                        link={appRoutes.liquidityAdd.makeUrl({
                             leftTokenRoot: farmingData.leftTokenAddress,
                             rightTokenRoot: farmingData.rightTokenAddress,
                         })}

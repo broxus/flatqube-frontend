@@ -20,8 +20,8 @@
 
         &:checked {
             + .checkbox__icon {
-                background: #c5e4f3;
-                border-color: #c5e4f3;
+                background: var(--checkbox-checked-background, #c5e4f3);
+                border-color: var(--checkbox-checked-border, #c5e4f3);
 
                 .icon {
                     display: block;
@@ -32,8 +32,8 @@
 
     &__icon {
         align-items: center;
-        border: 1px solid rgb(255 255 255 / 48%);
-        color: #050a2e;
+        border: 1px solid var(--checkbox-border, rgb(255 255 255 / 48%));
+        color: var(--checkbox-icon-color, #050a2e);
         display: flex;
         height: 16px;
         justify-content: center;

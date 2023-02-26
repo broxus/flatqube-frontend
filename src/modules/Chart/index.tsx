@@ -1,8 +1,7 @@
 import * as React from 'react'
 import classNames from 'classnames'
 import type {
-    AreaSeriesPartialOptions,
-    AutoscaleInfo,
+    AreaSeriesPartialOptions, AutoscaleInfo,
     CandlestickSeriesPartialOptions,
     ChartOptions,
     DeepPartial,
@@ -13,8 +12,8 @@ import type {
 } from 'lightweight-charts'
 import { createChart } from 'lightweight-charts'
 
-import { ContentLoader } from '@/components/common/ContentLoader'
 import { useLocalizationContext } from '@/context/Localization'
+import { Loader } from '@/modules/Chart/Loader'
 import {
     areaOptions,
     areaStyles,
@@ -76,13 +75,12 @@ export const Chart = React.forwardRef<ChartApi | undefined, Props>((props, ref) 
     const chartRef = React.useRef<HTMLDivElement | null>(null)
     const chart = React.useRef<IChartApi>()
     const listener = React.useRef<typeof handler>()
-
-    const [series, setSeries] = React.useState<ISeriesApi<SeriesType>>()
+    const series = React.useRef<ISeriesApi<SeriesType>>()
 
     const handler = React.useCallback(debounce(async () => {
         const lr = chart.current?.timeScale().getVisibleLogicalRange()
         if (lr != null) {
-            const barsInfo = series?.barsInLogicalRange(lr)
+            const barsInfo = series.current?.barsInLogicalRange(lr)
             if (
                 barsInfo?.barsBefore !== undefined
                 && barsInfo.barsBefore < 0
@@ -109,7 +107,7 @@ export const Chart = React.forwardRef<ChartApi | undefined, Props>((props, ref) 
 
     React.useImperativeHandle(ref, () => ({
         api: chart.current,
-        series,
+        series: series.current,
     }), [chart.current, series])
 
     // Listen window resizes
@@ -138,21 +136,21 @@ export const Chart = React.forwardRef<ChartApi | undefined, Props>((props, ref) 
 
                 if (type === 'Area') {
                     chart.current?.applyOptions(areaOptions)
-                    setSeries(chart.current?.addAreaSeries(areaStyles))
+                    series.current = chart.current?.addAreaSeries(areaStyles)
                 }
                 else if (type === 'Bar') {
-                    setSeries(chart.current?.addBarSeries())
+                    series.current = chart.current?.addBarSeries()
                 }
                 else if (type === 'Candlestick') {
                     chart.current?.applyOptions(candlestickOptions)
-                    setSeries(chart.current?.addCandlestickSeries(candlesticksStyles))
+                    series.current = chart.current?.addCandlestickSeries(candlesticksStyles)
                 }
                 else if (type === 'Histogram') {
                     chart.current?.applyOptions(histogramOptions)
-                    setSeries(chart.current?.addHistogramSeries(histogramStyles))
+                    series.current = chart.current?.addHistogramSeries(histogramStyles)
                 }
                 else if (type === 'Line') {
-                    setSeries(chart.current?.addLineSeries())
+                    series.current = chart.current?.addLineSeries()
                 }
                 chart.current?.applyOptions({ ...options })
                 try {
@@ -192,19 +190,6 @@ export const Chart = React.forwardRef<ChartApi | undefined, Props>((props, ref) 
     }, [mergedLocale])
 
     React.useEffect(() => {
-        if (data?.length === 0) {
-            (async () => {
-                await load?.()
-                try {
-                    chart.current?.timeScale().resetTimeScale()
-                    chart.current?.timeScale().fitContent()
-                }
-                catch (e) {}
-            })()
-        }
-    }, [data])
-
-    React.useEffect(() => {
         if (chart.current === undefined || data == null) {
             return
         }
@@ -216,8 +201,7 @@ export const Chart = React.forwardRef<ChartApi | undefined, Props>((props, ref) 
 
         let seriesMaxValue: number | undefined
 
-        series?.applyOptions({
-            ...chartStyles,
+        series.current?.applyOptions({
             autoscaleInfoProvider: (original: () => AutoscaleInfo | null): AutoscaleInfo | null => {
                 const res = original()
                 if (res !== null && seriesMaxValue !== undefined) {
@@ -227,9 +211,10 @@ export const Chart = React.forwardRef<ChartApi | undefined, Props>((props, ref) 
                 }
                 return res
             },
+            ...chartStyles,
         })
 
-        series?.setData(data)
+        series.current?.setData(data)
 
         data?.forEach(datum => {
             const { value } = datum as CommonGraphShape
@@ -252,17 +237,17 @@ export const Chart = React.forwardRef<ChartApi | undefined, Props>((props, ref) 
 
     return (
         <div
-            ref={chartRef}
             className={classNames('chart', {
-                'chart--loading': data?.length === 0 && loading,
-                'chart--no-data': data?.length === 0,
+                'chart--loading': (data == null || data?.length === 0) && loading,
+                'chart--no-data': (data == null || data?.length === 0) && !loading,
             }, className)}
             id={id}
         >
-            {(data?.length === 0 && loading) && (
-                <ContentLoader />
+            <div className="chart-holder" ref={chartRef} />
+            {((data == null || data?.length === 0) && loading) && (
+                <Loader />
             )}
-            {(noDataMessage !== undefined && data?.length === 0 && !loading) && (
+            {(noDataMessage !== undefined && (data == null || data?.length === 0) && !loading) && (
                 <div className="chart__no-data-message">
                     {noDataMessage}
                 </div>

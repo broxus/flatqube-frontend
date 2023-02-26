@@ -24,13 +24,17 @@ module.exports = {
         },
     ],
 
+    root: true,
+
     rules: {
+        'import/extensions': ['error', 'never', { json: 'always', scss: 'always' }],
         'no-await-in-loop': 'off',
         'no-restricted-syntax': 'off',
         '@typescript-eslint/no-non-null-assertion': 'off',
     },
 
     settings: {
+        'import/extensions': ['.ts', '.tsx', '.js', '.scss', '.css'],
         'import/resolver': {
             'eslint-import-resolver-webpack': {},
             node: {

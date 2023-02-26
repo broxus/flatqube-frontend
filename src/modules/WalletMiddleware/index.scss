@@ -5,33 +5,38 @@
     position: relative;
 
     > .message {
+        height: auto;
         position: relative;
         z-index: 1;
     }
 
-    @media only screen and (min-width: 640px) {
-        &::before,
-        &::after {
-            content: '';
-            height: 100%;
-            pointer-events: none;
-            position: absolute;
-            top: 0;
-            transition: background-position 0.15s ease-in;
-            width: 100%;
-            z-index: 0;
-        }
+    &::before,
+    &::after {
+        content: '';
+        height: 100%;
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        transition: background-position 0.15s ease-in;
+        width: 100%;
+        z-index: 0;
+    }
 
+    &::after {
+        background: url('./assets/WalletMiddlewareRightBg.svg') 100% 50% no-repeat;
+        background-size: contain;
+        right: 0;
+    }
+
+    @media only screen and (min-width: 640px) {
         &::before {
-            background: url('./assets/WalletMiddlewareLeftBg.png') -35% 50% no-repeat;
+            background: url('./assets/WalletMiddlewareLeftBg.svg') -15% 50% no-repeat;
             background-size: contain;
             left: 0;
         }
 
         &::after {
-            background: url('./assets/WalletMiddlewareRightBg.png') 135% 50% no-repeat;
-            background-size: contain;
-            right: 0;
+            background-position-x: 115%
         }
     }
 

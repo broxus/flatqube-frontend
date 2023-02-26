@@ -1,4 +1,4 @@
-import CoinLogo from '@/assets/EVERIcon.svg'
+import CoinLogo from '@/assets/icons/EVER.svg'
 
 export class DexConstants {
 

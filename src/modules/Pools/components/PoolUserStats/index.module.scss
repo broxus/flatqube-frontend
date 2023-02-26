@@ -1,0 +1,26 @@
+@import '@/styles/variables.scss';
+
+.pool_user_stats {
+    &__grid {
+        display: flex;
+        flex-flow: column wrap;
+        gap: 8px;
+        @media only screen and (min-width: $breakpoint-medium) {
+            flex-flow: row nowrap;
+        }
+
+        &_stack {
+            flex-flow: column wrap;
+            width: 100%;
+        }
+    }
+
+    &__grid_column {
+        display: flex;
+        width: 100%;
+        @media only screen and (min-width: $breakpoint-medium) {
+            flex-grow: 1;
+            width: 33.333%;
+        }
+    }
+}

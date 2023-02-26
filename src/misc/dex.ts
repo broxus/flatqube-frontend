@@ -10,11 +10,6 @@ import { useStaticRpc } from '@/hooks/useStaticRpc'
 import { DexAbi } from '@/misc/abi'
 import { TokenWallet } from '@/misc/token-wallet'
 
-export enum PairType {
-    CONSTANT_PRODUCT = '1',
-    STABLESWAP = '2',
-}
-
 export type PairTokenRoots = {
     left: Address;
     right: Address;
@@ -27,10 +22,10 @@ export type PairTokenRootsSymbols = {
     lpSymbol: string;
 }
 
-export type PairBalances = {
+type PairBalances = {
     left: string;
     right: string;
-    lp: string;
+    lpSupply: string;
 }
 
 export type PairExpectedDepositLiquidity = {
@@ -63,7 +58,9 @@ export type StablePairExpectedDepositLiquidity = {
 const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
-
+/**
+ * @deprecated Use DexUtils, DexAccountUtils or PairUtils instead
+ */
 export class Dex {
 
     public static async accountAddress(
@@ -227,7 +224,7 @@ export class Dex {
         }).call({ cachedState: state })
         return {
             left: left.toString(),
-            lp: lp.toString(),
+            lpSupply: lp.toString(),
             right: right.toString(),
         }
     }

@@ -4,7 +4,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 import path from 'path'
 import webpack from 'webpack'
-import { Configuration as DevServerConfiguration } from 'webpack-dev-server'
+import type { Configuration as DevServerConfiguration } from 'webpack-dev-server'
 
 type WebpackConfig = webpack.Configuration & { devServer?: DevServerConfiguration }
 
@@ -43,6 +43,10 @@ export default (_: any, options: any): WebpackConfig => {
         clean: true,
     }
 
+    if (isDevelopment) {
+        config.output.pathinfo = false
+    }
+
     /*
      * -------------------------------------------------------------
      * Optimization
@@ -50,12 +54,10 @@ export default (_: any, options: any): WebpackConfig => {
      */
 
     config.optimization = isDevelopment ? {
-        splitChunks: {
-            cacheGroups: {
-                default: false,
-                vendors: false,
-            },
-        },
+        removeAvailableModules: false,
+        removeEmptyChunks: false,
+        runtimeChunk: true,
+        splitChunks: false,
     } : {
         splitChunks: {
             chunks: (chunk) => !/^(polyfills|pages|modules)$/.test(chunk.name),
@@ -91,7 +93,11 @@ export default (_: any, options: any): WebpackConfig => {
     config.plugins = []
 
     if (isDevelopment && showErrors) {
-        config.plugins.push(new ForkTsCheckerWebpackPlugin())
+        config.plugins.push(new ForkTsCheckerWebpackPlugin({
+            typescript: {
+                configFile: path.resolve('tsconfig.json')
+            }
+        }))
     }
 
     config.plugins.push(
@@ -139,12 +145,12 @@ export default (_: any, options: any): WebpackConfig => {
     config.module = {
         rules: [
             {
-                test: /\.(ts|js)x?$/,
-                exclude: /node_modules/,
-                use: 'babel-loader',
+                exclude: [/node_modules/],
+                test: /\.([jt]sx?)?$/,
+                use: isProduction ? 'babel-loader' : 'swc-loader',
             },
             {
-                exclude: /\.module.(s(a|c)ss)$/,
+                exclude: /\.module.(s[ac]ss)$/,
                 test: /\.s[ac]ss$/i,
                 use: [
                     isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
@@ -153,7 +159,7 @@ export default (_: any, options: any): WebpackConfig => {
                 ],
             },
             {
-                test: /\.module\.s(a|c)ss$/,
+                test: /\.module\.s[ac]ss$/,
                 use: [
                     isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
                     {
@@ -187,7 +193,7 @@ export default (_: any, options: any): WebpackConfig => {
             '@': path.resolve(__dirname, 'src')
         },
 
-        extensions: ['.js', '.jsx', '.ts', '.tsx', '.d.ts', '.scss', '.css'],
+        extensions: ['.js', '.ts', '.tsx', '.scss', '.css'],
 
         fallback: {
             buffer: require.resolve('buffer'),
@@ -197,6 +203,8 @@ export default (_: any, options: any): WebpackConfig => {
             path.resolve(__dirname, 'src'),
             'node_modules',
         ],
+
+        symlinks: false,
     }
 
     /*
@@ -206,7 +214,7 @@ export default (_: any, options: any): WebpackConfig => {
      */
 
     if (isDevelopment) {
-        config.devtool = 'inline-source-map'
+        config.devtool = 'eval-source-map'
     }
 
     /*
@@ -223,7 +231,11 @@ export default (_: any, options: any): WebpackConfig => {
             liveReload: false,
             hot: false,
             client: {
-                overlay: false,
+                overlay: {
+                    errors: true,
+                    warnings: false,
+                },
+                reconnect: 10,
             },
         }
     }
@@ -236,8 +248,9 @@ export default (_: any, options: any): WebpackConfig => {
 
     if (isDevelopment) {
         config.watchOptions = {
-            aggregateTimeout: 100,
+            aggregateTimeout: 500,
             ignored: /node_modules/,
+            poll: 180,
         }
     }
 

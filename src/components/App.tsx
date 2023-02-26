@@ -17,29 +17,29 @@ import { WalletUpdateModal } from '@/components/common/WalletUpdateModal'
 import { Header } from '@/components/layout/Header'
 import { LocalizationContext } from '@/context/Localization'
 import { TokensUpgradesModal } from '@/modules/TokensUpgrades'
+import Swap from '@/pages/swap'
+import Pools from '@/pages/pools'
+import Pool from '@/pages/pools/item'
+import PoolAddLiquidity from '@/pages/pools/liquidity/add'
+import PoolRemoveLiquidity from '@/pages/pools/liquidity/remove'
+import AddLiquidity from '@/pages/liquidity/add'
+import RemoveLiquidity from '@/pages/liquidity/remove'
+import Tokens from '@/pages/tokens'
+import Token from '@/pages/tokens/item'
+import Farmings from '@/pages/farming'
+import Farming from '@/pages/farming/item'
+import CreateFarming from '@/pages/farming/create'
+import Gauges from '@/pages/gauges'
+import Gauge from '@/pages/gauges/item'
+import GaugesCalc from '@/pages/gauges/calc'
+import CreateGauge from '@/pages/gauges/create'
+import Dao from '@/pages/dao'
+import Balance from '@/pages/dao/balance'
+import Epoch from '@/pages/dao/epoch'
+import CreateCandidate from '@/pages/dao/whitelisting'
 import Builder from '@/pages/builder'
 import CreateToken from '@/pages/builder/create'
 import CustomToken from '@/pages/builder/token'
-import Farming from '@/pages/farming'
-import FarmingItem from '@/pages/farming/item'
-import CreateFarmPool from '@/pages/farming/create'
-import DAO from '@/pages/dao'
-import Balance from '@/pages/dao/balance'
-import CreateCandidate from '@/pages/dao/whitelisting'
-import Epoch from '@/pages/dao/epoch'
-import Pairs from '@/pages/pairs'
-import Pair from '@/pages/pairs/item'
-import AddLiquidityPool from '@/pages/pool'
-import Swap from '@/pages/swap'
-import Tokens from '@/pages/tokens'
-import Token from '@/pages/tokens/item'
-import Pools from '@/pages/pools'
-import Pool from '@/pages/pools/item'
-import GaugesCreate from '@/pages/gauges/create'
-import GaugesList from '@/pages/gauges/index'
-import GaugesItem from '@/pages/gauges/item'
-import GaugesCalc from '@/pages/gauges/calc'
-import BurnLiquidity from '@/pages/pools/burn-liquidity'
 import { appRoutes } from '@/routes'
 import { useWallet } from '@/stores/WalletService'
 import { isMobile, noop } from '@/utils'
@@ -78,48 +78,48 @@ export function App(): JSX.Element {
                                     <Swap />
                                 </Route>
 
-                                <Route exact path={appRoutes.poolList.path}>
+                                <Route exact path={appRoutes.pools.path}>
                                     <Pools />
                                 </Route>
-                                <Route exact path={appRoutes.poolRemoveLiquidity.path}>
-                                    <BurnLiquidity />
-                                </Route>
-                                <Route exact path={appRoutes.poolItem.path}>
+                                <Route exact path={appRoutes.pool.path}>
                                     <Pool />
                                 </Route>
-                                <Route exact path={appRoutes.poolCreate.path}>
-                                    <AddLiquidityPool />
+                                <Route exact path={appRoutes.poolAddLiquidity.path}>
+                                    <PoolAddLiquidity />
+                                </Route>
+                                <Route exact path={appRoutes.poolRemoveLiquidity.path}>
+                                    <PoolRemoveLiquidity />
                                 </Route>
 
-                                <Route exact path={appRoutes.tokenList.path}>
+                                <Route exact path={appRoutes.liquidityAdd.path}>
+                                    <AddLiquidity />
+                                </Route>
+                                <Route exact path={appRoutes.liquidityRemove.path}>
+                                    <RemoveLiquidity />
+                                </Route>
+
+                                <Route exact path={appRoutes.tokens.path}>
                                     <Tokens />
                                 </Route>
-                                <Route exact path={appRoutes.tokenItem.path}>
+                                <Route exact path={appRoutes.token.path}>
                                     <Token />
                                 </Route>
 
-                                <Route exact path={appRoutes.pairList.path}>
-                                    <Pairs />
-                                </Route>
-                                <Route exact path={appRoutes.pairItem.path}>
-                                    <Pair />
-                                </Route>
-
                                 <Route exact path={appRoutes.farming.path}>
-                                    <Farming />
+                                    <Farmings />
                                 </Route>
                                 <Route exact path={appRoutes.farmingCreate.path}>
-                                    <CreateFarmPool />
+                                    <CreateFarming />
                                 </Route>
                                 <Route exact path={appRoutes.farmingItem.path}>
-                                    <FarmingItem />
+                                    <Farming />
                                 </Route>
                                 <Route exact path={appRoutes.farmingItemUser.path}>
-                                    <FarmingItem />
+                                    <Farming />
                                 </Route>
 
                                 <Route exact path={appRoutes.dao.path}>
-                                    <DAO />
+                                    <Dao />
                                 </Route>
                                 <Route exact path={appRoutes.daoEpoch.path}>
                                     <Epoch />
@@ -132,22 +132,22 @@ export function App(): JSX.Element {
                                 </Route>
 
                                 <Route exact path={appRoutes.gauges.path}>
-                                    <GaugesList />
+                                    <Gauges />
                                 </Route>
                                 <Route exact path={appRoutes.gaugesCreate.path}>
-                                    <GaugesCreate />
+                                    <CreateGauge />
                                 </Route>
                                 <Route exact path={appRoutes.gaugesCalc.path}>
                                     <GaugesCalc />
                                 </Route>
                                 <Route exact path={appRoutes.gaugesItem.path}>
-                                    <GaugesItem />
+                                    <Gauge />
                                 </Route>
 
                                 <Route exact path={appRoutes.builder.path}>
                                     <Builder />
                                 </Route>
-                                <Route path={appRoutes.builderCreate.path}>
+                                <Route exact path={appRoutes.builderCreate.path}>
                                     <CreateToken />
                                 </Route>
                                 <Route exact path={appRoutes.builderItem.path}>

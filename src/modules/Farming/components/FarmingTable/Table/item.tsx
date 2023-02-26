@@ -52,24 +52,20 @@ export function FarmingTableItem({
     } : undefined
 
     const vestedRewards = item.reward_token_root_info
-        .map((rewardInfo, idx) => intl.formatMessage({
-            id: 'POOLS_LIST_TOKEN_BALANCE',
-        }, {
-            symbol: rewardInfo.reward_currency,
-            value: props.vestedRewards
-                ? formattedTokenAmount(props.vestedRewards[idx], rewardInfo.reward_scale)
-                : '0',
-        }))
+        .map((rewardInfo, idx) => (props.vestedRewards?.[idx]
+            ? `${formattedTokenAmount(
+                props.vestedRewards[idx],
+                rewardInfo.reward_scale,
+            )} ${rewardInfo.reward_currency}`
+            : `0 ${rewardInfo.reward_currency}`))
 
     const entitledRewards = item.reward_token_root_info
-        .map((rewardInfo, idx) => intl.formatMessage({
-            id: 'POOLS_LIST_TOKEN_BALANCE',
-        }, {
-            symbol: rewardInfo.reward_currency,
-            value: props.entitledRewards
-                ? formattedTokenAmount(props.entitledRewards[idx], rewardInfo.reward_scale)
-                : '0',
-        }))
+        .map((rewardInfo, idx) => (props.entitledRewards?.[idx]
+            ? `${formattedTokenAmount(
+                props.entitledRewards[idx],
+                rewardInfo.reward_scale,
+            )} ${rewardInfo.reward_currency}`
+            : `0 ${rewardInfo.reward_currency}`))
 
     const tvl = item.left_address && item.right_address ? item.tvl : null
 

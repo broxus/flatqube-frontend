@@ -1,20 +1,19 @@
 import * as React from 'react'
-import { reaction } from 'mobx'
 
 import { SwapFormStore } from '@/modules/Swap/stores/SwapFormStore'
-import { WalletService } from '@/stores/WalletService'
-import { SwapFormCtorOptions } from '@/modules/Swap/types'
-import { useNotifiedCallbacks } from '@/modules/Swap/hooks/useNotifiedCallbacks'
-import { TokensCacheService } from '@/stores/TokensCacheService'
-import { error } from '@/utils'
+import type { SwapFormCtorOptions } from '@/modules/Swap/stores/SwapFormStore'
+import { useTokensCache } from '@/stores/TokensCacheService'
+import type { TokensCacheService } from '@/stores/TokensCacheService'
+import { useWallet } from '@/stores/WalletService'
+import type { WalletService } from '@/stores/WalletService'
 
 // @ts-ignore
 export const SwapFormStoreContext = React.createContext<SwapFormStore>()
 
 export type SwapFormStoreProviderProps = React.PropsWithChildren<{
     beforeInit?: (formStore: SwapFormStore) => Promise<void>;
-    tokensCache: TokensCacheService;
-    wallet: WalletService;
+    tokensCache?: TokensCacheService;
+    wallet?: WalletService;
 } & SwapFormCtorOptions>
 
 export function useSwapFormStoreContext(): SwapFormStore {
@@ -30,48 +29,39 @@ export function SwapFormStoreProvider(props: SwapFormStoreProviderProps): JSX.El
         defaultLeftTokenAddress,
         defaultRightTokenAddress,
         minTvlValue,
-        multipleSwapTokenRoot,
+        referrer,
         safeAmount,
         tip3ToCoinAddress,
-        tokensCache,
-        wallet,
+        tokensCache = useTokensCache(),
+        wallet = useWallet(),
         wrapGas,
+        wrappedCoinTokenAddress,
         wrappedCoinVaultAddress,
     } = props
 
-    if (wallet === undefined) {
-        throw new Error('Ever Wallet Service not being passed in props')
-    }
-
-    if (tokensCache === undefined) {
-        throw new Error('Tokens Cache Service not being passed in props')
-    }
-
-    const callbacks = useNotifiedCallbacks(props)
-
     const options = React.useMemo(() => ({
-        ...callbacks,
         coinToTip3Address,
         comboToTip3Address,
         defaultLeftTokenAddress,
         defaultRightTokenAddress,
         minTvlValue,
-        multipleSwapTokenRoot,
+        referrer,
         safeAmount,
         tip3ToCoinAddress,
         wrapGas,
+        wrappedCoinTokenAddress,
         wrappedCoinVaultAddress,
     }), [
-        callbacks,
         coinToTip3Address,
         comboToTip3Address,
         defaultLeftTokenAddress,
         defaultRightTokenAddress,
         minTvlValue,
-        multipleSwapTokenRoot,
+        referrer,
         safeAmount,
         tip3ToCoinAddress,
         wrapGas,
+        wrappedCoinTokenAddress,
         wrappedCoinVaultAddress,
     ])
 
@@ -81,30 +71,7 @@ export function SwapFormStoreProvider(props: SwapFormStoreProviderProps): JSX.El
     )
 
     React.useEffect(() => {
-        const tokensListDisposer = reaction(
-            () => tokensCache.isReady,
-            async isReady => {
-                context.setState('isPreparing', true)
-                if (isReady) {
-                    try {
-                        await beforeInit?.(context)
-                        await context.init()
-                    }
-                    catch (e) {
-                        error('Swap Form Store initializing error', e)
-                    }
-                    finally {
-                        context.setState('isPreparing', false)
-                    }
-                }
-            },
-            { delay: 50, fireImmediately: true },
-        )
-
-        return () => {
-            tokensListDisposer()
-            context.dispose().catch(reason => error(reason))
-        }
+        beforeInit?.(context)
     }, [context])
 
     return (

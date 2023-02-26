@@ -29,8 +29,8 @@
         cursor: pointer;
     }
 
-    &.navbar-nav > li.active > a {
-        color: #ffffff;
+    &.navbar-nav > li > a.active {
+        color: #fff;
 
         // noinspection ALL
         .nav__arrow svg path {
@@ -63,6 +63,6 @@
     }
 
     li > a.active {
-        color: #ffffff;
+        color: #fff;
     }
 }

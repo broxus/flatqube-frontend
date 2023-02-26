@@ -1,17 +1,17 @@
 import * as React from 'react'
-import { useIntl } from 'react-intl'
+import { useParams } from 'react-router-dom'
 
-import { PoolsItem } from '@/modules/Pools/item'
-import { WalletMiddleware } from '@/modules/WalletMiddleware'
+import { Pool } from '@/modules/Pools/pool'
+import { PoolStoreProvider } from '@/modules/Pools/context'
 
 export default function Page(): JSX.Element {
-    const intl = useIntl()
+    const params = useParams<{ address: string }>()
 
     return (
         <div className="container container--large">
-            <WalletMiddleware message={intl.formatMessage({ id: 'POOLS_LIST_CONNECT_WALLET_TITLE' })}>
-                <PoolsItem />
-            </WalletMiddleware>
+            <PoolStoreProvider address={params.address}>
+                <Pool />
+            </PoolStoreProvider>
         </div>
     )
 }

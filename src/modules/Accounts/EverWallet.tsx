@@ -8,6 +8,7 @@ import { useWallet } from '@/stores/WalletService'
 import { formattedTokenAmount, sliceAddress } from '@/utils'
 
 import './index.scss'
+import classNames from 'classnames'
 
 type Props = {
     showDisconnectButton?: boolean;
@@ -21,7 +22,12 @@ export function EverWallet({ showDisconnectButton }: Props): JSX.Element | null 
     return (
         <Observer>
             {() => (
-                <div key="ever-wallet" className="wallet">
+                <div
+                    key="ever-wallet"
+                    className={classNames('wallet', {
+                        'wallet--connected': wallet.isConnected,
+                    })}
+                >
                     {!wallet.isConnected ? (
                         <div key="wrapper" className="wallet__wrapper">
                             <div className="wallet__inner">

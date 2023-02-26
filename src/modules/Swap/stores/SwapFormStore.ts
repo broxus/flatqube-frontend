@@ -1,63 +1,132 @@
 import BigNumber from 'bignumber.js'
-import type { DelayedMessageExecution } from 'everscale-inpage-provider'
-import { Address } from 'everscale-inpage-provider'
+import type {
+    Address, DelayedMessageExecution, Subscriber, Transaction,
+} from 'everscale-inpage-provider'
 import type { IReactionDisposer } from 'mobx'
 import {
-    action,
-    computed,
-    makeObservable,
-    override,
-    reaction,
+    action, comparer, computed, makeObservable, override, reaction, toJS,
 } from 'mobx'
 
+import { NPoolsList } from '@/config'
+import { useRpc, useStaticRpc } from '@/hooks'
+import type { LiquidityStablePoolData } from '@/misc'
 import {
-    DEFAULT_SLIPPAGE_VALUE,
-    DEFAULT_SWAP_BILL, RECEIPTS,
-} from '@/modules/Swap/constants'
+    getFullContractState,
+    LiquidityStablePoolUtils,
+    StablePoolUtils,
+    TokenWalletUtils,
+    wrappedCoinVaultContract,
+} from '@/misc'
+import { DEFAULT_SLIPPAGE_VALUE, RECEIPTS } from '@/modules/Swap/constants'
+import { useSwapApi } from '@/modules/Swap/hooks/useApi'
+import type { BaseSwapStoreData } from '@/modules/Swap/stores/BaseSwapStore'
 import { BaseSwapStore } from '@/modules/Swap/stores/BaseSwapStore'
-import { CoinSwapStore } from '@/modules/Swap/stores/CoinSwapStore'
-import { ConversionStore } from '@/modules/Swap/stores/ConversionStore'
-import { CrossPairSwapStore } from '@/modules/Swap/stores/CrossPairSwapStore'
-import { DirectSwapStore } from '@/modules/Swap/stores/DirectSwapStore'
-import { MultipleSwapStore } from '@/modules/Swap/stores/MultipleSwapStore'
 import type {
-    CoinSwapSuccessResult,
-    ConversionTransactionFailureResult,
-    ConversionTransactionSuccessResult,
-    CrossPairSwapStoreData,
-    CrossPairTransactionFailureResult,
-    DirectTransactionFailureResult,
-    DirectTransactionSuccessResult,
-    SendMessageCallbackParams,
-    SwapFormChangesShape,
-    SwapFormCtorOptions,
-    SwapFormStoreData,
-    SwapFormStoreState,
+    ConversionTransactionCallbacks,
+    CrossSwapRoutePayloadRequest,
+    CrossSwapRouteRequest,
+    CrossSwapStatusResponse,
+    SwapRoute,
+    SwapSendMessageCallbackParams,
+    SwapTransactionCallbacks,
 } from '@/modules/Swap/types'
-import { CoinSwapFailureResult, SwapDirection, SwapExchangeMode } from '@/modules/Swap/types'
-import { getCrossExchangeSlippage, getSlippageMinExpectedAmount } from '@/modules/Swap/utils'
-import { WalletService } from '@/stores/WalletService'
-import { TokensCacheService } from '@/stores/TokensCacheService'
+import { SwapDirection } from '@/modules/Swap/types'
+import { calcCrossExchangeSlippage } from '@/modules/Swap/utils'
+import { TokenSide } from '@/modules/TokensList'
+import type { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
+import type { WalletService } from '@/stores/WalletService'
 import {
+    addressesComparer,
     debounce,
     debug,
+    error,
     formattedBalance,
+    getSafeProcessingId,
     isGoodBignumber,
+    resolveEverscaleAddress,
     storage,
+    throwException,
 } from '@/utils'
 
 
+export interface SwapFormStoreData extends BaseSwapStoreData {
+    pool?: LiquidityStablePoolData;
+    route?: SwapRoute;
+    transfer?: {
+        abi?: string;
+        callId?: string;
+        gas?: string;
+        method: 'transfer' | 'wrap';
+        payload?: string;
+    };
+}
+
+export interface SwapFormStoreState {
+    coinSide?: TokenSide;
+    direction: SwapDirection;
+    isCalculating?: boolean;
+    isCombo?: boolean;
+    isConfirmationAwait?: boolean;
+    isSyncingPool?: boolean;
+    isPreparing?: boolean;
+    isProcessing?: boolean;
+    priceDirection: SwapDirection;
+}
+
+export interface SwapFormCtorOptions {
+    coinToTip3Address: Address;
+    comboToTip3Address: Address;
+    defaultLeftTokenAddress?: string;
+    defaultRightTokenAddress?: string;
+    minTvlValue?: string;
+    referrer?: string;
+    safeAmount?: string;
+    tip3ToCoinAddress: Address;
+    wrapGas?: string;
+    wrappedCoinTokenAddress: Address;
+    wrappedCoinVaultAddress: Address;
+}
+
+async function checkStatus(callId: string, recipient: string): Promise<CrossSwapStatusResponse> {
+    const api = useSwapApi()
+    return new Promise((resolve, reject) => {
+        try {
+            let attempts = 0
+            const check = debounce(async () => {
+                try {
+                    const response = await api.poolCrossSwapStatus({}, { method: 'POST' }, {
+                        id: Number(callId),
+                        recipient,
+                    })
+                    if (response.status === 'Pending') {
+                        if (attempts >= 30) {
+                            reject(new Error('Timed out waiting'))
+                            return
+                        }
+                        await check()
+                        attempts += 1
+                        return
+                    }
+                    resolve(response)
+                }
+                catch (e) {
+                    if (attempts >= 50) {
+                        reject(new Error('Timed out waiting'))
+                        return
+                    }
+                    await check()
+                }
+            }, 3000)
+            check()
+        }
+        catch (e) {
+            reject(e)
+        }
+    })
+}
+
+
 export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStoreState> {
-
-    public readonly conversion: ConversionStore
-
-    public readonly coinSwap: CoinSwapStore
-
-    public readonly crossPairSwap: CrossPairSwapStore
-
-    public readonly directSwap: DirectSwapStore
-
-    public readonly multipleSwap: MultipleSwapStore
 
     constructor(
         public readonly wallet: WalletService,
@@ -66,65 +135,8 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
     ) {
         super(tokensCache)
 
-        makeObservable<
-            SwapFormStore,
-            | 'handleChangeTokens'
-            | 'handleCoinSwapFailure'
-            | 'handleCoinSwapSuccess'
-            | 'handleConversionFailure'
-            | 'handleConversionSuccess'
-            | 'handleFormChanges'
-            | 'handleSend'
-            | 'handleSwapFailure'
-            | 'handleSwapSuccess'
-            | 'handleTokensCacheReady'
-            | 'handleWalletAccountChange'
-        >(this, {
-            coinSide: computed,
-            defaultLeftTokenRoot: computed,
-            defaultRightTokenRoot: computed,
-            direction: computed,
-            exchangeMode: computed,
-            formattedLeftBalance: override,
-            formattedRightBalance: override,
-            handleChangeTokens: action.bound,
-            handleCoinSwapFailure: action.bound,
-            handleCoinSwapSuccess: action.bound,
-            handleConversionFailure: action.bound,
-            handleConversionSuccess: action.bound,
-            handleFormChanges: action.bound,
-            handleSend: action.bound,
-            handleSwapFailure: action.bound,
-            handleSwapSuccess: action.bound,
-            handleTokensCacheReady: action.bound,
-            handleWalletAccountChange: action.bound,
-            isCalculating: override,
-            isCoinBasedSwapMode: computed,
-            isConfirmationAwait: computed,
-            isConversionMode: computed,
-            isCrossExchangeAvailable: computed,
-            isCrossExchangeMode: computed,
-            isCrossExchangeOnly: computed,
-            isLeftAmountValid: override,
-            isLoading: computed,
-            isMultipleSwapMode: computed,
-            isPreparing: computed,
-            isUnwrapMode: computed,
-            isWrapMode: computed,
-            leftBalanceNumber: override,
-            ltrPrice: override,
-            maximizeLeftAmount: action.bound,
-            multipleSwapTokenRoot: computed,
-            priceDirection: computed,
-            route: computed,
-            rtlPrice: override,
-            swap: computed,
-            togglePriceDirection: action.bound,
-            toggleSwapExchangeMode: action.bound,
-        })
-
         this.setData(() => ({
-            bill: DEFAULT_SWAP_BILL,
+            bill: {},
             leftAmount: '',
             rightAmount: '',
             slippage: DEFAULT_SLIPPAGE_VALUE,
@@ -132,90 +144,62 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
 
         this.setState(() => ({
             direction: SwapDirection.LTR,
-            exchangeMode: SwapExchangeMode.DIRECT_EXCHANGE,
-            isPreparing: false,
             priceDirection: SwapDirection.LTR,
         }))
 
-        this.conversion = new ConversionStore(wallet, tokensCache, {
-            callbacks: {
-                onSend: this.handleSend,
-                onTransactionFailure: this.handleConversionFailure,
-                onTransactionSuccess: this.handleConversionSuccess,
-            },
-            safeAmount: options.safeAmount,
-            tokenAddress: options.multipleSwapTokenRoot,
-            wrapGas: options?.wrapGas,
-            wrappedCoinVaultAddress: options.wrappedCoinVaultAddress,
-        })
-        this.crossPairSwap = new CrossPairSwapStore(wallet, tokensCache, {
-            leftAmount: this.data.leftAmount,
-            leftToken: this.data.leftToken,
-            rightAmount: this.data.rightAmount,
-            rightToken: this.data.rightToken,
-            slippage: this.data.slippage,
-        }, {
-            callbacks: {
-                onCoinSwapTransactionFailure: this.handleCoinSwapFailure,
-                onCoinSwapTransactionSuccess: this.handleCoinSwapSuccess,
-                onSend: this.handleSend,
-                onTransactionFailure: this.handleSwapFailure,
-                onTransactionSuccess: this.handleSwapSuccess,
-            },
-            coinToTip3Address: options.coinToTip3Address,
-            comboToTip3Address: options.comboToTip3Address,
-            minTvlValue: options.minTvlValue,
-            safeAmount: options.safeAmount,
-            tip3ToCoinAddress: options.tip3ToCoinAddress,
-            wrappedCoinVaultAddress: options.wrappedCoinVaultAddress,
-        })
-        this.directSwap = new DirectSwapStore(wallet, tokensCache, {
-            leftAmount: this.data.leftAmount,
-            leftToken: this.data.leftToken,
-            rightAmount: this.data.rightAmount,
-            rightToken: this.data.rightToken,
-            slippage: this.data.slippage,
-        }, {
-            callbacks: {
-                onSend: this.handleSend,
-                onTransactionFailure: this.handleSwapFailure,
-                onTransactionSuccess: this.handleSwapSuccess,
-            },
-        })
-        this.multipleSwap = new MultipleSwapStore(wallet, tokensCache, {
-            leftAmount: this.data.leftAmount,
-            leftToken: this.data.leftToken,
-            rightAmount: this.data.rightAmount,
-            rightToken: this.data.rightToken,
-            slippage: this.data.slippage,
-        }, {
-            callbacks: {
-                onSend: this.handleSend,
-                onTransactionFailure: this.handleSwapFailure,
-                onTransactionSuccess: this.handleCoinSwapSuccess,
-            },
-            coinToTip3Address: options.coinToTip3Address,
-            comboToTip3Address: options.comboToTip3Address,
-            safeAmount: options.safeAmount,
-            tip3ToCoinAddress: options.tip3ToCoinAddress,
-            wrappedCoinVaultAddress: options.wrappedCoinVaultAddress,
-        })
-        this.coinSwap = new CoinSwapStore(wallet, tokensCache, {
-            leftAmount: this.data.leftAmount,
-            leftToken: this.data.leftToken,
-            rightAmount: this.data.rightAmount,
-            rightToken: this.data.rightToken,
-            slippage: this.data.slippage,
-        }, {
-            callbacks: {
-                onSend: this.handleSend,
-                onTransactionFailure: this.handleSwapFailure,
-                onTransactionSuccess: this.handleCoinSwapSuccess,
-            },
-            coinToTip3Address: options.coinToTip3Address,
-            safeAmount: options?.safeAmount,
-            tip3ToCoinAddress: options.tip3ToCoinAddress,
-            wrappedCoinVaultAddress: options.wrappedCoinVaultAddress,
+        makeObservable<
+            SwapFormStore,
+            | 'handleChangeTokens'
+            | 'handleSend'
+            | 'handleTokensCacheReady'
+            | 'handleWalletAccountChange'
+        >(this, {
+            coinSide: computed,
+            combinedBalanceNumber: computed,
+            defaultLeftTokenRoot: computed,
+            defaultRightTokenRoot: computed,
+            direction: computed,
+            formattedLeftBalance: override,
+            formattedRightBalance: override,
+            handleChangeTokens: action.bound,
+            handleSend: action.bound,
+            handleTokensCacheReady: action.bound,
+            handleWalletAccountChange: action.bound,
+            isCalculating: computed,
+            isCoinBasedSwapMode: computed,
+            isCoinToTip3Valid: computed,
+            isComboSwapMode: computed,
+            isComboSwapValid: computed,
+            isConfirmationAwait: computed,
+            isConversionMode: computed,
+            isDepositOneCoinMode: computed,
+            isEnoughCoinBalance: computed,
+            isEnoughCombinedBalance: computed,
+            isEnoughLiquidity: computed,
+            isLeftAmountValid: override,
+            isPreparing: computed,
+            isRightAmountValid: override,
+            isSyncingPool: computed,
+            isTip3ToCoinValid: computed,
+            isUnwrapMode: computed,
+            isUnwrapValid: computed,
+            isValid: computed,
+            isWithdrawOneCoinMode: computed,
+            isWithdrawOneCoinValid: computed,
+            isWrapMode: computed,
+            isWrapValid: computed,
+            leftAmount: override,
+            leftBalanceNumber: override,
+            ltrPrice: override,
+            maximizeLeftAmount: action.bound,
+            pool: computed,
+            poolAddress: computed,
+            priceDirection: computed,
+            rightAmount: override,
+            route: computed,
+            rtlPrice: override,
+            togglePriceDirection: action.bound,
+            wrappedCoinTokenAddress: computed,
         })
     }
 
@@ -236,19 +220,12 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             { fireImmediately: true },
         )
 
-        this.formDataDisposer = reaction(
-            () => ({
-                bill: this.data.bill,
-                leftAmount: this.data.leftAmount,
-                leftToken: this.data.leftToken,
-                pair: this.data.pair,
-                rightAmount: this.data.rightAmount,
-                rightToken: this.data.rightToken,
-                slippage: this.data.slippage,
-            }),
-            this.handleFormChanges,
-            { fireImmediately: true },
-        )
+        this.poolDisposer = reaction(() => this.pool?.address, async address => {
+            await this.unwatchPool()
+            if (address) {
+                await this.watchPool()
+            }
+        }, { fireImmediately: true })
     }
 
     /**
@@ -257,96 +234,23 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * and reset all data to their defaults.
      */
     public async dispose(): Promise<void> {
-        this.formDataDisposer?.()
         this.tokensChangeDisposer?.()
         this.tokensCacheDisposer?.()
         this.walletAccountDisposer?.()
+        this.poolDisposer?.()
         this.reset()
-    }
-
-    /**
-     * Submit transaction dispatcher
-     */
-    public async submit(): Promise<void> {
-        switch (true) {
-            case this.isCrossExchangeMode:
-                if (this.isCoinBasedSwapMode && this.coinSide === 'leftToken') {
-                    await this.crossPairSwap.submit('fromCoinToTip3')
-                }
-                else if (this.isCoinBasedSwapMode && this.coinSide === 'rightToken') {
-                    await this.crossPairSwap.submit('fromTip3ToCoin')
-                }
-                else if (this.isMultipleSwapMode && this.multipleSwap.isEnoughTokenBalance) {
-                    await this.crossPairSwap.submit()
-                }
-                else if (this.isMultipleSwapMode && this.multipleSwap.isEnoughCoinBalance) {
-                    await this.crossPairSwap.submit('fromCoinToTip3')
-                }
-                else if (this.isMultipleSwapMode && this.multipleSwap.isEnoughCombinedBalance) {
-                    await this.crossPairSwap.submit('multiSwap')
-                }
-                else {
-                    await this.crossPairSwap.submit()
-                }
-                break
-
-            case this.isMultipleSwapMode && this.multipleSwap.isEnoughTokenBalance:
-                await this.directSwap.submit()
-                break
-
-            case this.isMultipleSwapMode && this.multipleSwap.isEnoughCoinBalance:
-                await this.coinSwap.submit('fromCoinToTip3')
-                break
-
-            case this.isMultipleSwapMode:
-                await this.multipleSwap.submit()
-                break
-
-            case this.coinSide === 'leftToken':
-                await this.coinSwap.submit('fromCoinToTip3')
-                break
-
-            case this.coinSide === 'rightToken':
-                await this.coinSwap.submit('fromTip3ToCoin')
-                break
-
-            default:
-                await this.directSwap.submit()
-        }
-    }
-
-    /**
-     * Full reset direct, cross-pair and multiple swap
-     * instances to their default.
-     * @protected
-     */
-    protected reset(): void {
-        this.setData({
-            bill: DEFAULT_SWAP_BILL,
-            leftAmount: '',
-            rightAmount: '',
-        })
-        this.setState(() => ({
-            coinSide: this.coinSide,
-            direction: SwapDirection.LTR,
-            exchangeMode: this.isConversionMode ? this.exchangeMode : SwapExchangeMode.DIRECT_EXCHANGE,
-            isConfirmationAwait: false,
-            isMultiple: this.isMultipleSwapMode,
-            priceDirection: SwapDirection.LTR,
-        }))
-        this.multipleSwap.reset()
-        this.crossPairSwap.reset()
-        this.coinSwap.reset()
-        this.directSwap.reset()
+        clearInterval(this.routeCheckRunnerInterval)
     }
 
     /**
      * Maximizing the value of the left field depending on the form mode
      */
     public async maximizeLeftAmount(): Promise<void> {
+        this.setState('direction', SwapDirection.LTR)
+
         let balance = this.leftBalanceNumber
 
-        if (this.isMultipleSwapMode || this.isWrapMode || this.coinSide === 'leftToken') {
+        if (this.isComboSwapMode || this.isWrapMode || this.coinSide === 'leftToken') {
             balance = balance.minus(
                 new BigNumber(this.options?.safeAmount || 0).shiftedBy(-this.wallet.coin.decimals),
             )
@@ -360,7 +264,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             return
         }
 
-        this.setState('isCalculating', true)
+        this.setState('isCalculating', !this.isConversionMode)
 
         await this.changeLeftAmount(balance.toFixed(), debounce(async () => {
             if (this.isConversionMode) {
@@ -381,23 +285,17 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      */
     public async changeLeftAmount(value: string, callback?: () => (Promise<void> | void)): Promise<void> {
         this.setState('direction', SwapDirection.LTR)
-
         this.setData('leftAmount', value)
-
-        this.forceInvalidate()
-
         if (value.length === 0) {
-            this.setData('rightAmount', '')
-            if (this.pair !== undefined && !this.isLowTvl) {
-                this.setState('exchangeMode', SwapExchangeMode.DIRECT_EXCHANGE)
-            }
+            this.setData({
+                bill: {},
+                ltrPrice: undefined,
+                rightAmount: '',
+                route: undefined,
+                rtlPrice: undefined,
+            })
         }
-
         await callback?.()
-
-        if (!this.isConversionMode && !this.isEnoughLiquidity) {
-            this.setData('rightAmount', '')
-        }
     }
 
     /**
@@ -409,19 +307,26 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      */
     public async changeRightAmount(value: string, callback?: () => (Promise<void> | void)): Promise<void> {
         this.setState('direction', SwapDirection.RTL)
-
         this.setData('rightAmount', value)
-
-        this.forceInvalidate()
-
         if (value.length === 0) {
-            this.setData('leftAmount', '')
-            if (this.pair !== undefined && !this.isLowTvl) {
-                this.setState('exchangeMode', SwapExchangeMode.DIRECT_EXCHANGE)
-            }
+            this.setData({
+                bill: {},
+                leftAmount: '',
+                ltrPrice: undefined,
+                route: undefined,
+                rtlPrice: undefined,
+            })
         }
-
         await callback?.()
+        if (this.isWithdrawOneCoinValid && !this.isEnoughLiquidity) {
+            this.setData({
+                bill: {},
+                leftAmount: '',
+                ltrPrice: undefined,
+                route: undefined,
+                rtlPrice: undefined,
+            })
+        }
     }
 
     /**
@@ -429,9 +334,8 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * Pass the callback function as second argument, and it will be fires after all data and
      * states changes and before run recalculation.
      * @param {string} [root]
-     * @param {() => void} [callback]
      */
-    public async changeLeftToken(root?: string, callback?: () => (Promise<void> | void)): Promise<void> {
+    public async changeLeftToken(root?: string): Promise<void> {
         if (root === undefined) {
             return
         }
@@ -440,19 +344,21 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
 
         if (isReverting) {
             this.setData({
+                bill: {},
                 leftToken: root,
                 rightToken: this.data.leftToken,
+                route: undefined,
             })
             this.setState('direction', SwapDirection.LTR)
         }
         else {
             this.setData({
+                bill: {},
                 leftToken: root,
                 ltrPrice: undefined,
-                pair: undefined,
+                route: undefined,
                 rtlPrice: undefined,
             })
-            this.crossPairSwap.setData('routes', [])
             if (this.direction === SwapDirection.LTR) {
                 this.setData('rightAmount', '')
             }
@@ -461,20 +367,9 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             }
         }
 
-        this.forceInvalidate()
-
-        await callback?.()
-
-        if (this.data.leftToken === undefined || this.data.rightToken === undefined) {
-            this.setData('pair', undefined)
-            return
+        if (this.isDepositOneCoinMode || this.isWithdrawOneCoinMode) {
+            await this.syncPool()
         }
-
-        if (this.pair === undefined) {
-            await this.prepare()
-        }
-
-        this.checkExchangeMode()
 
         await this.recalculate(!this.isCalculating)
     }
@@ -484,9 +379,8 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * Pass the callback function as second argument, and it will be fires after all data and
      * states changes and before run recalculation.
      * @param {string} [root]
-     * @param {() => void} [callback]
      */
-    public async changeRightToken(root?: string, callback?: () => (Promise<void> | void)): Promise<void> {
+    public async changeRightToken(root?: string): Promise<void> {
         if (root === undefined) {
             return
         }
@@ -495,19 +389,21 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
 
         if (isReverting) {
             this.setData({
+                bill: {},
                 leftToken: this.data.rightToken,
                 rightToken: root,
+                route: undefined,
             })
             this.setState('direction', SwapDirection.RTL)
         }
         else {
             this.setData({
+                bill: {},
                 ltrPrice: undefined,
-                pair: undefined,
                 rightToken: root,
+                route: undefined,
                 rtlPrice: undefined,
             })
-            this.crossPairSwap.setData('routes', [])
             if (this.direction === SwapDirection.LTR) {
                 this.setData('rightAmount', '')
             }
@@ -516,20 +412,9 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             }
         }
 
-        this.forceInvalidate()
-
-        await callback?.()
-
-        if (this.leftToken === undefined || this.rightToken === undefined) {
-            this.setData('pair', undefined)
-            return
+        if (this.isDepositOneCoinMode || this.isWithdrawOneCoinMode) {
+            await this.syncPool()
         }
-
-        if (this.pair === undefined) {
-            await this.prepare()
-        }
-
-        this.checkExchangeMode()
 
         await this.recalculate(!this.isCalculating)
     }
@@ -543,24 +428,6 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         if (value !== this.slippage) {
             this.setData('slippage', value)
             storage.set('slippage', value)
-
-            if (this.isCrossExchangeMode) {
-                this.crossPairSwap.setData('route', undefined)
-                await this.recalculate(!this.isCalculating)
-            }
-
-            if (this.swap.expectedAmount !== undefined) {
-                (this.swap as any).setData('bill', {
-                    amount: this.swap.amount,
-                    expectedAmount:  this.swap.expectedAmount,
-                    fee:  this.swap.fee,
-                    minExpectedAmount: getSlippageMinExpectedAmount(
-                        new BigNumber(this.swap.expectedAmount || 0),
-                        value,
-                    ).toFixed(),
-                    priceImpact: this.swap.priceImpact,
-                })
-            }
         }
     }
 
@@ -569,16 +436,13 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * Revert amounts, tokens, exchange mode and native coin side
      */
     public async toggleConversionDirection(): Promise<void> {
-        if (this.isLoading || this.isSwapping) {
+        if (this.isProcessing) {
             return
         }
 
         this.setState({
             coinSide: this.coinSide && (this.coinSide === 'leftToken' ? 'rightToken' : 'leftToken'),
             direction: SwapDirection.LTR,
-            exchangeMode: this.exchangeMode === SwapExchangeMode.WRAP_COIN
-                ? SwapExchangeMode.UNWRAP_COIN
-                : SwapExchangeMode.WRAP_COIN,
         })
 
         this.setData({
@@ -592,27 +456,26 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * Reset swap bill. Revert prices, amounts and tokens.
      */
     public async toggleDirection(): Promise<void> {
-        if (this.isLoading || this.isSwapping) {
+        if (this.isProcessing) {
             return
         }
 
         this.setState({
-            coinSide: this.isMultipleSwapMode
+            coinSide: this.isComboSwapMode
                 ? undefined
                 : (this.coinSide && (this.coinSide === 'leftToken' ? 'rightToken' : 'leftToken')),
             direction: this.direction === SwapDirection.RTL ? SwapDirection.LTR : SwapDirection.RTL,
-            exchangeMode: this.isMultipleSwapMode ? SwapExchangeMode.DIRECT_EXCHANGE : this.exchangeMode,
-            isMultiple: false,
+            isCombo: false,
         })
 
         this.setData({
+            bill: {},
             leftAmount: this.data.rightAmount,
             leftToken: this.data.rightToken,
             rightAmount: this.data.leftAmount,
             rightToken: this.data.leftToken,
+            route: undefined,
         })
-
-        this.forceInvalidate()
 
         await this.recalculate(!this.isCalculating)
     }
@@ -630,17 +493,6 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
     }
 
     /**
-     * Manually toggle exchange mode.
-     */
-    public toggleSwapExchangeMode(): void {
-        if (!this.isCrossExchangeMode && this.isCrossExchangeAvailable) {
-            this.setState('exchangeMode', SwapExchangeMode.CROSS_PAIR_EXCHANGE)
-            return
-        }
-        this.setState('exchangeMode', SwapExchangeMode.DIRECT_EXCHANGE)
-    }
-
-    /**
      * Manually recalculate exchange bill by current direction.
      * @param {boolean} [force]
      * @protected
@@ -652,38 +504,768 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
 
         this.setState('isCalculating', true)
 
-        if (this.direction === SwapDirection.LTR && isGoodBignumber(this.leftAmountNumber)) {
-            await Promise.allSettled([
-                (this.pair?.address !== undefined && !this.isCrossExchangeOnly) && this.calculateLeftToRight(force),
-                this.crossPairSwap.checkSuggestions(this.leftAmountNumber.toFixed(), 'expectedexchange'),
-            ])
-
-            await this.crossPairSwap.calculateLeftToRight(force)
-        }
-        else if (this.direction === SwapDirection.RTL && isGoodBignumber(this.rightAmountNumber)) {
-            await Promise.allSettled([
-                (this.pair?.address !== undefined && !this.isCrossExchangeOnly) && this.calculateRightToLeft(force),
-                this.crossPairSwap.checkSuggestions(this.rightAmountNumber.toFixed(), 'expectedspendamount'),
-            ])
-
-            await this.crossPairSwap.calculateRightToLeft(force, this.isEnoughLiquidity)
-        }
-        else {
-            await this.finalizeCalculation(this.direction)
-        }
+        await this.routeCheckRunner()
 
         this.setState('isCalculating', false)
+    }
 
-        if (!this.isCrossExchangeOnly) {
-            this.checkExchangeMode()
+    public async wrap(callbacks?: ConversionTransactionCallbacks): Promise<void> {
+        const callId = getSafeProcessingId()
+        let transaction: Transaction | undefined
+
+        try {
+            if (this.wallet.account?.address === undefined) {
+                throwException('Account not connected')
+            }
+
+            this.setState('isProcessing', true)
+
+            const wrappedAmount = new BigNumber(this.data.leftAmount ?? 0).shiftedBy(this.wallet.coin.decimals)
+            const amount = wrappedAmount.plus(this.options.wrapGas ?? 0).toFixed()
+            const input = {
+                amount: wrappedAmount.toFixed(),
+                receivedDecimals: this.rightToken?.decimals,
+                receivedIcon: this.rightToken?.icon,
+                receivedRoot: this.rightToken?.root,
+                receivedSymbol: this.rightToken?.symbol,
+            }
+
+            const rpc = useRpc()
+            const message = await rpc.sendMessageDelayed({
+                amount,
+                bounce: false,
+                recipient: this.options.wrappedCoinVaultAddress,
+                sender: this.wallet.account.address,
+            })
+
+            await callbacks?.onSend?.(message, { callId, mode: 'wrap' })
+
+            this.reset()
+            this.setState('isProcessing', false)
+
+            transaction = await message.transaction
+
+            await callbacks?.onTransactionSuccess?.({
+                callId,
+                direction: 'wrap',
+                input,
+                transaction,
+            })
         }
+        catch (e: any) {
+            await callbacks?.onTransactionFailure?.({
+                callId,
+                direction: 'wrap',
+                message: e.message,
+                transaction,
+            })
+            throw e
+        }
+        finally {
+            this.setState('isProcessing', false)
+        }
+    }
+
+    public async unwrap(callbacks?: ConversionTransactionCallbacks): Promise<void> {
+        const callId = getSafeProcessingId()
+        let transaction: Transaction | undefined
+
+        try {
+            if (this.wallet.account?.address === undefined) {
+                throwException('Account not connected')
+            }
+            if (this.leftToken?.wallet === undefined) {
+                throwException('Left token wallet not specified')
+            }
+
+            const amount = this.leftAmountNumber.toFixed()
+            const input = {
+                amount,
+                receivedDecimals: this.wallet.coin.decimals,
+                receivedIcon: this.wallet.coin.icon,
+                receivedSymbol: this.wallet.coin.symbol,
+            }
+
+            this.setState('isProcessing', true)
+
+            const message = await TokenWalletUtils.transfer(this.leftToken.wallet, {
+                amount,
+                payload: '',
+                recipient: this.options.wrappedCoinVaultAddress,
+                remainingGasTo: this.wallet.account.address,
+            }, {
+                amount: '500000000',
+                bounce: false,
+            })
+
+            await callbacks?.onSend?.(message, { callId, mode: 'unwrap' })
+
+            this.reset()
+            this.setState('isProcessing', false)
+
+            transaction = await message.transaction
+
+            await callbacks?.onTransactionSuccess?.({
+                callId,
+                direction: 'unwrap',
+                input,
+                transaction,
+            })
+        }
+        catch (e: any) {
+            error('Unwrap error', e)
+            await callbacks?.onTransactionFailure?.({
+                callId,
+                direction: 'unwrap',
+                message: e.message,
+                transaction,
+            })
+            throw e
+        }
+        finally {
+            this.setState('isProcessing', false)
+        }
+    }
+
+    public async swap(callbacks?: SwapTransactionCallbacks): Promise<void> {
+        if (!this.isValid) {
+            this.setState('isProcessing', false)
+            return
+        }
+
+        const callId = this.data.transfer?.callId || getSafeProcessingId()
+
+        try {
+            this.setState('isProcessing', true)
+
+            const rpc = useStaticRpc()
+            const data = await rpc.rawApi.decodeInput({
+                abi: this.data.transfer?.abi as string,
+                body: this.data.transfer?.payload as string,
+                internal: true,
+                method: (this.data.transfer?.method.toLowerCase()) as string,
+            })
+
+            debug('Transfer data', data)
+
+            let message!: DelayedMessageExecution
+
+            if (this.data.transfer?.method.toLowerCase() === 'transfer') {
+                message = await TokenWalletUtils.transfer(this.leftToken?.wallet as unknown as Address, {
+                    amount: data?.input.amount as string,
+                    deployWalletValue: data?.input.deployWalletValue as string ?? '0',
+                    payload: data?.input.payload as string,
+                    recipient: resolveEverscaleAddress(data?.input.recipient as string),
+                    remainingGasTo: this.wallet.account!.address,
+                }, {
+                    amount: this.data.transfer?.gas,
+                })
+            }
+            else if (this.data.transfer?.method.toLowerCase() === 'wrap') {
+                message = await wrappedCoinVaultContract(this.options.wrappedCoinVaultAddress)
+                    .methods.wrap({
+                        gas_back_address: this.wallet.account?.address as Address,
+                        owner_address: resolveEverscaleAddress(data?.input.owner_address as string),
+                        payload: data?.input.payload as string,
+                        tokens: (data?.input.tokens as string) ?? this.leftAmountNumber.toFixed(),
+                    })
+                    .sendDelayed({
+                        amount: this.data.transfer?.gas ?? this.leftAmountNumber.plus(5000000000).toFixed(),
+                        bounce: true,
+                        from: this.wallet.account!.address,
+                    })
+            }
+
+            RECEIPTS.set(callId.toString(), {
+                amount: data?.input.amount as string,
+                receivedDecimals: this.coinSide === 'rightToken' ? this.wallet.coin.decimals : this.rightTokenDecimals,
+                receivedIcon: this.coinSide === 'rightToken' ? this.wallet.coin.icon : this.rightToken?.icon,
+                receivedRoot: this.coinSide === 'rightToken' ? undefined : this.rightToken?.root,
+                receivedSymbol: this.coinSide === 'rightToken' ? this.wallet.coin.symbol : this.rightToken?.symbol,
+                spentAmount: data?.input.amount as string,
+                spentDecimals: this.leftTokenDecimals,
+                spentIcon: this.leftToken?.icon,
+                spentRoot: this.leftToken?.root,
+                spentSymbol: this.leftToken?.symbol,
+            })
+
+            this.reset()
+            this.setState('isProcessing', false)
+
+            await callbacks?.onSend?.(message, { callId: callId.toString(), mode: 'swap' })
+
+            const transaction = await message.transaction
+
+            clearInterval(this.routeCheckRunnerInterval)
+            this.routeCheckRunnerInterval = undefined
+
+            try {
+                const status = await checkStatus(callId, this.wallet.address!)
+
+                if (status.status === 'Succeed') {
+                    const receipt = RECEIPTS.get(callId)
+                    this.setState('isProcessing', false)
+                    await callbacks?.onTransactionSuccess?.({
+                        callId,
+                        transaction,
+                    }, {
+                        ...receipt,
+                        amount: status.amount.pop(),
+                        hash: transaction.id.hash,
+                    })
+                    RECEIPTS.delete(callId)
+                }
+                else if (status.status === 'Cancelled') {
+                    const receipt = RECEIPTS.get(callId)
+                    const cancelledIndex = status.amount.findIndex(amount => amount === '0')
+                    const amount = cancelledIndex > 0
+                        ? status.amount[cancelledIndex - 1]
+                        : receipt?.amount
+                    const receivedRoot = cancelledIndex > 0
+                        ? status.tokenRoot[cancelledIndex]
+                        : receipt?.receivedRoot
+                    const spentRoot = cancelledIndex > 0
+                        ? status.tokenRoot[cancelledIndex - 1]
+                        : receipt?.spentRoot
+                    this.setState('isProcessing', false)
+                    const spentToken = this.tokensCache.get(spentRoot)
+                    const receivedToken = this.tokensCache.get(receivedRoot)
+                    await callbacks?.onTransactionFailure?.({ callId, transaction }, {
+                        ...receipt,
+                        amount,
+                        hash: transaction.id.hash,
+                        isCrossExchangeCanceled: cancelledIndex > 0 && status.tokenRoot.length > 1,
+                        receivedDecimals: receivedToken?.decimals,
+                        receivedIcon: receivedToken?.icon,
+                        receivedRoot,
+                        receivedSymbol: receivedToken?.symbol,
+                        spentDecimals: spentToken?.decimals,
+                        spentIcon: spentToken?.icon,
+                        spentRoot,
+                        spentSymbol: spentToken?.symbol,
+                    })
+                    RECEIPTS.delete(callId)
+                }
+            }
+            catch (e) {
+                this.setState('isProcessing', false)
+                await callbacks?.onTransactionFailure?.({ callId, transaction }, {})
+                RECEIPTS.delete(callId)
+            }
+        }
+        catch (e: any) {
+            error('Swap finished with error: ', e)
+            await callbacks?.onTransactionFailure?.({ callId, message: e.message }, {})
+            throw e
+        }
+        finally {
+            this.setState('isProcessing', false)
+        }
+    }
+
+    protected async syncPool(): Promise<void> {
+        if (
+            this.data.leftToken === undefined
+            || this.data.rightToken === undefined
+            || this.poolAddress === undefined
+            || this.isSyncingPool
+        ) {
+            return
+        }
+
+        this.setState('isSyncingPool', true)
+
+        try {
+            const pool = await LiquidityStablePoolUtils.get(this.poolAddress, this.wallet.address)
+
+            if (!pool.state?.isDeployed || !(await StablePoolUtils.isActive(this.poolAddress, pool.state))) {
+                this.setData('pool', undefined)
+                return
+            }
+
+            debug('Stable Pool has been synced successfully', pool)
+
+            this.setData('pool', pool)
+        }
+        catch (e) {
+            error('Check pool error', e)
+            this.setData('pool', undefined)
+        }
+        finally {
+            await this.recalculate(true)
+            this.setState('isSyncingPool', false)
+        }
+    }
+
+    protected async syncPoolState(): Promise<void> {
+        if (this.pool?.address === undefined) {
+            return
+        }
+        const state = await getFullContractState(this.pool.address)
+        this.setData('pool', { ...this.pool, state })
+    }
+
+    protected async syncPoolBalances(): Promise<void> {
+        if (this.pool?.address === undefined) {
+            return
+        }
+        const balances = await StablePoolUtils.balances(this.pool.address, toJS(this.pool.state))
+
+        this.setData('pool', {
+            ...this.pool,
+            lp: {
+                ...this.pool.lp,
+                balance: balances.lpSupply,
+            },
+            tokens: this.pool.tokens.map((token, idx) => ({
+                ...token,
+                balance: balances.tokens[idx],
+            })),
+        })
+    }
+
+    protected async watchPool(): Promise<Subscriber> {
+        try {
+            if (this.pool?.address === undefined) {
+                throwException('Pool address not defined')
+            }
+
+            this.poolContractSubscriber = new (useStaticRpc()).Subscriber()
+            await this.poolContractSubscriber.states(this.pool.address).delayed(stream => stream.on(
+                debounce(
+                    async event => {
+                        if (addressesComparer(event.address, this.pool?.address)) {
+                            await this.syncPoolState()
+                            await this.syncPoolBalances()
+                            await this.recalculate(true)
+                            return
+                        }
+
+                        await this.unwatchPool()
+                    },
+                    3000,
+                ),
+            ))
+            return this.poolContractSubscriber
+        }
+        catch (e) {
+            await this.unwatchPool()
+            throw e
+        }
+    }
+
+    protected async unwatchPool(): Promise<void> {
+        try {
+            await this.poolContractSubscriber?.unsubscribe()
+            this.poolContractSubscriber = undefined
+        }
+        catch (e) {
+            error('Cannot unsubscribe from Pool contract subscriber', e)
+        }
+    }
+
+    /**
+     * Full reset direct, cross-pair and multiple swap
+     * instances to their default.
+     * @protected
+     */
+    protected reset(): void {
+        this.setData({
+            bill: {},
+            leftAmount: '',
+            ltrPrice: undefined,
+            rightAmount: '',
+            route: undefined,
+            rtlPrice: undefined,
+            transfer: undefined,
+        })
+        this.setState(() => ({
+            coinSide: this.coinSide,
+            direction: SwapDirection.LTR,
+            isCombo: this.state.isCombo,
+            priceDirection: SwapDirection.LTR,
+        }))
+    }
+
+    protected async fetchRoute(): Promise<void> {
+        if (this.data.leftToken === undefined || this.data.rightToken === undefined) {
+            return
+        }
+
+        if (this.direction === SwapDirection.LTR && !isGoodBignumber(this.leftAmountNumber)) {
+            return
+        }
+
+        if (this.direction === SwapDirection.RTL && !isGoodBignumber(this.rightAmountNumber)) {
+            return
+        }
+
+        const api = useSwapApi()
+        const callId = getSafeProcessingId()
+        const selectedTokens = [this.data.leftToken, this.data.rightToken].filter(Boolean) as string[]
+        const whiteListCurrencies = this.tokensCache.roots
+        selectedTokens.forEach(root => {
+            if (!whiteListCurrencies.includes(root)) {
+                whiteListCurrencies.push(root)
+            }
+        })
+
+        const crossPairInput: CrossSwapRouteRequest = {
+            amount: this.leftAmountNumber.toFixed(),
+            deep: 3,
+            direction: 'expectedexchange',
+            fromCurrencyAddress: this.data.leftToken,
+            minTvl: this.options.minTvlValue ?? '50000',
+            slippage: new BigNumber(this.data.slippage).div(100).toFixed(),
+            toCurrencyAddress: this.data.rightToken,
+            whiteListCurrencies,
+        }
+
+        if (this.wallet.address === undefined) {
+            const response = await api.poolCrossSwapRoute(
+                {},
+                { method: 'POST' },
+                crossPairInput,
+            )
+
+            const steps = response.steps.slice()
+            const firstStep = steps.slice().shift()
+            const lastStep = steps.slice().pop()
+            const spentAmount = firstStep?.spentAmount
+            const expectedAmount = lastStep?.expectedReceiveAmount
+            const leftAmount = new BigNumber(spentAmount ?? 0).shiftedBy(-this.leftTokenDecimals)
+            const rightAmount = new BigNumber(expectedAmount ?? 0).shiftedBy(-this.rightTokenDecimals)
+
+            if (this.direction === SwapDirection.LTR) {
+                if (isGoodBignumber(rightAmount ?? 0)) {
+                    this.setData({
+                        bill: {
+                            amount: this.data.leftAmount,
+                            expectedAmount,
+                            fee: response.globalFee,
+                            minExpectedAmount: lastStep?.minimumReceiveAmount,
+                            priceImpact: new BigNumber(response.globalPriceImpact).times(100).toFixed(),
+                        },
+                        ltrPrice: new BigNumber(this.data.leftAmount)
+                            .div(rightAmount)
+                            .dp(this.rightTokenDecimals, BigNumber.ROUND_DOWN)
+                            .toFixed(),
+                        rightAmount: rightAmount.toFixed(),
+                        route: {
+                            leftAmount: this.data.leftAmount,
+                            rightAmount: rightAmount.toFixed(),
+                            slippage: calcCrossExchangeSlippage(this.data.slippage, steps.length),
+                            steps: response.steps.map(step => ({
+                                actionType: step.actionType,
+                                amount: step.spentAmount,
+                                expectedAmount: step.expectedReceiveAmount,
+                                fee: step.fee,
+                                minExpectedAmount: step.minimumReceiveAmount,
+                                poolAddress: resolveEverscaleAddress(step.poolAddress),
+                                poolType: step.poolType,
+                                priceImpact: step.priceImpact,
+                                receiveToken: this.tokensCache.get(step.receiveCurrencyAddress) as TokenCache,
+                                spentToken: this.tokensCache.get(step.spentCurrencyAddress) as TokenCache,
+                            })),
+                        },
+                        rtlPrice: rightAmount
+                            .div(this.data.leftAmount)
+                            .dp(this.leftTokenDecimals, BigNumber.ROUND_DOWN)
+                            .toFixed(),
+                    })
+                }
+                else {
+                    this.setData({
+                        bill: {},
+                        leftAmount: '',
+                        ltrPrice: undefined,
+                        rightAmount: '',
+                        route: undefined,
+                        rtlPrice: undefined,
+                        transfer: undefined,
+                    })
+                    this.setState('isConfirmationAwait', false)
+                }
+            }
+            else if (this.direction === SwapDirection.RTL) {
+                if (isGoodBignumber(leftAmount ?? 0)) {
+                    this.setData({
+                        bill: {
+                            amount: leftAmount.toFixed(),
+                            expectedAmount: this.data.rightAmount,
+                            fee: response.globalFee,
+                            minExpectedAmount: lastStep?.minimumReceiveAmount,
+                            priceImpact: new BigNumber(response.globalPriceImpact).times(100).toFixed(),
+                        },
+                        leftAmount: leftAmount.toFixed(),
+                        ltrPrice: leftAmount
+                            .div(this.data.rightAmount)
+                            .dp(this.rightTokenDecimals, BigNumber.ROUND_DOWN)
+                            .toFixed(),
+                        route: {
+                            leftAmount: leftAmount.toFixed(),
+                            rightAmount: this.data.rightAmount,
+                            slippage: calcCrossExchangeSlippage(this.data.slippage, steps.length),
+                            steps: response.steps.map(step => ({
+                                actionType: step.actionType,
+                                amount: step.spentAmount,
+                                expectedAmount: step.expectedReceiveAmount,
+                                fee: step.fee,
+                                minExpectedAmount: step.minimumReceiveAmount,
+                                poolAddress: resolveEverscaleAddress(step.poolAddress),
+                                poolType: step.poolType,
+                                priceImpact: step.priceImpact,
+                                receiveToken: this.tokensCache.get(step.receiveCurrencyAddress) as TokenCache,
+                                spentToken: this.tokensCache.get(step.spentCurrencyAddress) as TokenCache,
+                            })),
+                        },
+                        rtlPrice: new BigNumber(this.data.rightAmount)
+                            .div(leftAmount)
+                            .dp(this.leftTokenDecimals, BigNumber.ROUND_DOWN)
+                            .toFixed(),
+                    })
+                }
+                else {
+                    this.setData({
+                        bill: {},
+                        leftAmount: '',
+                        ltrPrice: undefined,
+                        rightAmount: '',
+                        route: undefined,
+                        rtlPrice: undefined,
+                        transfer: undefined,
+                    })
+                    this.setState('isConfirmationAwait', false)
+                }
+            }
+        }
+        else {
+            const payloadRequest: CrossSwapRoutePayloadRequest = {
+                crossPairInput,
+                id: Number(callId),
+                nativeBalance: this.wallet.balance,
+                recipient: this.wallet.address,
+                referrer: this.options.referrer,
+                tokenBalance: this.leftToken?.balance || '0',
+            }
+
+            if (this.coinSide === 'leftToken') {
+                payloadRequest.nativeInfo = 'spendonlynative'
+            }
+            else if (this.coinSide === 'rightToken') {
+                payloadRequest.nativeInfo = 'receivenative'
+            }
+            else if (this.isComboSwapMode) {
+                if (this.direction === SwapDirection.RTL) {
+                    payloadRequest.nativeInfo = 'spendnativeandwrappednative'
+                }
+                else if (!this.isEnoughTokenBalance && this.isEnoughCoinBalance) {
+                    payloadRequest.nativeInfo = 'spendonlynative'
+                }
+                else if (!this.isEnoughTokenBalance && !this.isEnoughCoinBalance && this.isEnoughCombinedBalance) {
+                    payloadRequest.nativeInfo = 'spendnativeandwrappednative'
+                }
+            }
+
+            if (this.direction === SwapDirection.RTL) {
+                crossPairInput.amount = this.rightAmountNumber.toFixed()
+                crossPairInput.fromCurrencyAddress = this.data.rightToken
+                crossPairInput.direction = 'expectedspendamount'
+                crossPairInput.toCurrencyAddress = this.data.leftToken
+            }
+
+            try {
+                const response = await api.poolCrossSwapRoutePayload(
+                    {},
+                    { method: 'POST' },
+                    payloadRequest,
+                )
+
+                const steps = response.route.steps.slice()
+                const firstStep = steps.slice().shift()
+                const lastStep = steps.slice().pop()
+                const spentAmount = firstStep?.spentAmount
+                const expectedAmount = lastStep?.expectedReceiveAmount
+                const leftAmount = new BigNumber(spentAmount ?? 0).shiftedBy(-this.leftTokenDecimals)
+                const rightAmount = new BigNumber(expectedAmount ?? 0).shiftedBy(-this.rightTokenDecimals)
+
+                if (this.direction === SwapDirection.LTR) {
+                    if (isGoodBignumber(rightAmount ?? 0)) {
+                        this.setData({
+                            bill: {
+                                amount: this.data.leftAmount,
+                                expectedAmount,
+                                fee: response.route.globalFee,
+                                minExpectedAmount: lastStep?.minimumReceiveAmount,
+                                priceImpact: new BigNumber(response.route.globalPriceImpact).times(100).toFixed(),
+                            },
+                            ltrPrice: new BigNumber(this.data.leftAmount)
+                                .div(rightAmount)
+                                .dp(this.rightTokenDecimals, BigNumber.ROUND_DOWN)
+                                .toFixed(),
+                            rightAmount: rightAmount.toFixed(),
+                            route: {
+                                leftAmount: this.data.leftAmount,
+                                recipientWalletAddress: resolveEverscaleAddress(response.walletOfDestination),
+                                rightAmount: rightAmount.toFixed(),
+                                slippage: calcCrossExchangeSlippage(this.data.slippage, steps.length),
+                                steps: response.route.steps.map(step => ({
+                                    actionType: step.actionType,
+                                    amount: step.spentAmount,
+                                    expectedAmount: step.expectedReceiveAmount,
+                                    fee: step.fee,
+                                    minExpectedAmount: step.minimumReceiveAmount,
+                                    poolAddress: resolveEverscaleAddress(step.poolAddress),
+                                    poolType: step.poolType,
+                                    priceImpact: step.priceImpact,
+                                    receiveToken: this.tokensCache.get(step.receiveCurrencyAddress) as TokenCache,
+                                    spentToken: this.tokensCache.get(step.spentCurrencyAddress) as TokenCache,
+                                })),
+                            },
+                            rtlPrice: rightAmount
+                                .div(this.data.leftAmount)
+                                .dp(this.leftTokenDecimals, BigNumber.ROUND_DOWN)
+                                .toFixed(),
+                            transfer: {
+                                abi: response.abi,
+                                callId,
+                                gas: response.gas,
+                                method: response.abiFunction,
+                                payload: response.payload,
+                            },
+                        })
+                    }
+                    else {
+                        this.setData({
+                            bill: {},
+                            leftAmount: '',
+                            ltrPrice: undefined,
+                            rightAmount: '',
+                            route: undefined,
+                            rtlPrice: undefined,
+                            transfer: undefined,
+                        })
+                        this.setState('isConfirmationAwait', false)
+                    }
+                }
+                else if (this.direction === SwapDirection.RTL) {
+                    if (isGoodBignumber(leftAmount ?? 0)) {
+                        this.setData({
+                            bill: {
+                                amount: leftAmount.toFixed(),
+                                expectedAmount: this.data.rightAmount,
+                                fee: response.route.globalFee,
+                                minExpectedAmount: lastStep?.minimumReceiveAmount,
+                                priceImpact: new BigNumber(response.route.globalPriceImpact).times(100).toFixed(),
+                            },
+                            leftAmount: leftAmount.toFixed(),
+                            ltrPrice: leftAmount
+                                .div(this.data.rightAmount)
+                                .dp(this.rightTokenDecimals, BigNumber.ROUND_DOWN)
+                                .toFixed(),
+                            route: {
+                                leftAmount: leftAmount.toFixed(),
+                                recipientWalletAddress: resolveEverscaleAddress(response.walletOfDestination),
+                                rightAmount: this.data.rightAmount,
+                                slippage: calcCrossExchangeSlippage(this.data.slippage, steps.length),
+                                steps: response.route.steps.map(step => ({
+                                    actionType: step.actionType,
+                                    amount: step.spentAmount,
+                                    expectedAmount: step.expectedReceiveAmount,
+                                    fee: step.fee,
+                                    minExpectedAmount: step.minimumReceiveAmount,
+                                    poolAddress: resolveEverscaleAddress(step.poolAddress),
+                                    poolType: step.poolType,
+                                    priceImpact: step.priceImpact,
+                                    receiveToken: this.tokensCache.get(step.receiveCurrencyAddress) as TokenCache,
+                                    spentToken: this.tokensCache.get(step.spentCurrencyAddress) as TokenCache,
+                                })),
+                            },
+                            rtlPrice: new BigNumber(this.data.rightAmount)
+                                .div(leftAmount)
+                                .dp(this.leftTokenDecimals, BigNumber.ROUND_DOWN)
+                                .toFixed(),
+                            transfer: {
+                                abi: response.abi,
+                                callId,
+                                gas: response.gas,
+                                method: response.abiFunction,
+                                payload: response.payload,
+                            },
+                        })
+                    }
+                    else {
+                        this.setData({
+                            bill: {},
+                            leftAmount: '',
+                            ltrPrice: undefined,
+                            rightAmount: '',
+                            route: undefined,
+                            rtlPrice: undefined,
+                            transfer: undefined,
+                        })
+                        this.setState('isConfirmationAwait', false)
+                    }
+                }
+            }
+            catch (e) {
+                this.setData({
+                    bill: {},
+                    ltrPrice: undefined,
+                    rightAmount: this.direction === SwapDirection.RTL ? this.data.rightAmount : '',
+                    route: undefined,
+                    rtlPrice: undefined,
+                    transfer: undefined,
+                })
+            }
+        }
+    }
+
+    protected async routeCheckRunner(): Promise<void> {
+        if (
+            (this.direction === SwapDirection.LTR && !isGoodBignumber(this.leftAmountNumber))
+            || (this.direction === SwapDirection.RTL && !isGoodBignumber(this.rightAmountNumber))
+        ) {
+            clearInterval(this.routeCheckRunnerInterval)
+            this.routeCheckRunnerInterval = undefined
+            return
+        }
+        clearInterval(this.routeCheckRunnerInterval)
+        this.routeCheckRunnerInterval = undefined
+        debug('routeCheckRunner')
+        this.routeCheckRunnerInterval = setInterval(async () => {
+            if (this.isProcessing) {
+                debug('Skip route check during processing')
+                return
+            }
+            if (
+                (this.direction === SwapDirection.LTR && isGoodBignumber(this.leftAmountNumber))
+                || (this.direction === SwapDirection.RTL && isGoodBignumber(this.rightAmountNumber))
+            ) {
+                debug('Run background route check')
+                await this.fetchRoute()
+            }
+        }, 15000)
+        await this.fetchRoute()
     }
 
 
     /*
-     * Memoized store data and state values
+     * Memoized store data, state and options values
      * ----------------------------------------------------------------------------------
      */
+
+    public get pool(): SwapFormStoreData['pool'] {
+        return this.data.pool
+    }
+
+    /**
+     * Returns memoized best priced route
+     * @returns {SwapFormStoreData['route']}
+     */
+    public get route(): SwapFormStoreData['route'] {
+        return this.data.route
+    }
 
     /**
      * Returns memoized swap direction value
@@ -691,14 +1273,6 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      */
     public get direction(): SwapFormStoreState['direction'] {
         return this.state.direction
-    }
-
-    /**
-     * Returns memoized exchange mode value
-     * @returns {SwapFormStoreState['exchangeMode']}
-     */
-    public get exchangeMode(): SwapFormStoreState['exchangeMode'] {
-        return this.state.exchangeMode
     }
 
     /**
@@ -710,14 +1284,6 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
     }
 
     /**
-     * Price of right token per 1 left token
-     * @returns {BaseSwapStoreData['ltrPrice']}
-     */
-    public get ltrPrice(): SwapFormStoreData['ltrPrice'] {
-        return this.data.ltrPrice
-    }
-
-    /**
      * Returns memoized price direction value
      * @returns {SwapFormStoreState['priceDirection']}
      */
@@ -726,11 +1292,11 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
     }
 
     /**
-     * Price of left token per 1 right token
-     * @returns {BaseSwapStoreData['rtlPrice']}
+     * Returns memoized calculation state value
+     * @returns {SwapFormStoreState['isCalculating']}
      */
-    public get rtlPrice(): SwapFormStoreData['rtlPrice'] {
-        return this.data.rtlPrice
+    public get isCalculating(): SwapFormStoreState['isCalculating'] {
+        return this.state.isCalculating
     }
 
     /**
@@ -743,10 +1309,14 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
 
     /**
      * Returns memoized multiple swap mode state value
-     * @returns {SwapFormStoreState['isMultiple']}
+     * @returns {SwapFormStoreState['isCombo']}
      */
-    public get isMultipleSwapMode(): SwapFormStoreState['isMultiple'] {
-        return this.state.isMultiple
+    public get isComboSwapMode(): SwapFormStoreState['isCombo'] {
+        return this.state.isCombo
+    }
+
+    public get isSyncingPool(): SwapFormStoreState['isSyncingPool'] {
+        return this.state.isSyncingPool
     }
 
     /**
@@ -757,122 +1327,85 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         return this.state.isPreparing
     }
 
-
-    /*
-     * Computed values
-     * ----------------------------------------------------------------------------------
-     */
-
-    /**
-     * Returns memoized multiple swap token root value
-     * @returns {SwapFormCtorOptions['multipleSwapTokenRoot']}
-     */
-    public get multipleSwapTokenRoot(): SwapFormCtorOptions['multipleSwapTokenRoot'] {
-        return this.options?.multipleSwapTokenRoot
-    }
-
     /**
      * Returns memoized default left token root address
      * @returns {string}
      */
-    public get defaultLeftTokenRoot(): string | undefined {
-        return this.options?.defaultLeftTokenAddress?.toString()
+    public get defaultLeftTokenRoot(): SwapFormCtorOptions['defaultLeftTokenAddress'] {
+        return this.options.defaultLeftTokenAddress?.toString()
     }
 
     /**
      * Returns memoized default right token root address
      * @returns {string}
      */
-    public get defaultRightTokenRoot(): string | undefined {
-        return this.options?.defaultRightTokenAddress?.toString()
+    public get defaultRightTokenRoot(): SwapFormCtorOptions['defaultRightTokenAddress'] {
+        return this.options.defaultRightTokenAddress?.toString()
     }
 
     /**
-     *
+     * Returns memoized wrapped coin token root value
+     * @returns {SwapFormCtorOptions['wrappedCoinTokenAddress']}
      */
-    public get isCalculating(): boolean {
-        return this.state.isCalculating || this.swap.isCalculating
+    public get wrappedCoinTokenAddress(): SwapFormCtorOptions['wrappedCoinTokenAddress'] {
+        return this.options.wrappedCoinTokenAddress
     }
 
-    /**
-     * Returns `true` if cross-pair exchange is available for current pair.
-     * @returns {boolean}
+
+    /*
+     * Computed values and states
+     * ----------------------------------------------------------------------------------
      */
-    public get isCrossExchangeAvailable(): boolean {
-        return this.crossPairSwap.routes.length > 0
+
+    public get combinedBalanceNumber(): BigNumber {
+        const tokenBalance = new BigNumber(this.leftToken?.balance ?? 0).shiftedBy(-this.leftTokenDecimals)
+        const coinBalance = new BigNumber(this.wallet.coin.balance ?? 0).shiftedBy(-this.wallet.coin.decimals)
+        return tokenBalance.plus(coinBalance).dp(Math.min(this.leftTokenDecimals, this.wallet.coin.decimals))
     }
 
-    /**
-     * Returns `true` if cross-pair swap exchange mode is enabled.
-     * @returns {boolean}
-     */
-    public get isCrossExchangeMode(): boolean {
-        return [
-            SwapExchangeMode.CROSS_PAIR_EXCHANGE,
-            SwapExchangeMode.CROSS_PAIR_EXCHANGE_ONLY,
-        ].includes(this.exchangeMode)
-    }
-
-    /**
-     * Returns `true` if only cross-exchange available, otherwise `false`.
-     * @returns {boolean}
-     */
-    public get isCrossExchangeOnly(): boolean {
-        return this.exchangeMode === SwapExchangeMode.CROSS_PAIR_EXCHANGE_ONLY
-    }
-
-    /**
-     * Returns `true` if native coin is selected
-     * @returns {boolean}
-     */
-    public get isConversionMode(): boolean {
-        return [
-            SwapExchangeMode.WRAP_COIN,
-            SwapExchangeMode.UNWRAP_COIN,
-        ].includes(this.exchangeMode)
-    }
-
-    /**
-     *
-     */
-    public get isWrapMode(): boolean {
-        return this.exchangeMode === SwapExchangeMode.WRAP_COIN
-    }
-
-    /**
-     *
-     */
-    public get isUnwrapMode(): boolean {
-        return this.exchangeMode === SwapExchangeMode.UNWRAP_COIN
-    }
-
-    /**
-     *
-     */
     public get isCoinBasedSwapMode(): boolean {
-        return this.coinSide !== undefined
-    }
-
-    /**
-     * Returns combined `isLoading` state from direct swap, cross-pair swap.
-     * @returns {boolean}
-     */
-    public get isLoading(): boolean {
-        return this.tokensCache.isFetching || this.isPairChecking
-    }
-
-    /**
-     * Returns combined `isSwapping` state from direct swap, cross-pair swap.
-     * @returns {boolean}
-     */
-    public get isSwapping(): boolean {
         return (
-            this.coinSwap.isSwapping
-            || this.conversion.isProcessing
-            || this.crossPairSwap.isSwapping
-            || this.directSwap.isSwapping
-            || this.multipleSwap.isSwapping
+            (this.coinSide === 'leftToken' && !this.isWrapMode)
+            || (this.coinSide === 'rightToken' && !this.isUnwrapMode)
         )
+    }
+
+    public get isConversionMode(): boolean {
+        return this.isUnwrapMode || this.isWrapMode
+    }
+
+    public get isDepositOneCoinMode(): boolean {
+        if (this.data.leftToken === undefined || this.data.rightToken === undefined) {
+            return false
+        }
+        const lpDetails = NPoolsList.get(this.data.rightToken)
+        if (lpDetails === undefined) {
+            return false
+        }
+        return lpDetails.roots.some(
+            token => token.address.toString().toLowerCase() === this.data.leftToken?.toLowerCase(),
+        )
+    }
+
+    public get isWithdrawOneCoinMode(): boolean {
+        if (this.data.leftToken === undefined || this.data.rightToken === undefined) {
+            return false
+        }
+        const lpDetails = NPoolsList.get(this.data.leftToken)
+        if (lpDetails === undefined) {
+            return false
+        }
+        return lpDetails.roots.some(
+            token => token.address.toString().toLowerCase() === this.data.rightToken?.toLowerCase(),
+        )
+    }
+
+    public get isWrapMode(): boolean {
+        return this.coinSide === 'leftToken' && this.data.rightToken === this.wrappedCoinTokenAddress.toString()
+    }
+
+    public get isUnwrapMode(): boolean {
+        return this.coinSide === 'rightToken' && this.data.leftToken === this.wrappedCoinTokenAddress.toString()
     }
 
     /**
@@ -882,28 +1415,24 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * @returns {boolean}
      */
     public get isLeftAmountValid(): boolean {
-        if (this.isCrossExchangeMode && this.direction === SwapDirection.RTL) {
-            return this.crossPairSwap.isLeftAmountValid
-        }
-
-        if (this.isWrapMode) {
-            return this.conversion.isWrapAmountValid
-        }
-
-        if (this.isUnwrapMode) {
-            return this.conversion.isUnwrapAmountValid
-        }
-
-        if (this.isMultipleSwapMode) {
-            return this.multipleSwap.isLeftAmountValid
-        }
-
-        if (this.leftAmount.length === 0) {
+        if (this.data.leftAmount.length === 0) {
             return true
         }
 
+        if (this.isWrapMode) {
+            return isGoodBignumber(this.leftAmountNumber) && this.isEnoughCoinBalance
+        }
+
+        if (this.isUnwrapMode) {
+            return isGoodBignumber(this.leftAmountNumber) && this.isEnoughTokenBalance
+        }
+
+        if (this.isComboSwapMode) {
+            return isGoodBignumber(this.leftAmountNumber) && this.isEnoughCombinedBalance
+        }
+
         if (this.coinSide === 'leftToken') {
-            return this.coinSwap.isEnoughCoinBalance
+            return this.isEnoughCoinBalance
         }
 
         return (
@@ -919,14 +1448,126 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * @returns {boolean}
      */
     public get isRightAmountValid(): boolean {
-        if (
-            this.swap.rightAmount.length > 0
-            && !this.isCrossExchangeMode
-            && !this.isConversionMode
-        ) {
+        if (this.data.rightAmount.length === 0) {
+            return true
+        }
+
+        if (this.isConversionMode || this.isDepositOneCoinMode) {
+            return true
+        }
+
+        if (this.isWithdrawOneCoinMode) {
             return this.isEnoughLiquidity
         }
-        return true
+
+        return this.data.rightToken !== undefined && this.data.route !== undefined
+    }
+
+    /**
+     *
+     */
+    public get isEnoughCoinBalance(): boolean {
+        const balance = new BigNumber(this.wallet.coin.balance ?? 0).shiftedBy(-this.wallet.coin.decimals)
+        const safeAmount = new BigNumber(this.options?.safeAmount ?? 0).shiftedBy(-this.wallet.coin.decimals)
+        return (
+            isGoodBignumber(this.leftAmountNumber)
+            && this.leftAmountNumber.shiftedBy(-this.leftTokenDecimals).lte(balance.minus(safeAmount))
+        )
+    }
+
+    public get isEnoughCombinedBalance(): boolean {
+        const safeAmount = new BigNumber(this.options?.safeAmount ?? 0).shiftedBy(-this.wallet.coin.decimals)
+        return (
+            isGoodBignumber(this.leftAmountNumber)
+            && this.leftAmountNumber
+                .shiftedBy(-this.leftTokenDecimals)
+                .lte(this.combinedBalanceNumber.minus(safeAmount))
+        )
+    }
+
+    public get isEnoughLiquidity(): boolean {
+        const rightToken = this.pool?.tokens.find(
+            token => token.address.toString().toLowerCase() === this.data.rightToken?.toLowerCase(),
+        )
+        return !rightToken || this.rightAmountNumber.lt(rightToken.balance ?? 0)
+    }
+
+    public get isWrapValid(): boolean {
+        return this.wallet.address !== undefined && this.isEnoughCoinBalance
+    }
+
+    public get isUnwrapValid(): boolean {
+        return this.wallet.address !== undefined && this.leftToken?.wallet !== undefined && this.isEnoughTokenBalance
+    }
+
+    public get isDepositOneCoinValid(): boolean {
+        return (
+            this.isEnoughTokenBalance
+            && this.wallet.account?.address !== undefined
+            && this.leftToken?.wallet !== undefined
+            && this.leftTokenAddress !== undefined
+            && this.pool?.address !== undefined
+            && new BigNumber(this.bill.amount || 0).gt(0)
+            && new BigNumber(this.bill.expectedAmount || 0).gt(0)
+            && new BigNumber(this.bill.minExpectedAmount || 0).gt(0)
+        )
+    }
+
+    public get isWithdrawOneCoinValid(): boolean {
+        return (
+            this.isEnoughTokenBalance
+            && this.isEnoughLiquidity
+            && this.wallet.account?.address !== undefined
+            && this.leftToken?.wallet !== undefined
+            && this.leftTokenAddress !== undefined
+            && new BigNumber(this.bill.amount || 0).gt(0)
+            && new BigNumber(this.bill.expectedAmount || 0).gt(0)
+            && new BigNumber(this.bill.minExpectedAmount || 0).gt(0)
+        )
+    }
+
+    public get isComboSwapValid(): boolean {
+        return (
+            this.isEnoughLiquidity
+            && (this.isEnoughTokenBalance || this.isEnoughCoinBalance || this.isEnoughCombinedBalance)
+            && this.leftTokenAddress !== undefined
+            && this.leftToken?.wallet !== undefined
+            && this.route !== undefined
+            && this.route.steps.length > 0
+            && this.data.transfer?.abi !== undefined
+            && this.data.transfer.payload !== undefined
+            && isGoodBignumber(this.bill.amount || 0)
+            && isGoodBignumber(this.bill.expectedAmount || 0)
+            && isGoodBignumber(this.bill.minExpectedAmount || 0)
+            && this.options?.coinToTip3Address !== undefined
+            && this.options.comboToTip3Address !== undefined
+        )
+    }
+
+    public get isCoinToTip3Valid(): boolean {
+        return (
+            this.isEnoughCoinBalance
+            && this.wallet.account?.address !== undefined
+            && new BigNumber(this.bill.amount || 0).gt(0)
+            && new BigNumber(this.bill.expectedAmount || 0).gt(0)
+            && new BigNumber(this.bill.minExpectedAmount || 0).gt(0)
+            && this.options?.coinToTip3Address !== undefined
+            && this.options.wrappedCoinVaultAddress !== undefined
+        )
+    }
+
+    public get isTip3ToCoinValid(): boolean {
+        return (
+            this.isEnoughTokenBalance
+            && this.wallet.account?.address !== undefined
+            && this.leftToken?.wallet !== undefined
+            && this.leftTokenAddress !== undefined
+            && new BigNumber(this.bill.amount || 0).gt(0)
+            && new BigNumber(this.bill.expectedAmount || 0).gt(0)
+            && new BigNumber(this.bill.minExpectedAmount || 0).gt(0)
+            && this.options?.tip3ToCoinAddress !== undefined
+            && this.options.wrappedCoinVaultAddress !== undefined
+        )
     }
 
     /**
@@ -935,45 +1576,40 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      */
     public get isValid(): boolean {
         switch (true) {
+            case this.isDepositOneCoinMode:
+                return this.isDepositOneCoinValid
+
+            case this.isWithdrawOneCoinMode:
+                return this.isWithdrawOneCoinValid
+
             case this.isWrapMode:
-                return this.conversion.isWrapValid
+                return this.isWrapValid
 
             case this.isUnwrapMode:
-                return this.conversion.isWrapValid
+                return this.isWrapValid
 
-            case this.isCrossExchangeMode:
-                if (this.isCoinBasedSwapMode && this.coinSide === 'leftToken') {
-                    return this.crossPairSwap.isValidCoinToTip3
-                }
-                if (this.isCoinBasedSwapMode && this.coinSide === 'rightToken') {
-                    return this.crossPairSwap.isValidTip3ToCoin
-                }
-                if (this.isMultipleSwapMode) {
-                    return this.crossPairSwap.isValidCombined
-                }
-                return this.crossPairSwap.isValid
+            case this.isCoinBasedSwapMode && this.coinSide === 'leftToken':
+                return this.isCoinToTip3Valid
 
-            case this.isMultipleSwapMode:
-                return this.multipleSwap.isValid
+            case this.isCoinBasedSwapMode && this.coinSide === 'rightToken':
+                return this.isTip3ToCoinValid
 
-            case this.coinSide === 'leftToken':
-                return this.coinSwap.isValidCoinToTip3
-
-            case this.coinSide === 'rightToken':
-                return this.coinSwap.isValidTip3ToCoin
+            case this.isComboSwapMode:
+                return this.isComboSwapValid
 
             default:
                 return (
-                    this.isEnoughLiquidity
-                    && this.wallet.account?.address !== undefined
-                    && this.pair?.address !== undefined
-                    && this.pair?.contract !== undefined
-                    && this.leftToken?.wallet !== undefined
+                    this.wallet.account?.address !== undefined
                     && this.leftTokenAddress !== undefined
-                    && new BigNumber(this.amount || 0).gt(0)
-                    && new BigNumber(this.expectedAmount || 0).gt(0)
-                    && new BigNumber(this.minExpectedAmount || 0).gt(0)
-                    && new BigNumber(this.leftToken.balance || 0).gte(this.amount || 0)
+                    && this.leftToken?.wallet !== undefined
+                    && this.route !== undefined
+                    && this.route.steps.length > 0
+                    && this.data.transfer?.abi !== undefined
+                    && this.data.transfer.payload !== undefined
+                    && new BigNumber(this.bill.amount || 0).gt(0)
+                    && new BigNumber(this.bill.expectedAmount || 0).gt(0)
+                    && new BigNumber(this.bill.minExpectedAmount || 0).gt(0)
+                    && new BigNumber(this.leftToken.balance || 0).gte(this.bill.amount || 0)
                 )
         }
     }
@@ -1002,7 +1638,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
     public get leftBalanceNumber(): BigNumber {
         const balance = new BigNumber(this.leftToken?.balance || 0).shiftedBy(-this.leftTokenDecimals)
 
-        if (this.isMultipleSwapMode) {
+        if (this.isComboSwapMode) {
             return balance.plus(this.wallet.balanceNumber)
         }
 
@@ -1013,85 +1649,15 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         return balance
     }
 
-    /**
-     * Returns memoized best priced route
-     * Proxy to cross-pair swap store instance
-     * @returns {CrossPairSwapStoreData['pair']}
-     */
-    public get route(): CrossPairSwapStoreData['route'] {
-        return this.crossPairSwap.route
-    }
-
-    /**
-     * Returns current swap way upon exchange mode
-     * @requires {DirectSwapStore | MultipleSwapStore | CoinSwapStore | CrossPairSwapStore}
-     */
-    public get swap(): DirectSwapStore | MultipleSwapStore | CoinSwapStore | CrossPairSwapStore {
-        switch (true) {
-            case this.isCrossExchangeMode:
-                return this.crossPairSwap
-
-            case this.isCoinBasedSwapMode:
-                return this.coinSwap
-
-            case this.isMultipleSwapMode:
-                return this.multipleSwap
-
-            default:
-                return this.directSwap
+    public get poolAddress(): Address | undefined {
+        if (this.isDepositOneCoinMode) {
+            return NPoolsList.get(this.data.rightToken!)?.poolAddress
         }
-    }
-
-
-    /*
-     * Internal and external utilities methods
-     * ----------------------------------------------------------------------------------
-     */
-
-    /**
-     * Invalidate partial data of the internal stores
-     */
-    public forceInvalidate(): void {
-        this.setData('bill', DEFAULT_SWAP_BILL)
-        this.multipleSwap.setData('bill', DEFAULT_SWAP_BILL)
-        this.crossPairSwap.setData('route', undefined)
-        this.directSwap.setData('bill', DEFAULT_SWAP_BILL)
-    }
-
-    /**
-     * Checks if we should be toggled to cross-exchange mode.
-     * Toggle to cross-exchange mode if:
-     * - direct pair token doesn't exist or exists, but pool haven't enough liquidity
-     * - cross-exchange is available - has 1 or more routes and has best route
-     * @protected
-     */
-    protected checkExchangeMode(): void {
-        switch (true) {
-            case (this.pair === undefined || this.isLowTvl) && this.isCrossExchangeAvailable:
-                this.setState('exchangeMode', SwapExchangeMode.CROSS_PAIR_EXCHANGE_ONLY)
-                break
-
-            case this.isMultipleSwapMode:
-                this.setState('exchangeMode', SwapExchangeMode.DIRECT_EXCHANGE)
-                break
-
-            case this.coinSide === 'leftToken' && this.rightToken?.root === this.multipleSwapTokenRoot:
-                this.setState('exchangeMode', SwapExchangeMode.WRAP_COIN)
-                break
-
-            case this.coinSide === 'rightToken' && this.leftToken?.root === this.multipleSwapTokenRoot:
-                this.setState('exchangeMode', SwapExchangeMode.WRAP_COIN)
-                break
-
-            case (!this.isEnoughLiquidity || this.pair === undefined) && this.route !== undefined:
-                this.setState('exchangeMode', SwapExchangeMode.CROSS_PAIR_EXCHANGE)
-                break
-
-            default:
-                this.setState('exchangeMode', SwapExchangeMode.DIRECT_EXCHANGE)
+        if (this.isWithdrawOneCoinMode) {
+            return NPoolsList.get(this.data.leftToken!)?.poolAddress
         }
+        return undefined
     }
-
 
     /*
      * Reactions handlers
@@ -1114,8 +1680,6 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             return
         }
 
-        debug('handleChangeTokens')
-
         await Promise.all([
             (prevLeftToken !== undefined && ![leftToken, rightToken].includes(prevLeftToken))
                 ? this.tokensCache.unwatch(prevLeftToken, 'swap')
@@ -1137,18 +1701,6 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         }
     }
 
-    protected async handleFormChanges(formData?: SwapFormChangesShape): Promise<void> {
-        if (formData === undefined) {
-            return
-        }
-
-        this.crossPairSwap.setData(formData)
-        this.conversion.setData('amount', formData.leftAmount)
-        this.coinSwap.setData(formData)
-        this.directSwap.setData(formData)
-        this.multipleSwap.setData(formData)
-    }
-
     /**
      *
      * @param {boolean} isReady
@@ -1159,20 +1711,18 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             return
         }
 
-        if (this.data.leftToken !== undefined && this.data.rightToken !== undefined) {
-            this.walletAccountDisposer = reaction(
-                () => this.wallet.account?.address,
-                this.handleWalletAccountChange,
-                {
-                    equals: (address, prevAddress) => (
-                        address !== undefined
-                        && address.toString().toLowerCase() !== prevAddress?.toString().toLowerCase()
-                    ),
-                    fireImmediately: true,
-                },
-            )
+        this.setState('isPreparing', this.wallet.isInitializing || this.wallet.isConnecting)
 
-            await this.prepare()
+        this.walletAccountDisposer = reaction(
+            () => this.wallet.account?.address,
+            this.handleWalletAccountChange,
+            {
+                equals: addressesComparer,
+                fireImmediately: true,
+            },
+        )
+
+        if (this.data.leftToken !== undefined && this.data.rightToken !== undefined) {
             await this.recalculate(true)
         }
         else if (this.data.leftToken === undefined && this.data.rightToken === undefined) {
@@ -1181,37 +1731,12 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
                 rightToken: this.options.defaultRightTokenAddress?.toString(),
             })
 
-            this.setState('isMultiple', true)
-
-            this.walletAccountDisposer = reaction(
-                () => this.wallet.account?.address,
-                this.handleWalletAccountChange,
-                {
-                    equals: (address, prevAddress) => (
-                        address !== undefined
-                        && address.toString().toLowerCase() !== prevAddress?.toString().toLowerCase()
-                    ),
-                    fireImmediately: true,
-                },
-            )
+            this.setState('isCombo', true)
         }
 
-        this.tokensChangeDisposer = reaction(
-            () => [this.data.leftToken, this.data.rightToken],
-            this.handleChangeTokens,
-            // Delay uses here for debounce calls
-            {
-                delay: 50,
-                equals: (
-                    [leftToken, rightToken],
-                    [prevLeftToken, prevRightToken],
-                ) => (
-                    (leftToken === prevRightToken && rightToken === prevLeftToken)
-                    || (leftToken === prevLeftToken && rightToken === prevRightToken)
-                ),
-                fireImmediately: true,
-            },
-        )
+        if (this.isDepositOneCoinMode || this.isWithdrawOneCoinMode) {
+            await this.syncPool()
+        }
     }
 
     /**
@@ -1220,6 +1745,15 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * @protected
      */
     protected async handleWalletAccountChange(address?: Address): Promise<void> {
+        this.tokensChangeDisposer = reaction(
+            () => [this.data.leftToken, this.data.rightToken],
+            this.handleChangeTokens,
+            {
+                equals: comparer.structural,
+                fireImmediately: true,
+            },
+        )
+
         if (address === undefined) {
             this.tokensCache.tokens.forEach(token => {
                 this.tokensCache.update(token.root, 'balance', undefined)
@@ -1227,6 +1761,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             })
             return
         }
+        this.setState('isPreparing', this.tokensCache.isFetching)
         await Promise.all([
             this.leftToken?.root && this.tokensCache.syncToken(this.leftToken.root, true),
             this.rightToken?.root && this.tokensCache.syncToken(this.rightToken.root, true),
@@ -1245,173 +1780,23 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
 
     /**
      * Fires when user press Send message in extension
-     * @param {DelayedMessageExecution} message
-     * @param {SendMessageCallbackParams} params
+     * @param {DelayedMessageExecution} _
+     * @param {SwapSendMessageCallbackParams} params
      * @protected
      */
-    protected handleSend(message: DelayedMessageExecution, params: SendMessageCallbackParams): void {
+    protected handleSend(_: DelayedMessageExecution, params: SwapSendMessageCallbackParams): void {
         RECEIPTS.set(params.callId, {
             receivedDecimals: this.coinSide === 'rightToken' ? this.wallet.coin.decimals : this.rightTokenDecimals,
             receivedIcon: this.coinSide === 'rightToken' ? this.wallet.coin.icon : this.rightToken?.icon,
             receivedRoot: this.coinSide === 'rightToken' ? undefined : this.rightToken?.root,
             receivedSymbol: this.coinSide === 'rightToken' ? this.wallet.coin.symbol : this.rightToken?.symbol,
-            slippage: this.isCrossExchangeMode ? this.crossPairSwap.slippage : this.data.slippage,
+            slippage: this.data.slippage,
             spentDecimals: this.leftTokenDecimals,
             spentIcon: this.leftToken?.icon,
             spentRoot: this.leftToken?.root,
             spentSymbol: this.leftToken?.symbol,
         })
         this.reset()
-        this.options.onSend?.(message, params)
-    }
-
-    /**
-     * Success transaction callback handler
-     * @param {DirectTransactionSuccessResult} result
-     * @protected
-     */
-    protected handleSwapSuccess(result: DirectTransactionSuccessResult): void {
-        const receipt = RECEIPTS.get(result.callId)
-
-        if (receipt === undefined) {
-            return
-        }
-
-        this.options.onSwapSuccess?.(result, {
-            ...receipt,
-            amount: result.input.result.received.toString(),
-            hash: result.transaction.id.hash,
-            spentFee: result.input.result.fee.toString(),
-            success: true,
-        })
-
-        RECEIPTS.delete(result.callId)
-    }
-
-    /**
-     * Failure transaction callback handler
-     * @param {DirectTransactionFailureResult | CrossPairTransactionFailureResult} reason
-     * @protected
-     */
-    protected handleSwapFailure(reason: DirectTransactionFailureResult | CrossPairTransactionFailureResult): void {
-        if ('cancelStep' in reason || 'step' in reason || 'index' in reason) {
-            const receipt = RECEIPTS.get(reason.callId)
-            if (receipt === undefined) {
-                return
-            }
-
-            const leftToken = this.tokensCache.get(reason.cancelStep?.step.spentAddress.toString())
-            const rightToken = this.tokensCache.get(reason.cancelStep?.step.receiveAddress.toString())
-
-            this.options.onSwapFailure?.(reason, {
-                amount: reason.step?.amount,
-                hash: reason.cancelStep?.transaction?.id.hash,
-                isCrossExchangeCanceled: reason.step !== undefined,
-                receivedDecimals: rightToken?.decimals,
-                receivedRoot: rightToken?.root,
-                receivedSymbol: rightToken?.symbol,
-                slippage: reason.index !== undefined
-                    ? getCrossExchangeSlippage(
-                        receipt.slippage || this.crossPairSwap.slippage,
-                        reason.index + 1,
-                    )
-                    : undefined,
-                spentDecimals: leftToken?.decimals,
-                spentIcon: leftToken?.icon,
-                spentRoot: leftToken?.root,
-                spentSymbol: leftToken?.symbol,
-                success: false,
-            })
-
-            RECEIPTS.delete(reason.callId)
-
-            return
-        }
-
-        this.options.onSwapFailure?.(reason, {})
-    }
-
-    /**
-     * Fires when coin swap has been completed
-     * @param {CoinSwapSuccessResult} result
-     * @protected
-     */
-    protected handleCoinSwapSuccess(result: CoinSwapSuccessResult): void {
-        const receipt = RECEIPTS.get(result.callId)
-
-        if (receipt === undefined) {
-            return
-        }
-
-        this.options.onCoinSwapSuccess?.(result, {
-            ...receipt,
-            amount: result.input.amount.toString(),
-            hash: result.transaction.id.hash,
-            success: true,
-        })
-
-        RECEIPTS.delete(result.callId)
-    }
-
-    /**
-     * Fires when coin swap ends with failure
-     * @param {CoinSwapFailureResult} reason
-     * @protected
-     */
-    protected handleCoinSwapFailure(reason: CoinSwapFailureResult): void {
-        if (reason.status === 'partial') {
-            const leftToken = this.tokensCache.get(reason.cancelStep?.step.spentAddress.toString())
-            const rightToken = this.tokensCache.get(reason.cancelStep?.step.receiveAddress.toString())
-
-            this.options.onCoinSwapFailure?.(reason, {
-                amount: reason.cancelStep?.amount,
-                hash: reason.cancelStep?.transaction?.id.hash,
-                isCrossExchangeCanceled: true,
-                receivedDecimals: reason.isLastStep ? this.wallet.coin.decimals : rightToken?.decimals,
-                receivedRoot: reason.isLastStep ? undefined : rightToken?.root,
-                receivedSymbol: reason.isLastStep ? this.wallet.coin.symbol : rightToken?.symbol,
-                slippage: reason.index !== undefined
-                    ? getCrossExchangeSlippage(
-                        this.crossPairSwap.slippage,
-                        reason.index + 1,
-                    )
-                    : undefined,
-                spentDecimals: leftToken?.decimals,
-                spentIcon: leftToken?.icon,
-                spentRoot: leftToken?.root,
-                spentSymbol: leftToken?.symbol,
-                success: false,
-            })
-        }
-        else if (reason.status === 'cancel') {
-            this.options.onCoinSwapFailure?.(reason, {
-                amount: reason.input?.amount,
-                hash: reason.input?.id,
-                isCrossExchangeCanceled: false,
-                receivedDecimals: this.wallet.coin.decimals,
-                receivedIcon: this.wallet.coin.icon,
-                receivedSymbol: this.wallet.coin.symbol,
-                success: false,
-            })
-        }
-    }
-
-    /**
-     * Fires when conversion has been completed
-     * @param {ConversionTransactionSuccessResult} result
-     * @protected
-     */
-    protected handleConversionSuccess(result: ConversionTransactionSuccessResult): void {
-        this.options.onConversionSuccess?.(result)
-    }
-
-    /**
-     * Fires when conversion ends with failure
-     * @param {ConversionTransactionFailureResult} reason
-     * @protected
-     */
-    protected handleConversionFailure(reason: ConversionTransactionFailureResult): void {
-        this.options.onConversionFailure?.(reason)
     }
 
 
@@ -1420,12 +1805,16 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * ----------------------------------------------------------------------------------
      */
 
-    protected formDataDisposer: IReactionDisposer | undefined
+    protected routeCheckRunnerInterval: ReturnType<typeof setInterval> | undefined
 
     protected tokensChangeDisposer: IReactionDisposer | undefined
 
     protected tokensCacheDisposer: IReactionDisposer | undefined
 
     protected walletAccountDisposer: IReactionDisposer | undefined
+
+    protected poolDisposer: IReactionDisposer | undefined
+
+    protected poolContractSubscriber?: Subscriber
 
 }

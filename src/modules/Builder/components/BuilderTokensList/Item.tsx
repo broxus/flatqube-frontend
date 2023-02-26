@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link } from 'react-router-dom'
 
 import { Token } from '@/misc'
+import { appRoutes } from '@/routes'
 import { formattedAmount, sliceAddress } from '@/utils'
 
 
@@ -11,7 +12,10 @@ type Props = {
 
 export function Item({ token }: Props): JSX.Element {
     return (
-        <Link to={`/builder/${token.root}`} className="list__row list__row--pointer">
+        <Link
+            to={appRoutes.builderItem.makeUrl({ tokenRoot: token.root })}
+            className="list__row list__row--pointer"
+        >
             <div className="list__cell list__cell--left">
                 {token.name}
             </div>

@@ -1,6 +1,19 @@
-.epochs_list {
-    &__empty_message {
-        padding: 34px;
-        text-align: center;
+.list__empty_message {
+    padding: 34px 16px;
+    text-align: center;
+
+    &__title {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 0.1px;
+        line-height: 24px;
     }
+
+    &__note {
+        font-size: 14px;
+        line-height: 20px;
+        margin-top: 8px;
+    }
+
+    img { margin: auto }
 }

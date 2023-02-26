@@ -1,34 +1,73 @@
 import * as React from 'react'
 import classNames from 'classnames'
+import { reaction } from 'mobx'
 import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
+import { useParams } from 'react-router-dom'
 
 import { Icon } from '@/components/common/Icon'
 import {
     ConversionSubmitButton,
-    CrossExchangeSubmitButton,
+    LiquidityStableSwapSubmitButton,
     MultiSwapConfirmationPopup,
     SwapBill,
     SwapConfirmationPopup,
     SwapField,
     SwapNotation,
-    SwapPrice,
+    // SwapPrice,
     SwapSettings,
     SwapSubmitButton,
 } from '@/modules/Swap/components'
 import { useSwapFormStoreContext } from '@/modules/Swap/context'
+import { DEFAULT_SLIPPAGE_VALUE } from '@/modules/Swap/constants'
 import { useSwapForm } from '@/modules/Swap/hooks/useSwapForm'
-import { SwapDirection } from '@/modules/Swap/types'
 import { TokensList } from '@/modules/TokensList'
 import { TokenImportPopup } from '@/modules/TokensList/components'
+import type { URLTokensParams } from '@/routes'
+import { error, storage } from '@/utils'
 
 import './index.scss'
 
 
 export function Swap(): JSX.Element {
     const intl = useIntl()
+    const { leftTokenRoot, rightTokenRoot } = useParams<URLTokensParams>()
+
     const formStore = useSwapFormStoreContext()
     const form = useSwapForm()
+
+    const onLeftImportConfirm = React.useCallback((value: string) => {
+        form.onLeftImportConfirm(value, rightTokenRoot)
+    }, [leftTokenRoot, rightTokenRoot])
+
+    const onRightImportConfirm = React.useCallback((value: string) => {
+        if (leftTokenRoot) {
+            form.onRightImportConfirm(leftTokenRoot, value)
+        }
+    }, [leftTokenRoot, rightTokenRoot])
+
+    React.useEffect(() => {
+        formStore.setState('isPreparing', formStore.wallet.isInitializing || !formStore.tokensCache.isReady)
+        const tokensListDisposer = reaction(
+            () => formStore.tokensCache.isReady,
+            async isReady => {
+                if (isReady) {
+                    try {
+                        formStore.setData('slippage', storage.get('slippage') ?? DEFAULT_SLIPPAGE_VALUE)
+                        await form.resolveStateFromUrl(leftTokenRoot, rightTokenRoot)
+                        await formStore.init()
+                    }
+                    catch (e) {}
+                }
+            },
+            { fireImmediately: true },
+        )
+
+        return () => {
+            tokensListDisposer()
+            formStore.dispose().catch(reason => error(reason))
+        }
+    }, [])
 
     return (
         <>
@@ -56,28 +95,21 @@ export function Swap(): JSX.Element {
                                     <SwapField
                                         key="leftField"
                                         balance={formStore.formattedLeftBalance}
-                                        disabled={formStore.isLoading || formStore.isSwapping}
+                                        disabled={formStore.isProcessing}
                                         id="leftField"
-                                        isMultiple={formStore.isMultipleSwapMode}
-                                        isValid={(
-                                            formStore.isLoading
-                                                || formStore.isSwapping
-                                                || formStore.isLeftAmountValid
-                                        )}
-                                        nativeCoin={(formStore.isMultipleSwapMode || formStore.coinSide === 'leftToken')
+                                        isMultiple={formStore.isComboSwapMode}
+                                        isValid={formStore.isProcessing || formStore.isLeftAmountValid}
+                                        nativeCoin={(formStore.isComboSwapMode || formStore.coinSide === 'leftToken')
                                             ? formStore.wallet.coin
                                             : undefined}
                                         readOnly={(
                                             formStore.isPreparing
-                                                || formStore.isPairChecking
-                                                || formStore.isSwapping
+                                            || formStore.isSyncingPool
+                                            || formStore.isProcessing
                                         )}
                                         showMaximizeButton={formStore.leftBalanceNumber.gt(0)}
                                         token={formStore.leftToken}
-                                        value={(
-                                            formStore.isCrossExchangeMode
-                                                && formStore.direction === SwapDirection.RTL
-                                        ) ? formStore.crossPairSwap.leftAmount : formStore.leftAmount}
+                                        value={formStore.leftAmount}
                                         onChange={form.onChangeLeftAmount}
                                         onMaximize={formStore.maximizeLeftAmount}
                                         onToggleTokensList={form.showTokensList('leftToken')}
@@ -89,11 +121,7 @@ export function Swap(): JSX.Element {
                                 {() => (
                                     <div
                                         className={classNames('swap-icon', {
-                                            disabled: (
-                                                formStore.isPreparing
-                                                || formStore.isLoading
-                                                || formStore.isSwapping
-                                            ),
+                                            disabled: formStore.isPreparing || formStore.isProcessing,
                                         })}
                                         onClick={formStore.isConversionMode
                                             ? form.toggleConversionDirection
@@ -109,49 +137,54 @@ export function Swap(): JSX.Element {
                                     <SwapField
                                         key="rightField"
                                         balance={formStore.formattedRightBalance}
-                                        disabled={formStore.isLoading || formStore.isSwapping}
+                                        disabled={formStore.isProcessing}
                                         id="rightField"
                                         isValid={(
                                             formStore.isCalculating
-                                            || formStore.isLoading
-                                            || formStore.isSwapping
+                                            || formStore.isProcessing
                                             || formStore.isRightAmountValid
                                         )}
                                         nativeCoin={formStore.coinSide === 'rightToken' ? formStore.wallet.coin : undefined}
                                         readOnly={(
                                             formStore.isPreparing
-                                            || formStore.isPairChecking
-                                            || formStore.isSwapping
+                                            || formStore.isSyncingPool
+                                            || formStore.isProcessing
                                         )}
                                         token={formStore.rightToken}
-                                        value={(
-                                            formStore.isCrossExchangeMode
-                                                && formStore.direction === SwapDirection.LTR
-                                        ) ? formStore.crossPairSwap.rightAmount : formStore.rightAmount}
+                                        value={formStore.rightAmount}
                                         onChange={form.onChangeRightAmount}
                                         onToggleTokensList={form.showTokensList('rightToken')}
                                     />
                                 )}
                             </Observer>
 
+                            {/*
                             <Observer>
-                                {() => ((
-                                    formStore.wallet.isConnected
-                                    && !formStore.isPreparing
-                                    && !formStore.isConversionMode
-                                )
-                                    ? <SwapPrice key="price" />
-                                    : null)}
+                                {() => {
+                                    switch (true) {
+                                        case formStore.route !== undefined:
+                                        case formStore.isDepositOneCoinMode:
+                                        case formStore.isWithdrawOneCoinMode:
+                                            if (formStore.ltrPrice === undefined && formStore.rtlPrice === undefined) {
+                                                return null
+                                            }
+                                            return <SwapPrice key="price" />
+
+                                        default:
+                                            return null
+                                    }
+                                }}
                             </Observer>
+                            */}
 
                             <Observer>
                                 {() => {
                                     switch (true) {
+                                        case formStore.isDepositOneCoinMode || formStore.isWithdrawOneCoinMode:
+                                            return <LiquidityStableSwapSubmitButton key="liquidityStableSwapSubmitButton" />
+
                                         case formStore.isConversionMode:
                                             return <ConversionSubmitButton key="conversionSubmitButton" />
-
-                                        case formStore.isCrossExchangeMode:
-                                            return <CrossExchangeSubmitButton key="crossExchangeSubmitButton" />
 
                                         default:
                                             return <SwapSubmitButton key="submitButton" />
@@ -165,25 +198,14 @@ export function Swap(): JSX.Element {
 
             <Observer>
                 {() => (!formStore.isConversionMode ? (
-                    <SwapBill
-                        key="bill"
-                        fee={formStore.swap.fee}
-                        isCrossExchangeAvailable={formStore.isCrossExchangeAvailable}
-                        isCrossExchangeMode={formStore.isCrossExchangeMode}
-                        leftToken={formStore.coinSide === 'leftToken' ? formStore.wallet.coin : formStore.leftToken}
-                        minExpectedAmount={formStore.swap.minExpectedAmount}
-                        priceImpact={formStore.swap.priceImpact}
-                        rightToken={formStore.coinSide === 'rightToken' ? formStore.wallet.coin : formStore.rightToken}
-                        slippage={formStore.swap.slippage}
-                        tokens={formStore.route?.tokens}
-                    />
+                    <SwapBill key="bill" />
                 ) : null)}
             </Observer>
 
             <Observer>
                 {/* eslint-disable-next-line no-nested-ternary */}
                 {() => (formStore.isConfirmationAwait ? (
-                    formStore.isMultipleSwapMode ? (
+                    formStore.isComboSwapMode ? (
                         <MultiSwapConfirmationPopup key="multiSwapConfirmationPopup" />
                     ) : (
                         <SwapConfirmationPopup key="confirmationPopup" />
@@ -198,8 +220,8 @@ export function Swap(): JSX.Element {
                     allowMultiple
                     currentToken={formStore.leftToken}
                     currentTokenSide="leftToken"
-                    isMultiple={formStore.isMultipleSwapMode}
-                    combinedTokenRoot={formStore.multipleSwapTokenRoot}
+                    isMultiple={formStore.isComboSwapMode}
+                    combinedTokenRoot={formStore.wrappedCoinTokenAddress.toString()}
                     nativeCoin={formStore.wallet.coin}
                     nativeCoinSide={formStore.coinSide}
                     onDismiss={form.hideTokensList}
@@ -215,8 +237,8 @@ export function Swap(): JSX.Element {
                     allowMultiple={false}
                     currentToken={formStore.rightToken}
                     currentTokenSide="rightToken"
-                    isMultiple={formStore.isMultipleSwapMode}
-                    combinedTokenRoot={formStore.multipleSwapTokenRoot}
+                    isMultiple={formStore.isComboSwapMode}
+                    combinedTokenRoot={formStore.wrappedCoinTokenAddress.toString()}
                     nativeCoin={formStore.wallet.coin}
                     nativeCoinSide={formStore.coinSide}
                     onDismiss={form.hideTokensList}
@@ -231,13 +253,13 @@ export function Swap(): JSX.Element {
                         {(formStore.tokensCache.isImporting && form.tokenSide === 'leftToken') && (
                             <TokenImportPopup
                                 key="tokenImportLeft"
-                                onImportConfirm={form.onLeftImportConfirm}
+                                onImportConfirm={onLeftImportConfirm}
                             />
                         )}
                         {(formStore.tokensCache.isImporting && form.tokenSide === 'rightToken') && (
                             <TokenImportPopup
                                 key="tokenImportRight"
-                                onImportConfirm={form.onRightImportConfirm}
+                                onImportConfirm={onRightImportConfirm}
                             />
                         )}
                         {(formStore.tokensCache.isImporting && form.tokenSide === undefined) && (

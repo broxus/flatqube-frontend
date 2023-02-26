@@ -89,7 +89,7 @@
 }
 
 .notification-body {
-    margin: 8px 0;
+    margin: 8px 0 16px;
 }
 
 .notification-actions {
@@ -113,4 +113,22 @@
 
 .notification :last-child {
     margin-bottom: 0;
+}
+
+.notification_token-badge {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 8px;
+
+    &__title {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.35px;
+        line-height: 24px;
+    }
+
+    &:not(:first-child) {
+        margin-top: 8px;
+    }
 }

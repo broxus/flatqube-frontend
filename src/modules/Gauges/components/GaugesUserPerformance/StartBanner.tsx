@@ -87,7 +87,7 @@ function UserPerformanceStartBannerInner(): JSX.Element {
                         size="md"
                         type="primary"
                         link={leftToken && rightToken
-                            ? appRoutes.poolCreate.makeUrl({
+                            ? appRoutes.liquidityAdd.makeUrl({
                                 leftTokenRoot: leftToken.root,
                                 rightTokenRoot: rightToken.root,
                             })

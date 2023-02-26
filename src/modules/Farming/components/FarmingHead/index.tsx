@@ -151,7 +151,7 @@ export function FarmingHeadInner(): JSX.Element {
                         <Button
                             size="md"
                             type="secondary"
-                            link={appRoutes.poolCreate.makeUrl({
+                            link={appRoutes.liquidityAdd.makeUrl({
                                 leftTokenRoot: farmingData.leftTokenAddress,
                                 rightTokenRoot: farmingData.rightTokenAddress,
                             })}

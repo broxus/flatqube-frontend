@@ -7,7 +7,7 @@ import {
     FarmingPoolResponse, RewardInfo, Transaction, TransactionsRequest,
 } from '@/modules/Farming/types'
 import { getUserAmount, getUserPendingReward } from '@/modules/Farming/utils'
-import { CurrencyInfo } from '@/modules/Currencies/types'
+import { CurrencyResponse } from '@/modules/Currencies/types'
 import { useWallet, WalletService } from '@/stores/WalletService'
 import { TokenCache, TokensCacheService, useTokensCache } from '@/stores/TokensCacheService'
 import {
@@ -22,7 +22,7 @@ type State = {
     apiResponse?: FarmingPoolResponse;
     poolDetails?: PoolDetails;
     pairBalances?: PairBalances;
-    rewardCurrencies?: (CurrencyInfo | undefined)[];
+    rewardCurrencies?: (CurrencyResponse | undefined)[];
     userAddress?: string;
     userPoolDataAddress?: Address;
     userLpWalletAddress?: Address;
@@ -549,7 +549,7 @@ export class FarmingDataStore {
     }
 
     public get pairBalanceLp(): string | undefined {
-        return this.state.pairBalances?.lp
+        return this.state.pairBalances?.lpSupply
     }
 
     public get userLpWalletAmount(): string | undefined {
@@ -655,7 +655,7 @@ export class FarmingDataStore {
                 return acc
             }
             const { decimals } = token
-            const currency = rewardCurrencies[index] as CurrencyInfo
+            const currency = rewardCurrencies[index] as CurrencyResponse
             const current = new BigNumber(item).shiftedBy(-decimals).multipliedBy(currency.price)
             return acc.plus(current)
         }

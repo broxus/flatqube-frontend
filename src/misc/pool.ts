@@ -31,17 +31,18 @@ const staticRpc = useStaticRpc()
 const WITHDRAW_SUCCESS_METHOD = 'dexPairWithdrawSuccess'
 const WITHDRAW_FAIL_METHOD = 'dexPairOperationCancelled'
 
-
+/**
+ * @deprecated Use LiquidityPoolUtils
+ */
 export class Pool {
 
-    static async pool(
-        poolAddress: Address,
-        walletAddress: Address,
-    ): Promise<PoolData> {
+    static async pool(poolAddress: Address, walletAddress: Address): Promise<PoolData> {
         const pairTokenRoots = await Dex.pairTokenRoots(poolAddress)
         const [
-            lpDecimals, lpSymbol,
-            pairBalances, walletLp,
+            lpDecimals,
+            lpSymbol,
+            pairBalances,
+            walletLp,
         ] = await Promise.all([
             TokenWallet.getDecimals(pairTokenRoots.lp),
             TokenWallet.getSymbol(pairTokenRoots.lp),
@@ -51,20 +52,20 @@ export class Pool {
 
         return {
             address: poolAddress.toString(),
+            left: {
+                address: pairTokenRoots.left.toString(),
+                inPool: pairBalances.left,
+            },
             lp: {
-                inPool: pairBalances.lp,
-                inWallet: walletLp,
-                decimals: Number(lpDecimals),
                 address: pairTokenRoots.lp.toString(),
+                decimals: Number(lpDecimals),
+                inPool: pairBalances.lpSupply,
+                inWallet: walletLp,
                 symbol: lpSymbol,
             },
-            left: {
-                inPool: pairBalances.left,
-                address: pairTokenRoots.left.toString(),
-            },
             right: {
-                inPool: pairBalances.right,
                 address: pairTokenRoots.right.toString(),
+                inPool: pairBalances.right,
             },
         }
     }

@@ -6,7 +6,7 @@ import './index.scss'
 type Props = {
     address: string;
     className?: string;
-    size?: 'small' | 'xsmall' | 'medium';
+    size?: 'small' | 'xsmall' | 'medium' | 'large';
 }
 
 
@@ -123,6 +123,9 @@ export function UserAvatar({ address, size, className }: Props): JSX.Element {
             break
         case 'medium':
             pxSize = 32
+            break
+        case 'large':
+            pxSize = 44
             break
         default:
             pxSize = 36

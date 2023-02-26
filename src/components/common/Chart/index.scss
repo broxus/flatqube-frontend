@@ -1,0 +1,24 @@
+.chart {
+    align-items: center;
+    display: flex;
+    max-width: 100%;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+
+    .chart-placeholder {
+        position: absolute;
+        width: 100%;
+    }
+
+    &__no-data-message {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+        height: 100%;
+        position: absolute;
+        width: 100%;
+    }
+
+    table, th, td { border-spacing: 0 !important }
+}

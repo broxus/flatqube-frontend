@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useIntl } from 'react-intl'
 
 import { FarmingChart } from '@/modules/Farming/components/FarmingCharts/chart'
-import { Timeframe } from '@/modules/Chart/types'
+import { Timeframe } from '@/modules/Charts/types'
 
 import './index.scss'
 

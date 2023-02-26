@@ -6,6 +6,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { Logo } from '@/components/layout/Logo'
+import { appRoutes } from '@/routes'
 import { useWallet } from '@/stores/WalletService'
 
 import './index.scss'
@@ -59,7 +60,7 @@ export function Footer(): JSX.Element {
             <div className="container container--large">
                 <div className="footer__wrapper">
                     <div className="footer__left">
-                        <Link to="/" className="footer-logo">
+                        <Link to={appRoutes.home.makeUrl()} className="footer-logo">
                             <Logo />
                         </Link>
                         {toolbar}
@@ -67,74 +68,44 @@ export function Footer(): JSX.Element {
                     <nav className="footer-nav">
                         <div className="footer-nav__col">
                             <div className="footer-nav__col-title">
-                                {intl.formatMessage({
-                                    id: 'FOOTER_NAV_HEADER_PRODUCT',
-                                })}
+                                {intl.formatMessage({ id: 'FOOTER_NAV_HEADER_PRODUCT' })}
                             </div>
                             <ul className="footer-nav__list">
                                 <li>
-                                    <NavLink to="/swap">
-                                        {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_SWAP',
-                                        })}
+                                    <NavLink to={appRoutes.swap.makeUrl()}>
+                                        {intl.formatMessage({ id: 'NAV_LINK_TEXT_SWAP' })}
                                     </NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/pools">
-                                        {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_POOLS',
-                                        })}
+                                    <NavLink to={appRoutes.pools.makeUrl()}>
+                                        {intl.formatMessage({ id: 'NAV_LINK_TEXT_POOLS' })}
                                     </NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/tokens">
-                                        {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_TOKENS',
-                                        })}
+                                    <NavLink to={appRoutes.tokens.makeUrl()}>
+                                        {intl.formatMessage({ id: 'NAV_LINK_TEXT_TOKENS' })}
                                     </NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/pairs">
-                                        {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_PAIRS',
-                                        })}
+                                    <NavLink to={appRoutes.gauges.makeUrl()}>
+                                        {intl.formatMessage({ id: 'NAV_LINK_TEXT_FARMING' })}
                                     </NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/farming">
-                                        {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_FARMING_OLD',
-                                        })}
+                                    <NavLink to={appRoutes.dao.makeUrl()}>
+                                        {intl.formatMessage({ id: 'NAV_LINK_TEXT_QUBE_DAO' })}
                                     </NavLink>
                                 </li>
                                 <li>
-                                    <NavLink to="/gauges">
-                                        {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_FARMING_NEW',
-                                        })}
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="/dao">
-                                        {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_QUBE_DAO',
-                                        })}
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="/builder">
-                                        {intl.formatMessage({
-                                            id: 'NAV_LINK_TEXT_BUILDER',
-                                        })}
+                                    <NavLink to={appRoutes.builder.makeUrl()}>
+                                        {intl.formatMessage({ id: 'NAV_LINK_TEXT_BUILDER' })}
                                     </NavLink>
                                 </li>
                             </ul>
                         </div>
                         <div className="footer-nav__col">
                             <div className="footer-nav__col-title">
-                                {intl.formatMessage({
-                                    id: 'FOOTER_NAV_HEADER_DOCS',
-                                })}
+                                {intl.formatMessage({ id: 'FOOTER_NAV_HEADER_DOCS' })}
                             </div>
                             <ul className="footer-nav__list">
                                 <li>

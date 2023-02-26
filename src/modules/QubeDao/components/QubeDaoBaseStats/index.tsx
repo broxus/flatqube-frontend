@@ -4,7 +4,7 @@ import classNames from 'classnames'
 import { when } from 'mobx'
 import { Observer } from 'mobx-react-lite'
 import { IntlShape, useIntl } from 'react-intl'
-import { BarPrice, BarPrices } from 'lightweight-charts'
+import { LineData } from 'lightweight-charts'
 
 import { RateChange } from '@/components/common/RateChange'
 import { Placeholder } from '@/components/common/Placeholder'
@@ -20,13 +20,13 @@ import {
 
 import styles from './index.module.scss'
 
-function tokenAmountFormatter(symbol: string): (value: BarPrice | BarPrices | undefined) => string {
-    return (value: BarPrice | BarPrices | undefined) => `${formattedTokenAmount(value?.toString())} ${symbol}`
+function tokenAmountFormatter(symbol: string): (value: LineData | undefined) => string {
+    return (value: LineData | undefined) => `${formattedTokenAmount(value?.value.toString())} ${symbol}`
 }
 
-function averageLockFormatter(intl: IntlShape): (value: BarPrice | BarPrices | undefined) =>string {
-    return (value: BarPrice | BarPrices | undefined): string => {
-        const valueNumber = new BigNumber(value?.toString() ?? 0)
+function averageLockFormatter(intl: IntlShape): (value: LineData | undefined) =>string {
+    return (value: LineData | undefined): string => {
+        const valueNumber = new BigNumber(value?.value.toString() ?? 0)
         const currentValue = valueNumber.shiftedBy(valueNumber.decimalPlaces() ?? 0).toNumber()
         const months = currentValue >= SECONDS_IN_YEAR
             ? (currentValue % SECONDS_IN_YEAR) / SECONDS_IN_MONTH

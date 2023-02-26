@@ -20,9 +20,8 @@ import { MinWalletVersion } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
 import { useStaticRpc } from '@/hooks/useStaticRpc'
 import {
-    connectToWallet,
     DexAbi,
-    DexConstants,
+    DexConstants, getFullContractState,
     Token,
 } from '@/misc'
 import { BaseStore } from '@/stores/BaseStore'
@@ -41,6 +40,7 @@ export type WalletData = {
 export type WalletState = {
     hasProvider: boolean;
     isConnecting: boolean;
+    isDisconnecting: boolean;
     isInitialized: boolean;
     isInitializing: boolean;
     isUpdatingContract: boolean;
@@ -63,6 +63,7 @@ const DEFAULT_WALLET_DATA: WalletData = {
 const DEFAULT_WALLET_STATE: WalletState = {
     hasProvider: false,
     isConnecting: false,
+    isDisconnecting: false,
     isInitialized: false,
     isInitializing: false,
     isUpdatingContract: false,
@@ -72,6 +73,18 @@ const staticRpc = useStaticRpc()
 const rpc = useRpc()
 
 
+export async function connect(): Promise<Permissions['accountInteraction'] | undefined> {
+    const hasProvider = await hasEverscaleProvider()
+
+    if (hasProvider) {
+        await rpc.ensureInitialized()
+        return (await rpc.requestPermissions({
+            permissions: ['basic', 'accountInteraction'],
+        })).accountInteraction
+    }
+    return undefined
+}
+
 export class WalletService extends BaseStore<WalletData, WalletState> {
 
     constructor(
@@ -80,13 +93,13 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
     ) {
         super()
 
-        this.#contractSubscriber = undefined
+        this.contractSubscriber = undefined
 
-        this.setData(DEFAULT_WALLET_DATA)
-        this.setState({
+        this.setData(() => DEFAULT_WALLET_DATA)
+        this.setState(() => ({
             ...DEFAULT_WALLET_STATE,
             isInitializing: true,
-        })
+        }))
 
         makeObservable(this, {
             account: computed,
@@ -162,7 +175,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         }
 
         try {
-            const account = await connectToWallet()
+            const account = await connect()
             this.setData('account', account)
         }
         catch (e) {
@@ -182,7 +195,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
             return
         }
 
-        this.setState('isConnecting', true)
+        this.setState('isDisconnecting', true)
 
         try {
             await rpc.disconnect()
@@ -192,7 +205,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
             error('Wallet disconnect error', e)
         }
         finally {
-            this.setState('isConnecting', false)
+            this.setState('isDisconnecting', false)
         }
     }
 
@@ -378,6 +391,18 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
     protected async init(): Promise<void> {
         this.setState('isInitializing', true)
 
+        try {
+            await rpc.ensureInitialized()
+        }
+        catch (e) {
+            this.setState({
+                hasProvider: false,
+                isInitialized: false,
+                isInitializing: false,
+            })
+            return
+        }
+
         let hasProvider = false
 
         try {
@@ -393,30 +418,21 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
             return
         }
 
-        try {
-            await rpc.ensureInitialized()
-        }
-        catch (e) {
-            return
-        }
-
         this.setState({
             hasProvider,
-            isConnecting: true,
         })
 
         const currentProviderState = await rpc.getProviderState()
 
         if (currentProviderState.permissions.accountInteraction === undefined) {
             this.setState({
-                isConnecting: false,
                 isInitialized: true,
                 isInitializing: false,
             })
             return
         }
 
-        const account = await connectToWallet()
+        const account = await connect()
 
         this.setData({
             account,
@@ -424,12 +440,11 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         })
 
         this.setState({
-            isConnecting: false,
             isInitialized: true,
             isInitializing: false,
         })
 
-        const permissionsSubscriber = await rpc.subscribe('permissionsChanged')
+        const permissionsSubscriber = await staticRpc.subscribe('permissionsChanged')
         permissionsSubscriber.on('data', event => {
             this.setData('account', event.permissions.accountInteraction)
         })
@@ -444,16 +459,16 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @protected
      */
     protected async onAccountChange(account?: Account): Promise<void> {
-        if (this.#contractSubscriber !== undefined) {
+        if (this.contractSubscriber !== undefined) {
             if (account !== undefined) {
                 try {
-                    await this.#contractSubscriber.unsubscribe()
+                    await this.contractSubscriber.unsubscribe()
                 }
                 catch (e) {
                     error('Wallet contract unsubscribe error', e)
                 }
             }
-            this.#contractSubscriber = undefined
+            this.contractSubscriber = undefined
         }
 
         if (account === undefined) {
@@ -463,9 +478,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         this.setState('isUpdatingContract', true)
 
         try {
-            const { state } = await rpc.getFullContractState({
-                address: account.address,
-            })
+            const state = await getFullContractState(account.address)
 
             this.setData('contract', state)
             this.setState('isUpdatingContract', false)
@@ -478,12 +491,12 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         }
 
         try {
-            this.#contractSubscriber = await rpc.subscribe(
+            this.contractSubscriber = await staticRpc.subscribe(
                 'contractStateChanged',
                 { address: account.address },
             )
 
-            this.#contractSubscriber.on('data', event => {
+            this.contractSubscriber.on('data', event => {
                 debug(
                     '%cRPC%c The wallet\'s `contractStateChanged` event was captured',
                     'font-weight: bold; background: #4a5772; color: #fff; border-radius: 2px; padding: 3px 6.5px',
@@ -496,7 +509,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         }
         catch (e) {
             error('Contract subscribe error', e)
-            this.#contractSubscriber = undefined
+            this.contractSubscriber = undefined
         }
     }
 
@@ -513,7 +526,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @type {Subscription<'contractStateChanged'> | undefined}
      * @protected
      */
-    #contractSubscriber: Subscription<'contractStateChanged'> | undefined
+    protected contractSubscriber: Subscription<'contractStateChanged'> | undefined
 
 }
 

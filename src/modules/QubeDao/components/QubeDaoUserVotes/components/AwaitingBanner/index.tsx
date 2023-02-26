@@ -2,8 +2,8 @@ import * as React from 'react'
 import { DateTime } from 'luxon'
 import { useIntl } from 'react-intl'
 
+import TransactionsListEmptyBg from '@/assets/TransactionsListEmpty.svg'
 import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
-import TransactionsListEmptyBg from '@/modules/Transactions/assets/TransactionsListEmptyBg.png'
 
 export function AwaitingBanner(): JSX.Element {
     const intl = useIntl()

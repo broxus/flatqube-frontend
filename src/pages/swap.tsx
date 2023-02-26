@@ -4,6 +4,7 @@ import {
     EverToTip3Address,
     EverWeverToTip3Address,
     SafeAmount,
+    // SwapReferrerAddress,
     Tip3ToEverAddress,
     USDTRootAddress,
     WEVERRootAddress,
@@ -12,14 +13,9 @@ import {
 } from '@/config'
 import { Swap } from '@/modules/Swap'
 import { SwapFormStoreProvider } from '@/modules/Swap/context'
-import { useTokensCache } from '@/stores/TokensCacheService'
-import { useWallet } from '@/stores/WalletService'
 
 
 export default function Page(): JSX.Element {
-    const tokenCache = useTokensCache()
-    const wallet = useWallet()
-
     return (
         <SwapFormStoreProvider
             coinToTip3Address={EverToTip3Address}
@@ -27,12 +23,11 @@ export default function Page(): JSX.Element {
             defaultLeftTokenAddress={WEVERRootAddress.toString()}
             defaultRightTokenAddress={USDTRootAddress.toString()}
             minTvlValue="50000"
-            multipleSwapTokenRoot={WEVERRootAddress.toString()}
+            // referrer={SwapReferrerAddress.toString()}
             safeAmount={SafeAmount}
             tip3ToCoinAddress={Tip3ToEverAddress}
-            tokensCache={tokenCache}
-            wallet={wallet}
             wrapGas={WrapGas}
+            wrappedCoinTokenAddress={WEVERRootAddress}
             wrappedCoinVaultAddress={WeverVaultAddress}
         >
             <div className="container container--small">

@@ -9,19 +9,19 @@ import './index.scss'
 
 type Props = {
     address: string;
+    icon?: string;
     size?: TokenIconProps['size'];
+    symbol?: string;
 }
 
 function TokenInner({
     address,
+    icon,
     size = 'small',
-}: Props): JSX.Element | null {
+    symbol,
+}: Props): JSX.Element {
     const tokensCache = useTokensCache()
     const token = tokensCache.get(address)
-
-    if (!token) {
-        return null
-    }
 
     return (
         <div
@@ -30,11 +30,11 @@ function TokenInner({
             })}
         >
             <TokenIcon
+                address={token?.root ?? address}
+                icon={token?.icon ?? icon}
                 size={size}
-                address={token.root}
-                icon={token.icon}
             />
-            {token.symbol}
+            {token?.symbol ?? symbol}
         </div>
     )
 }
