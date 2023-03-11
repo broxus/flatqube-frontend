@@ -42,7 +42,7 @@ export function RelatedPoolsListItem({ idx, pool }: Props): JSX.Element {
             </div>
             <div className="list__cell list__cell--right">
                 <div>{`$${formattedAmount(pool.volume24h)}`}</div>
-                <RateChange size="sm" value={formattedAmount(pool.volume24hChange)} />
+                <RateChange size="sm" value={pool.volume24hChange} />
             </div>
             <div className="list__cell list__cell--right">
                 <div>{`$${formattedAmount(pool.volume7d)}`}</div>
