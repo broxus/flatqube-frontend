@@ -73,8 +73,8 @@ export function WalletBalance(): JSX.Element {
                                 <TokenAmountBadge
                                     address={poolStore.lpToken?.root}
                                     amount={`${formattedTokenAmount(userLpBalance, undefined, {
+                                        precision: 2,
                                         roundOn: false,
-                                        truncate: 2,
                                     })}${userLpBalanceAbbr}`}
                                     icon={poolStore.lpToken?.icon}
                                     size="xsmall"

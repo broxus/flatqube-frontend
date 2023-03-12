@@ -79,8 +79,8 @@ export function FarmLockedBalance(): JSX.Element {
                                 <TokenAmountBadge
                                     address={poolStore.lpToken?.root}
                                     amount={`${formattedTokenAmount(scoredLpBalance, undefined, {
+                                        precision: 2,
                                         roundOn: false,
-                                        truncate: 2,
                                     })}${scoredLpBalanceAbbr}`}
                                     icon={poolStore.lpToken?.icon}
                                     size="xsmall"

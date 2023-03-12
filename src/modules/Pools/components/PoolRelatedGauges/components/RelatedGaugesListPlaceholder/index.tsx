@@ -39,10 +39,10 @@ export function RelatedGaugesListPlaceholder(): JSX.Element {
                     </div>
                 </div>
                 <div className="list__cell list__cell--left">
-                    <Placeholder height={20} width={80} />
+                    <PlaceholderBase circle width={24} />
                 </div>
                 <div className="list__cell list__cell--right">
-                    <Placeholder height={20} width={100} />
+                    <Placeholder height={20} width={80} />
                     <div>
                         <Placeholder height={18} width={40} />
                     </div>

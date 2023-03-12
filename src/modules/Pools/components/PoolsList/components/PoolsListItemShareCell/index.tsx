@@ -84,7 +84,7 @@ export function PoolsListItemShareCell(props: Props): JSX.Element {
             {(isFetching === undefined || isFetching)
                 ? (
                     <>
-                        <Placeholder height={20} width={50} />
+                        <Placeholder height={20} width={80} />
                         <div className="visible@s">
                             <Placeholder height={18} width={40} />
                         </div>
@@ -100,7 +100,7 @@ export function PoolsListItemShareCell(props: Props): JSX.Element {
                                     &nbsp;
                                 </span>
                                 {`${formattedTokenAmount(formattedUserBalance, undefined, {
-                                    truncate: 2,
+                                    precision: 2,
                                 })}${formattedUserBalanceAbbr}`}
                                 <span className="text-truncate truncate-name">
                                     {lpToken.current?.symbol}

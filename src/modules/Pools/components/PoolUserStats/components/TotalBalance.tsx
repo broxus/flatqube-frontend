@@ -79,8 +79,8 @@ export function TotalBalance(): JSX.Element {
                                 <TokenAmountBadge
                                     address={poolStore.lpToken?.root}
                                     amount={`${formattedTokenAmount(totalLpBalance, undefined, {
+                                        precision: 2,
                                         roundOn: false,
-                                        truncate: 2,
                                     })}${totalLpBalanceAbbr}`}
                                     icon={poolStore.lpToken?.icon}
                                     size="xsmall"
