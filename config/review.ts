@@ -11,7 +11,7 @@ export const QubeDaoMinLockPeriod = 14
 
 export const QubeDaoMaxLockPeriod = 1460
 
-export const DexRootAddress = new AddressLiteral('0:5eb5713ea9b4a0f3a13bc91b282cde809636eb1e68d2fcb6427b9ad78a5a9008')
+export const DexRootAddress = new AddressLiteral('0:db93071d5eabd049a8769322fc3ee9007c83b29727c3ee82299fd9467cc654a7')
 
 export const DexGasValuesAddress = new AddressLiteral('0:bf3adb71719dfc8c12c213f99a01668a15ea00203645e8b897cb1bd70e1bdb3d')
 

@@ -1058,6 +1058,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
             recipientAddress: this.wallet.account.address,
             sendGasTo: this.wallet.account.address,
             tokenAddress: params.tokenAddress,
+            deployWalletGrams,
             // eslint-disable-next-line sort-keys
             onSend: params?.onSend,
             onTransactionFailure: params?.onTransactionFailure,
