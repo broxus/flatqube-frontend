@@ -1,5 +1,6 @@
 import { computed, makeObservable } from 'mobx'
 
+import { USE_WHITE_LISTS } from '@/config'
 import { usePoolsApi } from '@/modules/Pools/hooks/useApi'
 import { PoolStore } from '@/modules/Pools/stores/PoolStore'
 import type { PoolsPagination, PoolTransactionResponse } from '@/modules/Pools/types'
@@ -74,7 +75,7 @@ export class PoolTransactionsStore extends BaseStore<PoolTransactionsStoreData, 
                 timestampBlockGe: this.state.timestampBlockGe,
                 timestampBlockLe: this.state.timestampBlockLe,
                 userAddress: this.onlyUserTransactions ? this.pool.wallet.address : undefined,
-                whiteListUri: this.pool.tokensCache.tokensList.uri,
+                whiteListUri: USE_WHITE_LISTS ? this.pool.tokensCache.tokensList.uri : undefined,
             })
 
             this.setData('transactions', Array.isArray(response.transactions) ? response.transactions : [])

@@ -7,6 +7,7 @@ import {
     DexRootAddress,
     EverToTip3Address,
     EverWeverToTip3Address,
+    MinTvlValue,
     SafeAmount,
     Tip3ToEverAddress,
     USDTRootAddress,
@@ -98,7 +99,7 @@ export default function Page(): JSX.Element {
                     comboToTip3Address={EverWeverToTip3Address}
                     defaultLeftTokenAddress={WEVERRootAddress.toString()}
                     defaultRightTokenAddress={USDTRootAddress.toString()}
-                    minTvlValue="50000"
+                    minTvlValue={MinTvlValue}
                     safeAmount={SafeAmount}
                     tip3ToCoinAddress={Tip3ToEverAddress}
                     wrapGas={WrapGas}

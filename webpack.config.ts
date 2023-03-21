@@ -120,11 +120,7 @@ export default (_: any, options: any): WebpackConfig => {
                 patterns: [
                     {
                         context: 'public',
-                        from: 'favicon.ico',
-                    },
-                    {
-                        context: 'public',
-                        from: 'favicon.svg',
+                        from: 'favicon.{ico,svg}',
                     },
                     {
                         context: 'public',

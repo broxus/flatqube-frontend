@@ -8,7 +8,7 @@ import type {
 
 import { useRpc, useStaticRpc } from '@/hooks'
 import { TokenAbi } from '@/misc/abi'
-import { tokenRootContract, tokenWalletContract } from '@/misc/contracts'
+import { getFullContractState, tokenRootContract, tokenWalletContract } from '@/misc/contracts'
 import { debug, resolveEverscaleAddress, sliceAddress } from '@/utils'
 
 
@@ -176,6 +176,20 @@ export abstract class TokenWalletUtils {
 
                 return value0
             })
+    }
+
+    /**
+     * Returns request is deployed wallet address
+     * @param {TokenWalletOwnerParams} params
+     * @param {FullContractState} [cachedState]
+     */
+    public static async isTokenWalletDeployed(
+        params: TokenWalletOwnerParams,
+        cachedState?: FullContractState,
+    ): Promise<boolean> {
+        const walletAddress = await this.walletAddress(params, cachedState)
+        const walletState = await getFullContractState(walletAddress)
+        return !!walletState?.isDeployed
     }
 
 }

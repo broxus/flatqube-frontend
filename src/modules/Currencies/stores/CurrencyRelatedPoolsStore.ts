@@ -1,5 +1,6 @@
 import { computed, makeObservable } from 'mobx'
 
+import { USE_WHITE_LISTS } from '@/config'
 import { useCurrenciesApi } from '@/modules/Currencies/hooks/useApi'
 import { CurrencyStore } from '@/modules/Currencies/stores/CurrencyStore'
 import type { PoolResponse, PoolsPagination } from '@/modules/Pools/types'
@@ -64,7 +65,7 @@ export class CurrencyRelatedPoolsStore extends BaseStore<
                 limit: this.pagination.limit,
                 offset: this.pagination.limit * (this.pagination.currentPage - 1),
                 ordering: this.ordering,
-                whiteListUri: this.currency.tokensCache.tokensList.uri,
+                whiteListUri: USE_WHITE_LISTS ? this.currency.tokensCache.tokensList.uri : undefined,
             })
 
             this.setData('pools', response.pools)

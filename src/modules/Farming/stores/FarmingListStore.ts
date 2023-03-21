@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 import { makeAutoObservable, runInAction, toJS } from 'mobx'
 import { Address } from 'everscale-inpage-provider'
 
-import { TokenListURI } from '@/config'
+import { USE_WHITE_LISTS } from '@/config'
 import { Farm } from '@/misc'
 import { FarmingApi, useApi } from '@/modules/Farming/hooks/useApi'
 import {
@@ -87,7 +87,7 @@ export class FarmingListStore {
             tvlLe: filter.tvlTo ? filter.tvlTo : undefined,
             userAddress: this.wallet.address,
             whiteCurrencyAddresses: getImportedTokens(),
-            whiteListUri: TokenListURI,
+            whiteListUri: USE_WHITE_LISTS ? this.tokensCache.tokensList.uri : undefined,
         }
     }
 

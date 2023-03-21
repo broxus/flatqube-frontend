@@ -10,9 +10,11 @@ import {
 } from 'mobx'
 import type { IReactionDisposer } from 'mobx'
 
+import { DexGasValuesAddress, SwapReferrerAddress } from '@/config'
 import { useStaticRpc } from '@/hooks'
 import {
     DexAccountUtils,
+    dexGasValuesContract,
     getFullContractState,
     LiquidityStablePoolUtils,
     StablePoolUtils,
@@ -36,6 +38,7 @@ import type { DexAccountService } from '@/stores/DexAccountService'
 import type { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
 import type { WalletService } from '@/stores/WalletService'
 import {
+    calcGas,
     debug,
     error,
     getSafeProcessingId,
@@ -202,6 +205,11 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 await callbacks?.onTransactionSuccess?.(result)
             }
 
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getAddPoolGas({ N: this.pool.tokens.length })
+                .call())
+                .value0
+
             await LiquidityStablePoolUtils.connect({
                 dexAccountAddress: this.dex.address,
                 roots: this.pool.tokens.map(token => token.address),
@@ -210,7 +218,10 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 onSend: callbacks?.onSend,
                 onTransactionFailure: callbacks?.onTransactionFailure,
                 onTransactionSuccess,
-            }, { from: this.wallet.account.address })
+            }, {
+                amount: calcGas(fixedValue, dynamicGas),
+                from: this.wallet.account.address,
+            })
         }
         catch (e) {
             error('Connect to Stable pool error', e)
@@ -307,6 +318,11 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 RECEIPTS.delete(callId)
             }
 
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getDepositToAccountGas({})
+                .call())
+                .value0
+
             await DexAccountUtils.depositToken(this.dex.address, {
                 amount: delta.toFixed(),
                 callId,
@@ -320,7 +336,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 onSend,
                 onTransactionFailure,
                 onTransactionSuccess,
-            })
+            }, { amount: calcGas(fixedValue, dynamicGas) })
         }
         catch (e) {
             this.setState(prevState => {
@@ -404,6 +420,14 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 RECEIPTS.delete(callId)
             }
 
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getAccountDepositGas({
+                    N: this.pool.tokens.length,
+                    referrer: SwapReferrerAddress,
+                })
+                .call())
+                .value0
+
             await LiquidityStablePoolUtils.depositLiquidity({
                 dexAccountAddress: this.dex.address,
                 expected: { root: this.pool.lp.address },
@@ -424,7 +448,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 onSend,
                 onTransactionFailure,
                 onTransactionSuccess,
-            })
+            }, { amount: calcGas(fixedValue, dynamicGas) })
         }
         catch (e) {
             this.setState('isDepositingLiquidity', false)
@@ -453,6 +477,18 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 await callbacks?.onTransactionFailure?.(reason)
             }
 
+            const deployWalletValue = this.pool.tokens.some(
+                token => token.userWalletAddress == null,
+            ) ? '100000000' : '0'
+
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getPoolDirectNoFeeWithdrawGas({
+                    deployWalletValue,
+                    N: this.pool.tokens.length
+                })
+                .call())
+                .value0
+
             await LiquidityStablePoolUtils.withdrawLiquidity({
                 amount: this.pool.lp.userBalance ?? '0',
                 lpPoolWalletAddress: this.pool.lp.walletAddress,
@@ -471,7 +507,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 onSend: callbacks?.onSend,
                 onTransactionFailure,
                 onTransactionSuccess,
-            })
+            }, { amount: calcGas(fixedValue, dynamicGas) })
         }
         catch (e) {
             this.setState('isWithdrawingLiquidity', false)
@@ -534,6 +570,17 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 RECEIPTS.delete(callId)
             })
 
+            const isTokenWalletDeployed = await TokenWalletUtils.isTokenWalletDeployed({
+                tokenRootAddress: tokenAddress,
+                walletOwnerAddress: this.wallet.account.address,
+            })
+            const deployWalletGrams = isTokenWalletDeployed ? '0' : '100000000'
+
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getAccountWithdrawGas({ deployWalletValue: deployWalletGrams })
+                .call())
+                .value0
+
             await DexAccountUtils.withdrawToken(this.dex.address, {
                 amount,
                 callId,
@@ -541,10 +588,13 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 recipientAddress: this.wallet.account.address,
                 sendGasTo: this.wallet.account.address,
                 tokenAddress: address,
+                deployWalletGrams,
                 // eslint-disable-next-line sort-keys
                 onSend,
                 onTransactionFailure,
                 onTransactionSuccess,
+            }, {
+                amount: calcGas(fixedValue, dynamicGas),
             })
         }
         catch (e) {

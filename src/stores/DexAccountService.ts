@@ -9,14 +9,16 @@ import type { IReactionDisposer } from 'mobx'
 import type { Address, FullContractState, Transaction } from 'everscale-inpage-provider'
 import { Subscription } from 'everscale-inpage-provider'
 
-import { DexRootAddress } from '@/config'
+import { DexGasValuesAddress, DexRootAddress } from '@/config'
 import { useStaticRpc } from '@/hooks'
-import { DexAccountUtils, DexUtils, getFullContractState } from '@/misc'
+import {
+    DexAccountUtils, dexGasValuesContract, DexUtils, getFullContractState,
+} from '@/misc'
 import { BaseStore } from '@/stores/BaseStore'
 import { useWallet } from '@/stores/WalletService'
 import type { WalletService } from '@/stores/WalletService'
 import {
-    addressesComparer,
+    addressesComparer, calcGas,
     debug,
     error,
     throttle,
@@ -132,8 +134,15 @@ export class DexAccountService extends BaseStore<DexAccountData, DexAccountState
             return undefined
         }
 
+        const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+            .methods.getDeployAccountGas({})
+            .call())
+            .value0
+
         const message = await DexUtils.deployAccount(this.dexRootAddress, {
             dexAccountOwnerAddress: this.wallet.address,
+        }, {
+            amount: calcGas(fixedValue, dynamicGas),
         })
 
         return message.transaction

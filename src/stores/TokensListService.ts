@@ -38,7 +38,6 @@ export type TokensListState = {
     time?: number;
 }
 
-
 export class TokensListService extends BaseStore<TokensListData, TokensListState> {
 
     constructor(public readonly uri: string) {

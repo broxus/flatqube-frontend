@@ -178,7 +178,7 @@ export interface GaugeListRequest {
   showLowBalance?: boolean | null;
   starredGauges?: string[] | null;
   tvl?: FromTo;
-  whitelistUri: string;
+  whitelistUri?: string;
 }
 
 export interface GaugeLpRootRequest {

@@ -7,7 +7,7 @@ import BigNumber from 'bignumber.js'
 import { GaugeItem } from '@/modules/Gauges/api/models'
 import { error } from '@/utils'
 import { gaugesHandler } from '@/modules/Gauges/utils'
-import { TokenListURI } from '@/config'
+import { TokenListURI, USE_WHITE_LISTS } from '@/config'
 import { GaugesListDataStore } from '@/modules/Gauges/stores/GaugesListDataStore'
 import { getImportedTokens } from '@/stores/TokensCacheService'
 import { GaugesFilters } from '@/modules/Gauges/types'
@@ -113,7 +113,7 @@ export class GaugesListStore {
                     from: this.filters.tvlFrom,
                     to: this.filters.tvlTo,
                 } : undefined,
-                whitelistUri: TokenListURI,
+                whitelistUri: USE_WHITE_LISTS ? TokenListURI : undefined,
             })
 
             response.gauges.forEach(gauge => {

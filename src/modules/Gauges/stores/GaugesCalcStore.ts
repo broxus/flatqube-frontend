@@ -6,7 +6,7 @@ import { Address } from 'everscale-inpage-provider'
 
 import { GaugeItem } from '@/modules/Gauges/api/models'
 import { daoMainPageHandler, decimalAmount, gaugesHandler } from '@/modules/Gauges/utils'
-import { GaugeFactoryAddress, TokenListURI } from '@/config'
+import { GaugeFactoryAddress, TokenListURI, USE_WHITE_LISTS } from '@/config'
 import { getImportedTokens } from '@/stores/TokensCacheService'
 import { error, isGoodBignumber } from '@/utils'
 import { GaugesTokensStore } from '@/modules/Gauges/stores/GaugesTokensStore'
@@ -131,7 +131,7 @@ export class GaugesCalcStore {
                 limit: this.limit,
                 offset: this.offset,
                 starredGauges: this.onlyFav ? this.favorites.addresses : undefined,
-                whitelistUri: TokenListURI,
+                whitelistUri: USE_WHITE_LISTS ? TokenListURI : undefined,
             })
 
             await Promise.all(
@@ -465,7 +465,9 @@ export class GaugesCalcStore {
     }
 
     public get veLockBoost(): (string | undefined)[] | undefined {
-        const { gauges, veQubesMinted, totalVeAmount, lpAmount, lpAmountValid } = this
+        const {
+            gauges, veQubesMinted, totalVeAmount, lpAmount, lpAmountValid,
+        } = this
 
         if (gauges && veQubesMinted && totalVeAmount && lpAmount && lpAmountValid) {
             return gauges.map(gauge => (

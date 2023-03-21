@@ -452,6 +452,7 @@ export abstract class DexAccountUtils {
                 recipientAddress: params.recipientAddress,
                 sendGasTo: params.sendGasTo,
                 tokenAddress: params.tokenAddress,
+                deployWalletGrams: params.deployWalletGrams
             }, args)
 
             await params.onSend?.(message, {

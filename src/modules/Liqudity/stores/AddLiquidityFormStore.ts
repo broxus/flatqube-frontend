@@ -10,9 +10,10 @@ import {
 } from 'mobx'
 import type { IReactionDisposer } from 'mobx'
 
+import { DexGasValuesAddress, SwapReferrerAddress } from '@/config'
 import { useStaticRpc } from '@/hooks'
 import {
-    DexAccountUtils,
+    DexAccountUtils, dexGasValuesContract,
     DexUtils,
     getFullContractState,
     LiquidityPoolUtils,
@@ -43,6 +44,7 @@ import type { DexAccountService } from '@/stores/DexAccountService'
 import type { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
 import {
     addressesComparer,
+    calcGas,
     debug,
     error,
     getSafeProcessingId,
@@ -362,6 +364,11 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 await callbacks?.onTransactionSuccess?.(result)
             }
 
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getAddPoolGas({ N: 2 })
+                .call())
+                .value0
+
             await LiquidityPoolUtils.connect({
                 dexAccountAddress: this.dex.address,
                 leftRootAddress: this.data.leftToken,
@@ -371,7 +378,10 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 onSend: callbacks?.onSend,
                 onTransactionFailure: callbacks?.onTransactionFailure,
                 onTransactionSuccess,
-            }, { from: this.wallet.account.address })
+            }, {
+                amount: calcGas(fixedValue, dynamicGas),
+                from: this.wallet.account.address,
+            })
         }
         catch (e) {
             this.setState('isConnectingPool', false)
@@ -409,6 +419,11 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 toJS(this.dex.dexState),
             )
 
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getDeployPoolGas({ N: 2 })
+                .call())
+                .value0
+
             await LiquidityPoolUtils.create({
                 dexRootAddress: this.dex.dexRootAddress,
                 expectedAddress,
@@ -419,7 +434,10 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 onSend: callbacks?.onSend,
                 onTransactionFailure: callbacks?.onTransactionFailure,
                 onTransactionSuccess,
-            }, { from:  this.wallet.account.address })
+            }, {
+                amount: calcGas(fixedValue, dynamicGas),
+                from:  this.wallet.account.address,
+            })
         }
         catch (e) {
             this.setState('isCreatingPool', false)
@@ -674,6 +692,11 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 RECEIPTS.delete(callId)
             }
 
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getAccountDepositGas({ N: 2, referrer: SwapReferrerAddress })
+                .call())
+                .value0
+
             await LiquidityPoolUtils.depositLiquidity({
                 autoChange: !!this.isAutoExchangeEnabled,
                 callId,
@@ -688,7 +711,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 onSend,
                 onTransactionFailure,
                 onTransactionSuccess,
-            })
+            }, { amount: calcGas(fixedValue, dynamicGas) })
         }
         catch (e) {
             this.setState('isDepositingLiquidity', false)
@@ -774,6 +797,18 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 await callbacks?.onTransactionFailure?.(reason)
             }
 
+            const deployWalletValue = (
+                this.pool.left.walletAddress == null || this.pool.right.walletAddress == null
+            ) ? '100000000' : '0'
+
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getPoolDirectNoFeeWithdrawGas({
+                    deployWalletValue,
+                    N: 2
+                })
+                .call())
+                .value0
+
             await LiquidityPoolUtils.withdrawLiquidity({
                 amount: this.pool.lp.userBalance ?? '0',
                 dexRootAddress: this.dex.dexRootAddress,
@@ -793,7 +828,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
                 onSend: callbacks?.onSend,
                 onTransactionFailure,
                 onTransactionSuccess,
-            })
+            }, { amount: calcGas(fixedValue, dynamicGas) })
         }
         catch (e) {
             this.setState('isWithdrawingLiquidity', false)
@@ -891,6 +926,11 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
             throw Error('Recipient Token Wallet not found')
         }
 
+        const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+            .methods.getDepositToAccountGas({})
+            .call())
+            .value0
+
         await DexAccountUtils.depositToken(this.dex.address, {
             amount: params.amount,
             callId: params.callId,
@@ -904,6 +944,8 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
             onSend: params?.onSend,
             onTransactionFailure: params?.onTransactionFailure,
             onTransactionSuccess: params?.onTransactionSuccess,
+        }, {
+            amount: calcGas(fixedValue, dynamicGas),
         })
     }
 
@@ -997,17 +1039,29 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
             return
         }
 
+        const isTokenWalletDeployed = await TokenWalletUtils.isTokenWalletDeployed({
+            tokenRootAddress: params.tokenAddress,
+            walletOwnerAddress: this.wallet.account.address,
+        })
+        const deployWalletGrams = isTokenWalletDeployed ? '0' : '100000000'
+
+        const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+            .methods.getAccountWithdrawGas({ deployWalletValue: deployWalletGrams })
+            .call())
+            .value0
+
         await DexAccountUtils.withdrawToken(this.dex.address, {
             amount: params.amount,
             lastLt: this.dex.accountState?.lastTransactionId?.lt,
             recipientAddress: this.wallet.account.address,
             sendGasTo: this.wallet.account.address,
             tokenAddress: params.tokenAddress,
+            deployWalletGrams,
             // eslint-disable-next-line sort-keys
             onSend: params?.onSend,
             onTransactionFailure: params?.onTransactionFailure,
             onTransactionSuccess: params?.onTransactionSuccess,
-        })
+        }, { amount: calcGas(fixedValue, dynamicGas) })
     }
 
     protected async subscribe(): Promise<void> {

@@ -1,5 +1,6 @@
 import { computed, makeObservable } from 'mobx'
 
+import { USE_WHITE_LISTS } from '@/config'
 import { useCurrenciesApi } from '@/modules/Currencies/hooks/useApi'
 import { CurrencyTransactionEventType, CurrencyTransactionsOrdering } from '@/modules/Currencies/types'
 import type { CurrenciesPagination, CurrencyTransactionResponse } from '@/modules/Currencies/types'
@@ -7,7 +8,6 @@ import { CurrencyStore } from '@/modules/Currencies/stores/CurrencyStore'
 import { BaseStore } from '@/stores/BaseStore'
 import { TokenUtils } from '@/misc'
 import { debug } from '@/utils'
-import { PoolStoreState } from '@/modules/Pools/stores'
 
 export type CurrencyTransactionsStoreData = {
     customTokensDecimals?: Record<string, number>;
@@ -78,7 +78,7 @@ export class CurrencyTransactionsStore extends BaseStore<
                 timestampBlockGe: this.state.timestampBlockGe,
                 timestampBlockLe: this.state.timestampBlockLe,
                 userAddress: this.onlyUserTransactions ? this.currency.wallet.address : undefined,
-                whiteListUri: this.currency.tokensCache.tokensList.uri,
+                whiteListUri: USE_WHITE_LISTS ? this.currency.tokensCache.tokensList.uri : undefined,
             })
 
             try {
@@ -153,7 +153,7 @@ export class CurrencyTransactionsStore extends BaseStore<
         return this.state.isFetching
     }
 
-    public get isSyncingCustomTokens(): PoolStoreState['isSyncingCustomTokens'] {
+    public get isSyncingCustomTokens(): CurrencyTransactionsStoreState['isSyncingCustomTokens'] {
         return this.state.isSyncingCustomTokens
     }
 

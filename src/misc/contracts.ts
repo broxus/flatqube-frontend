@@ -67,6 +67,13 @@ export function dexStablePoolContract(
     return new provider.Contract(DexAbi.StablePool, resolveEverscaleAddress(address))
 }
 
+export function dexGasValuesContract(
+    address: Address | string,
+    provider = staticRpc,
+): Contract<typeof DexAbi.DexGasValues> {
+    return new provider.Contract(DexAbi.DexGasValues, resolveEverscaleAddress(address))
+}
+
 export function swapCallbacksContract(
     address: Address | string,
     provider = staticRpc,

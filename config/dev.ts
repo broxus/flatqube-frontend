@@ -5,17 +5,21 @@ export const WrapGas = '1000000000' // <= 1 EVER
 
 export const SafeAmount = '10000000000' // <= 10 EVER
 
+export const MinTvlValue = '50000' // <= 50 000 USD
+
 export const QubeDaoMinLockPeriod = 14
 
 export const QubeDaoMaxLockPeriod = 1460
 
 export const DexRootAddress = new AddressLiteral('0:5eb5713ea9b4a0f3a13bc91b282cde809636eb1e68d2fcb6427b9ad78a5a9008')
 
-export const EverToTip3Address = new AddressLiteral('0:223217628e2a5eaaa38923ca60cff3877a3be4f366c35417952091becf2332ea')
+export const DexGasValuesAddress = new AddressLiteral('0:bf3adb71719dfc8c12c213f99a01668a15ea00203645e8b897cb1bd70e1bdb3d')
 
-export const Tip3ToEverAddress = new AddressLiteral('0:959c96f962cfba25e0d5117492a2b0e2f6a349d1a7b094494a9fe5c258fc4755')
+export const EverToTip3Address = new AddressLiteral('0:e1b253e92e6b7196b581fb999c67b419afb08c14161a1493e2325b9c47874e13')
 
-export const EverWeverToTip3Address = new AddressLiteral('0:5f01f0d04a77db53f4f266cf5148e01e42ae74c6425b4e961cb91bd63a8b561b')
+export const Tip3ToEverAddress = new AddressLiteral('0:2987ed01b6691af900613b14d3327e43913822fc2e5490faf6896b4f6df5cb58')
+
+export const EverWeverToTip3Address = new AddressLiteral('0:57f5d5f7ad0fa2f3486afb806be4f32274d38ca74c06ba3fb771374427e2fb72')
 
 export const WeverVaultAddress = new AddressLiteral('0:557957cba74ab1dc544b4081be81f1208ad73997d74ab3b72d95864a41b779a4')
 
@@ -37,7 +41,7 @@ export const VoteEscrowAddress = new AddressLiteral('0:8317ae7ee92d748500e179843
 
 export const GaugeFactoryAddress = new AddressLiteral('0:9509c21b9b098f6c47af3ce4b013da335ed96cb24367ba8de5b07001a1702441')
 
-export const SwapReferrerAddress = new AddressLiteral('0:7a43a08e77dcc2bd7ce2f5f6798dbb84af9c8443e8bfb60c27e125033fef1760')
+export const SwapReferrerAddress = new AddressLiteral('0:0000000000000000000000000000000000000000000000000000000000000000')
 
 export const TokenListURI = 'https://raw.githubusercontent.com/broxus/flatqube-assets/master/manifest.json'
 
@@ -55,20 +59,13 @@ export const GAUGES_API_URL = 'https://farming.flatqube.io/v2'
 
 export const TOKENS_API_URL = 'https://tokens.everscan.io/v1'
 
-
 export const NPoolsList = new Map<
     string /* pool lp token root */,
     { poolAddress: Address, roots: { address: Address }[] }
->([
-    ['0:0000000000000000000000000000000000000000000000000000000000000000', {
-        poolAddress: new AddressLiteral('0:59bfee4a5fe27860d3d8d6de8aa39a37e77c2482473a73d8d76eea4a6dc8d78a'),
-        roots: [
-            { address: new AddressLiteral('0:a519f99bb5d6d51ef958ed24d337ad75a1c770885dcd42d51d6663f9fcdacfb2') },
-            { address: new AddressLiteral('0:c37b3fafca5bf7d3704b081fde7df54f298736ee059bf6d32fac25f5e6085bf6') },
-            { address: new AddressLiteral('0:eb2ccad2020d9af9cec137d3146dde067039965c13a27d97293c931dae22b2b9') },
-        ],
-    }],
-])
+>([])
+
+export const USE_WHITE_LISTS = true
+
 export const P2P_API_URL = 'https://limit-api.flatqube.io'
 
 export const backPK = '107109469055807608186892190796543593557361412273437038860260422366233567094150'

@@ -9,8 +9,10 @@ import {
 } from 'mobx'
 import type { IReactionDisposer } from 'mobx'
 
+import { DexGasValuesAddress, SwapReferrerAddress } from '@/config'
 import { useStaticRpc } from '@/hooks'
 import {
+    dexGasValuesContract,
     getFullContractState,
     LiquidityStablePoolUtils,
     StablePoolUtils,
@@ -27,6 +29,7 @@ import type { TokenCache, TokensCacheService } from '@/stores/TokensCacheService
 import type { WalletService } from '@/stores/WalletService'
 import {
     addressesComparer,
+    calcGas,
     debug,
     error,
     isGoodBignumber,
@@ -246,6 +249,18 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
                 await this.subscribe()
             }
 
+            const deployWalletValue = this.pool.tokens.some(
+                token => token.userWalletAddress == null,
+            ) ? '100000000' : '0'
+
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getPoolDirectNoFeeWithdrawGas({
+                    deployWalletValue,
+                    N: this.pool.tokens.length
+                })
+                .call())
+                .value0
+
             await LiquidityStablePoolUtils.withdrawLiquidity({
                 amount: new BigNumber(this.amount ?? 0)
                     .dp(this.pool.lp.decimals ?? 0, BigNumber.ROUND_DOWN)
@@ -267,7 +282,7 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
                 onSend,
                 onTransactionFailure,
                 onTransactionSuccess,
-            })
+            }, { amount: calcGas(fixedValue, dynamicGas) })
         }
         catch (e) {
             this.setState({

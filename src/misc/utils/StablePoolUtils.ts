@@ -1,3 +1,4 @@
+import BigNumber from 'bignumber.js'
 import type {
     Address,
     DecodedAbiFunctionOutputs,
@@ -288,11 +289,13 @@ export abstract class StablePoolUtils {
 
         const deployWalletGrams = params.deployWalletGrams == null ? '100000000' : params.deployWalletGrams
 
-        const { amounts } = await StablePoolUtils.expectedWithdrawLiquidity(
+        const amounts = (await StablePoolUtils.expectedWithdrawLiquidity(
             params.poolAddress,
             params.amount,
             params.poolState,
-        )
+        )).amounts.map(v => {
+            return new BigNumber(v).times(0.999).dp(0, BigNumber.ROUND_DOWN).toFixed();
+        })
 
         const payload = await StablePoolUtils.buildWithdrawLiquidityPayload(params.poolAddress, {
             callId: params.callId ?? getSafeProcessingId(),

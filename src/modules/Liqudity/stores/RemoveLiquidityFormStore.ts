@@ -10,8 +10,10 @@ import {
 } from 'mobx'
 import type { IReactionDisposer } from 'mobx'
 
+import { DexGasValuesAddress } from '@/config'
 import { useStaticRpc } from '@/hooks'
 import {
+    dexGasValuesContract,
     DexUtils,
     getFullContractState,
     LiquidityPoolUtils,
@@ -27,6 +29,7 @@ import type { TokenCache, TokensCacheService } from '@/stores/TokensCacheService
 import type { WalletService } from '@/stores/WalletService'
 import {
     addressesComparer,
+    calcGas,
     debug,
     error,
     isGoodBignumber,
@@ -152,7 +155,7 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
     }
 
     public async withdrawLiquidity(callbacks?: LiquidityPoolWithdrawCallbacks): Promise<void> {
-        if (this.wallet.address === undefined || this.dex.address === undefined || this.pool === undefined) {
+        if (this.wallet.address === undefined || this.pool === undefined) {
             return
         }
 
@@ -186,11 +189,29 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
                 await callbacks?.onTransactionFailure?.(reason)
             }
 
+            const [leftWalletState, rightWalletState] = await Promise.all([
+                this.leftToken?.wallet ? getFullContractState(this.leftToken.wallet) : undefined,
+                this.rightToken?.wallet ? getFullContractState(this.rightToken.wallet) : undefined,
+            ]).catch(() => [undefined, undefined])
+
+            const deployWalletValue = (
+                !leftWalletState?.isDeployed || !rightWalletState?.isDeployed
+            ) ? '100000000' : '0'
+
+            const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
+                .methods.getPoolDirectNoFeeWithdrawGas({
+                    deployWalletValue,
+                    N: 2,
+                })
+                .call())
+                .value0
+
             await LiquidityPoolUtils.withdrawLiquidity({
                 amount: new BigNumber(this.amount || 0)
                     .dp(this.pool.lp.decimals ?? 0, BigNumber.ROUND_DOWN)
                     .shiftedBy(this.pool.lp.decimals ?? 0)
                     .toFixed(),
+                deployWalletGrams: deployWalletValue,
                 dexRootAddress: this.dex.dexRootAddress,
                 dexRootState: toJS(this.dex.dexState),
                 leftRootAddress: this.pool.left.address,
@@ -208,9 +229,10 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
                 onSend,
                 onTransactionFailure,
                 onTransactionSuccess,
-            })
+            }, { amount: calcGas(fixedValue, dynamicGas) })
         }
         catch (e) {
+            error(e)
             this.setState({
                 isAwaitingConfirmation: false,
                 isWithdrawingLiquidity: false,
