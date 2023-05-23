@@ -308,7 +308,9 @@ export function RemoveLiquidity(): JSX.Element {
                                                         size="xsmall"
                                                     />
                                                     <div className="liquidity-remove-form__value">
-                                                        {formattedTokenAmount(formStore.receiveLeft)}
+                                                        {formattedTokenAmount(formStore.isReverted
+                                                            ? formStore.receiveRight
+                                                            : formStore.receiveLeft)}
                                                     </div>
                                                 </div>
 
@@ -318,7 +320,9 @@ export function RemoveLiquidity(): JSX.Element {
                                                         size="xsmall"
                                                     />
                                                     <div className="liquidity-remove-form__value">
-                                                        {formattedTokenAmount(formStore.receiveRight)}
+                                                        {formattedTokenAmount(formStore.isReverted
+                                                            ? formStore.receiveLeft
+                                                            : formStore.receiveRight)}
                                                     </div>
                                                 </div>
                                             </div>

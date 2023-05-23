@@ -90,7 +90,8 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
             isPoolDataAvailable: computed,
             isPoolEmpty: computed,
             isPreparing: computed,
-            isSoleLiquidityProvider: computed,
+            isReverted: computed,
+            isSoloLiquidityProvider: computed,
             isStablePool: computed,
             isSyncingPool: computed,
             isWithdrawingLiquidity: computed,
@@ -495,7 +496,11 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
         return new BigNumber(this.pool?.lp.balance || 0).isZero()
     }
 
-    public get isSoleLiquidityProvider(): boolean {
+    public get isReverted(): boolean {
+        return this.pool?.left.address.toString().toLowerCase() !== this.data.leftToken?.toLowerCase()
+    }
+
+    public get isSoloLiquidityProvider(): boolean {
         return this.isPoolEmpty || new BigNumber(this.pool?.lp.balance ?? 0).eq(this.pool?.lp.userBalance ?? 0)
     }
 
@@ -570,7 +575,7 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
         }
 
         if (
-            this.isSoleLiquidityProvider
+            this.isSoloLiquidityProvider
             && !(new BigNumber(this.amount).shiftedBy(this.pool?.lp.decimals ?? 0).eq(this.pool?.lp.userBalance ?? 0))
         ) {
             return '100'
