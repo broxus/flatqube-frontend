@@ -1,0 +1,28 @@
+.field-rate {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    font-size: 15px;
+    justify-content: flex-end;
+    letter-spacing: 0.6px;
+    line-height: 16px;
+    min-height: 28px;
+    text-align: right;
+    width: 100%;
+}
+
+.btn.field-rate__reverse-btn {
+    border: 0 none;
+    border-radius: 50%;
+    opacity: 0.5;
+    padding: 0;
+    transition: opacity 0.15s ease-in-out;
+
+    svg {
+        stroke: #fff;
+    }
+
+    &:hover {
+        opacity: 0.9;
+    }
+}

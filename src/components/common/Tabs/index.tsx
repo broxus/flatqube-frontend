@@ -9,6 +9,7 @@ type Props = {
         active?: boolean
         onClick: () => void
         label: React.ReactNode
+        itemClassName?: string;
     }[]
 }
 
@@ -26,8 +27,8 @@ export function Tabs({
             })}
         >
             {/* eslint-disable react/no-array-index-key */}
-            {items.map(({ active, onClick, label }, index) => (
-                <li className={classNames({ active })} key={index}>
+            {items.map(({ active, onClick, label, itemClassName }, index) => (
+                <li className={classNames({ active }, itemClassName)} key={index}>
                     {/* eslint-disable jsx-a11y/anchor-is-valid */}
                     <a onClick={onClick}>
                         {label}

@@ -41,6 +41,18 @@ export const apiRoutes = {
     poolCrossSwapRoutePayload: new Route('/pools/cross_swap_payload'),
     poolCrossSwapStatus: new Route('/pools/cross_swap_payload_status'),
     transactions: new Route('/transactions'),
+    pairs: new Route('/pairs'),
+    newCrossPairs: new Route('/pairs/new_cross_pairs'),
+    pair: new Route<{ address: string }>('/pairs/address/:address([0][:][0-9a-f]{64})?'),
+    pairByTokensRoot: new Route<{ leftTokenAddress: string, rightTokenAddress: string }>('/pairs/left/:leftTokenAddress([0][:][0-9a-f]{64})?/right/:rightTokenAddress([0][:][0-9a-f]{64})?'),
+    pairOhlcv: new Route<{ address: string }>('/pairs/address/:address([0][:][0-9a-f]{64})?/ohlcv'),
+    pairOhlcvByTokensRoot: new Route<{ leftTokenAddress: string, rightTokenAddress: string }>('/pairs/left/:leftTokenAddress([0][:][0-9a-f]{64})?/right/:rightTokenAddress([0][:][0-9a-f]{64})?/ohlcv'),
+    pairTvl: new Route<{ address: string }>('/pairs/address/:address([0][:][0-9a-f]{64})?/tvl'),
+    pairVolume: new Route<{ address: string }>('/pairs/address/:address([0][:][0-9a-f]{64})?/volume'),
+    limitOrderList: new Route('/get_limit_orders'),
+    limitOrderHistoryList: new Route('/get_exchanges'),
+    limitOrderBook: new Route('/get_order_book'),
+    limitOrderGraph: new Route('/get_plot_data'),
 }
 
 export const farmingApiRoutes = {
@@ -92,6 +104,7 @@ export const tokensApiRoutes = {
 export const appRoutes = {
     home: new Route('/'),
     swap: new Route<URLTokensParams>('/swap/:leftTokenRoot?/:rightTokenRoot?'),
+    limit: new Route<URLTokensParams>('/limit/:leftTokenRoot?/:rightTokenRoot?'),
     pool: new Route<URLAddressParam>('/pools/:address([0][:][0-9a-f]{64})?'),
     poolAddLiquidity: new Route<URLAddressParam>('/pools/:address([0][:][0-9a-f]{64})/liquidity/add'),
     poolRemoveLiquidity: new Route<URLAddressParam>('/pools/:address([0][:][0-9a-f]{64})/liquidity/remove'),

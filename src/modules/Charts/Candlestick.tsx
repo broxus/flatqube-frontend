@@ -22,7 +22,6 @@ type CandlestickChartProps = {
 
 export const Candlestick = React.memo((props: CandlestickChartProps) => {
     const intl = useIntl()
-
     const {
         data,
         id,

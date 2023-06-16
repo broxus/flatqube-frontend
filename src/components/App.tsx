@@ -18,6 +18,7 @@ import { Header } from '@/components/layout/Header'
 import { LocalizationContext } from '@/context/Localization'
 import { TokensUpgradesModal } from '@/modules/TokensUpgrades'
 import Swap from '@/pages/swap'
+import Limit from '@/pages/limit'
 import Pools from '@/pages/pools'
 import Pool from '@/pages/pools/item'
 import PoolAddLiquidity from '@/pages/pools/liquidity/add'
@@ -43,6 +44,7 @@ import CustomToken from '@/pages/builder/token'
 import { appRoutes } from '@/routes'
 import { useWallet } from '@/stores/WalletService'
 import { isMobile, noop } from '@/utils'
+import { P2PGlobalNotify } from '@/modules/LimitOrders/context/P2PGlobalNotifyContext'
 
 import './App.scss'
 
@@ -76,6 +78,10 @@ export function App(): JSX.Element {
 
                                 <Route path={appRoutes.swap.path}>
                                     <Swap />
+                                </Route>
+
+                                <Route path={appRoutes.limit.path}>
+                                    <Limit />
                                 </Route>
 
                                 <Route exact path={appRoutes.pools.path}>
@@ -178,6 +184,7 @@ export function App(): JSX.Element {
                     </>
                 )}
             </Observer>
+            <P2PGlobalNotify />
         </IntlProvider>
     )
 }

@@ -1,0 +1,171 @@
+@import '@/styles/variables.scss';
+
+.list__cell > div.order-rate {
+    font-size: 14px;
+}
+
+.limit-order-list {
+    img {
+        display: unset;
+    }
+
+    &.list {
+        --list-grid-template: minmax(30%, 50%) minmax(80px, 50%);
+
+        min-height: 1px;
+
+        @media (min-width: $breakpoint-small) {
+            --list-grid-template: minmax(30%, 70%) minmax(30%, 70%);
+        }
+        
+        @media (min-width: $breakpoint-medium) {
+            --list-grid-template: minmax(2%, 40%) minmax(5%, 25%) minmax(5%, 25%) minmax(5%, 10%) 
+        }
+
+        @media (min-width: $breakpoint-large) {
+            --list-grid-template: minmax(2%, 40%) minmax(5%, 25%) minmax(5%, 25%) minmax(5%, 10%)
+        }
+
+        &.one-extra-column {
+            @media (min-width: $breakpoint-medium) {
+                --list-grid-template: minmax(2%, 40%) minmax(5%, 16%) minmax(5%, 16%) minmax(5%, 11%) minmax(7%, 12%)
+            }
+    
+            @media (min-width: $breakpoint-large) {
+                --list-grid-template: minmax(2%, 40%) minmax(5%, 16%) minmax(5%, 16%) minmax(5%, 11%) minmax(7%, 12%)
+            }
+        }
+
+        &.two-extra-column {
+            @media (min-width: $breakpoint-medium) {
+                --list-grid-template: minmax(2%, 50%) minmax(5%, 10%) minmax(5%, 10%) minmax(5%, 15%) minmax(7%, 10%)  minmax(7%, 10%)
+            }
+    
+            @media (min-width: $breakpoint-large) {
+                --list-grid-template: minmax(2%, 50%) minmax(5%, 10%) minmax(5%, 10%) minmax(5%, 15%) minmax(7%, 10%)  minmax(7%, 10%)
+            }
+        }
+    }
+
+    &__item {
+        padding-left: 15px;
+    }
+
+    &__wrap-words {
+        font-size: 12px!important;
+        white-space: break-spaces!important;
+    }
+
+    &__empty-message {
+        padding: 34px;
+        text-align: center;
+
+        img {
+            height: auto;
+            margin: 20px auto;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 24px;
+            margin-bottom: 8px;
+        }
+    }
+
+    &__cell-center {
+        align-items: center;
+        display: flex;
+        justify-content: center;
+    }
+
+    &__header-flex {
+        align-items: flex-start;
+        display: flex;
+        flex-flow: column wrap;
+        gap: 16px;
+        justify-content: space-between;
+        margin-bottom: 16px;
+
+        @media only screen and (min-width: $breakpoint-small) {
+            align-items: center;
+            flex-flow: row nowrap;
+        }
+    }
+
+    &__header-flex-end {
+        align-items: center;
+        display: flex;
+
+        // flex-flow: column wrap;
+        gap: 16px;
+        justify-content: flex-end;
+
+        // margin-bottom: 16px;
+
+        @media only screen and (min-width: $breakpoint-small) {
+            align-items: center;
+            flex-flow: row nowrap;
+        }
+    }
+
+    &__header-toggle-buy-sell-active.active>a {
+        background-color: #4ab44a !important;
+        color: white !important;
+    }
+}
+
+@media (min-width: $breakpoint-medium) and (max-width: $breakpoint-medium-max) {
+    .disable-overflow-hidden {
+        overflow: unset!important;
+    }
+}
+
+@media (max-width: $breakpoint-small-max) {
+    .flex-column {
+        flex-direction: column;
+    }
+
+    .padding5px {
+        padding: 5px 0;
+    }
+
+    .list-bill.unset-max-width {
+        max-width: unset;
+    }
+}
+
+.card_placeholder {
+    width: 100%;
+
+    &__token_placeholder {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+    }
+}
+
+.order-progress {
+    &__bar {
+        align-items: center;
+        background: rgb(255 255 255 / 8%);
+        display: flex;
+        height: 4px;
+    }
+
+    &__progress {
+        height: 4px;
+
+        &_left {
+            background: #4ab44a;
+        }
+    }
+}
+
+.list__row > .list__cell > .hover-visible-btn {
+    visibility: hidden;
+}
+
+.list__row:hover > .list__cell > .hover-visible-btn {
+    visibility: visible;
+}

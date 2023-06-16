@@ -52,7 +52,7 @@ function Field({
     return (
         <label className="form-label" htmlFor={props.id}>
             <fieldset
-                className={classNames('form-fieldset', {
+                className={classNames('form-fieldset swap', {
                     checking: formStore.tokensCache.isTokenUpdatingBalance(token?.root) && !props.disabled,
                     invalid: !isValid,
                 })}
