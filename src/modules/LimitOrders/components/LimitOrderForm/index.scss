@@ -1,0 +1,20 @@
+.info {
+    align-items: center;
+    background-color: rgb(255 255 255 / 16%);
+    border-left: 4px solid #fff;
+    column-gap: 20px;
+    display: flex;
+    flex-direction: row;
+    font-size: 14px;
+    font-weight: 700;
+    justify-content: center;
+    letter-spacing: 0.2px;
+    line-height: 16px;
+    margin: 0;
+    margin-top: 16px;
+    padding: 12px;
+}
+
+.empty-info {
+    min-height: 66px;
+}

@@ -5,82 +5,81 @@ import { useIntl } from 'react-intl'
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { TokenIcons } from '@/components/common/TokenIcons'
-import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { storage } from '@/utils'
+import { useWallet } from '@/stores/WalletService'
+import { NotationPlaceholder } from '@/modules/Swap/components/SwapNotation/NotationPlaceholder'
 
 import './index.scss'
 
 
 function SwapNotationInternal(): JSX.Element | null {
     const intl = useIntl()
-    const formStore = useSwapFormStoreContext()
-
+    const wallet = useWallet()
     const [available, setAvailable] = React.useState(storage.get('swap_notation') == null)
 
-    if (formStore.wallet.isInitializing || formStore.wallet.isUpdatingContract) {
-        return null
+    if (wallet?.isInitializing || wallet?.isUpdatingContract) {
+        return (
+            <NotationPlaceholder />
+        )
     }
 
     if (
-        !formStore.wallet.hasProvider
-        || !formStore.wallet.isConnected
-        || (formStore.wallet.isConnected && formStore.wallet.balance === '0')
+        !wallet?.hasProvider
+        || !wallet?.isConnected
+        || (wallet?.isConnected && wallet?.balance === '0')
     ) {
-        const connect: React.MouseEventHandler<HTMLAnchorElement> = async event => {
-            event.preventDefault()
-            await formStore.wallet.connect()
-        }
         return (
             <div className="card swap-notation-newbie">
                 <div>
-                    <h3>{intl.formatMessage({ id: 'GREETING_BANNER_TITLE' })}</h3>
-                    {(!formStore.wallet.hasProvider || !formStore.wallet.isConnected) ? (
-                        <p>{intl.formatMessage({ id: 'GREETING_BANNER_WALLET_NOT_INSTALLED_NOTE' })}</p>
-                    ) : (
-                        <>
-                            <p>{intl.formatMessage({ id: 'GREETING_BANNER_WALLET_INSTALLED_NOTE_P1' })}</p>
-                            <p>{intl.formatMessage({ id: 'GREETING_BANNER_WALLET_INSTALLED_NOTE_P2' })}</p>
-                        </>
-                    )}
-                    <p>
-                        {!formStore.wallet.hasProvider && (
-                            <a
-                                className="swap-notation-link"
-                                href="https://l1.broxus.com/everscale/wallet"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {intl.formatMessage({ id: 'WALLET_INSTALLATION_LINK_TEXT' })}
-                                <Icon icon="chevronRight" />
-                            </a>
+                    <div>
+                        <h3>{intl.formatMessage({ id: 'GREETING_BANNER_TITLE' })}</h3>
+                        {(!wallet?.hasProvider || !wallet?.isConnected) ? (
+                            <p>{intl.formatMessage({ id: 'GREETING_BANNER_WALLET_NOT_INSTALLED_NOTE' })}</p>
+                        ) : (
+                            <>
+                                <p>{intl.formatMessage({ id: 'GREETING_BANNER_WALLET_INSTALLED_NOTE_P1' })}</p>
+                                <p>{intl.formatMessage({ id: 'GREETING_BANNER_WALLET_INSTALLED_NOTE_P2' })}</p>
+                            </>
                         )}
-                        {(formStore.wallet.hasProvider && !formStore.wallet.isConnected) && (
-                            <a
-                                className="swap-notation-link"
-                                href="/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={connect}
+                    </div>
+                    <div className="buttons-row">
+                        <p>
+                            {!wallet?.hasProvider && (
+                                <Button
+                                    className="swap-notation-btn"
+                                    type="danger"
+                                    href="https://l1.broxus.com/everscale/wallet"
+
+                                >
+                                    {intl.formatMessage({ id: 'WALLET_INSTALLATION_LINK_TEXT' })}
+                                    <Icon icon="externalLink" ratio={0.8} />
+                                </Button>
+                            )}
+                            {(wallet?.hasProvider && !wallet?.isConnected) && (
+                                <Button
+                                    className="swap-notation-btn"
+                                    type="secondary"
+                                    onClick={wallet?.connect}
+                                >
+                                    {intl.formatMessage({ id: 'EVER_WALLET_CONNECT_BTN_TEXT' })}
+                                    <Icon icon="externalLink" ratio={0.8} />
+                                </Button>
+                            )}
+                        </p>
+                        <p>
+                            <Button
+                                className="swap-notation-btn"
+                                type="secondary"
+                                href="https://docs.flatqube.io/use/getting-started/how-to-get-ever"
                             >
-                                {intl.formatMessage({ id: 'EVER_WALLET_CONNECT_BTN_TEXT' })}
-                                <Icon icon="chevronRight" />
-                            </a>
-                        )}
-                    </p>
-                    <p>
-                        <a
-                            className="swap-notation-link"
-                            href="https://docs.flatqube.io/use/getting-started/how-to-get-ever"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            {intl.formatMessage({ id: 'GREETING_BANNER_GET_EVER_LINK_TEXT' })}
-                            <Icon icon="chevronRight" />
-                        </a>
-                    </p>
+                                {intl.formatMessage({ id: 'GREETING_BANNER_GET_EVER_LINK_TEXT' })}
+                                <Icon icon="externalLink" ratio={0.8} />
+                            </Button>
+                        </p>
+                    </div>
                 </div>
 
-                <footer>
+                {/* <footer>
                     <p>
                         {intl.formatMessage({ id: 'GREETING_BANNER_FAQ_NOTE' })}
                     </p>
@@ -95,12 +94,12 @@ function SwapNotationInternal(): JSX.Element | null {
                             <Icon icon="chevronRight" />
                         </a>
                     </p>
-                </footer>
+                </footer> */}
             </div>
         )
     }
 
-    if (formStore.wallet.isConnected && available) {
+    if (wallet?.isConnected && available) {
         const onDismiss = () => {
             storage.set('swap_notation', '1')
             setAvailable(false)
@@ -120,34 +119,32 @@ function SwapNotationInternal(): JSX.Element | null {
                         <TokenIcons
                             icons={[
                                 { icon: 'https://raw.githubusercontent.com/broxus/ton-assets/master/icons/WEVER/logo.svg' },
-                                { icon: formStore.wallet.coin.icon },
+                                { icon: wallet?.coin.icon },
                             ]}
-                            size="medium"
+                            size="small"
                         />
+                        <h3>
+                            {intl.formatMessage({ id: 'SWAP_COMBINED_NOTATION_TITLE' })}
+                        </h3>
                     </div>
-                    <h3>
-                        {intl.formatMessage({ id: 'SWAP_COMBINED_NOTATION_TITLE' })}
-                    </h3>
-                    <p>
-                        {intl.formatMessage({ id: 'SWAP_COMBINED_NOTATION_P1' })}
-                    </p>
-                    <p>
-                        {intl.formatMessage({ id: 'SWAP_COMBINED_NOTATION_P2' })}
-                    </p>
-                </div>
-                <footer>
-                    <p>
-                        <a
-                            className="swap-notation-link"
+                    <div className='buttons-row'>
+                        <p>
+                            {intl.formatMessage({ id: 'SWAP_COMBINED_NOTATION_P1' })}
+                            <br />
+                            {intl.formatMessage({ id: 'SWAP_COMBINED_NOTATION_P2' })}
+                        </p>
+                        <Button
+                            className="swap-notation-btn"
+                            type="secondary"
                             href="https://docs.flatqube.io/use/swap/how-to/make-a-basic-swap"
-                            target="_blank"
-                            rel="noopener noreferrer"
                         >
-                            {intl.formatMessage({ id: 'SWAP_COMBINED_NOTATION_HOW_TO_LINK_TEXT' })}
-                            <Icon icon="chevronRight" />
-                        </a>
-                    </p>
-                </footer>
+                            <div>
+                                {intl.formatMessage({ id: 'SWAP_COMBINED_NOTATION_HOW_TO_LINK_TEXT' })}
+                                <Icon icon="externalLink" ratio={0.8} />
+                            </div>
+                        </Button>
+                    </div>
+                </div>
             </div>
         )
     }

@@ -3,7 +3,7 @@ import classNames from 'classnames'
 import { reaction } from 'mobx'
 import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import { Icon } from '@/components/common/Icon'
 import {
@@ -13,7 +13,7 @@ import {
     SwapBill,
     SwapConfirmationPopup,
     SwapField,
-    SwapNotation,
+    // SwapNotation,
     // SwapPrice,
     SwapSettings,
     SwapSubmitButton,
@@ -23,7 +23,8 @@ import { DEFAULT_SLIPPAGE_VALUE } from '@/modules/Swap/constants'
 import { useSwapForm } from '@/modules/Swap/hooks/useSwapForm'
 import { TokensList } from '@/modules/TokensList'
 import { TokenImportPopup } from '@/modules/TokensList/components'
-import type { URLTokensParams } from '@/routes'
+import { appRoutes, URLTokensParams } from '@/routes'
+import { NativeScrollArea } from '@/components/common/NativeScrollArea'
 import { error, storage } from '@/utils'
 
 import './index.scss'
@@ -57,7 +58,7 @@ export function Swap(): JSX.Element {
                         await form.resolveStateFromUrl(leftTokenRoot, rightTokenRoot)
                         await formStore.init()
                     }
-                    catch (e) {}
+                    catch (e) { }
                 }
             },
             { fireImmediately: true },
@@ -71,18 +72,52 @@ export function Swap(): JSX.Element {
 
     return (
         <>
-            <div className="swap-container">
-                <SwapNotation />
+            <div className="swap__sidebar">
                 <div className="card swap-card">
                     <div className="card__wrap">
                         <header className="card__header">
                             <Observer>
                                 {() => (
-                                    <h2 className="card-title">
-                                        {intl.formatMessage({
-                                            id: 'SWAP_HEADER_TITLE',
-                                        })}
-                                    </h2>
+                                    <NativeScrollArea>
+                                        <ul className="tabs">
+                                            <li
+                                                className="active"
+                                                style={({
+                                                    fontWeight: 500,
+                                                    letterSpacing: '0.25px',
+                                                    lineHeight: '20px',
+                                                })}
+                                            >
+                                                {intl.formatMessage({
+                                                    id: 'NAV_LINK_TEXT_SWAP',
+                                                })}
+                                            </li>
+                                            <li>
+                                                <Link
+                                                    to={appRoutes.limit.makeUrl({
+                                                        leftTokenRoot: formStore.leftToken?.root.toString(),
+                                                        rightTokenRoot: formStore.leftToken?.root.toString()
+                                                            ? formStore.rightToken?.root.toString()
+                                                            : undefined,
+                                                    })}
+                                                    onClick={() => storage.set(
+                                                        'amounts',
+                                                        JSON.stringify({
+                                                            leftAmount: formStore.leftAmount ?? '',
+                                                            rightAmount: formStore.rightAmount ?? '',
+                                                        }),
+                                                    )}
+                                                >
+                                                    {/* <h4 className="card-title"> */}
+                                                    {intl.formatMessage({ id: 'P2P_HEADER_TITLE' })}
+                                                    {/* </h4> */}
+                                                </Link>
+
+                                            </li>
+
+                                        </ul>
+                                    </NativeScrollArea>
+
                                 )}
                             </Observer>
 
@@ -127,7 +162,10 @@ export function Swap(): JSX.Element {
                                             ? form.toggleConversionDirection
                                             : form.toggleSwapDirection}
                                     >
-                                        <Icon icon="reverse" />
+                                        <Icon
+                                            icon="reverse"
+                                            ratio={2 / 3}
+                                        />
                                     </div>
                                 )}
                             </Observer>
@@ -158,8 +196,8 @@ export function Swap(): JSX.Element {
                                 )}
                             </Observer>
 
-                            {/*
-                            <Observer>
+
+                            {/* <Observer>
                                 {() => {
                                     switch (true) {
                                         case formStore.route !== undefined:
@@ -174,9 +212,16 @@ export function Swap(): JSX.Element {
                                             return null
                                     }
                                 }}
-                            </Observer>
-                            */}
+                            </Observer> */}
 
+                            <Observer>
+                                {/* {() => (!formStore.isConversionMode ? (
+                                    <SwapBill key="bill" />
+                                ) : null)} */}
+                                {() => (
+                                    <SwapBill key="bill" />
+                                )}
+                            </Observer>
                             <Observer>
                                 {() => {
                                     switch (true) {
@@ -194,13 +239,9 @@ export function Swap(): JSX.Element {
                         </div>
                     </div>
                 </div>
-            </div>
+                {/* <SwapNotation /> */}
 
-            <Observer>
-                {() => (!formStore.isConversionMode ? (
-                    <SwapBill key="bill" />
-                ) : null)}
-            </Observer>
+            </div>
 
             <Observer>
                 {/* eslint-disable-next-line no-nested-ternary */}

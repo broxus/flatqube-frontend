@@ -381,6 +381,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
      * @param {string} [root]
      */
     public async changeRightToken(root?: string): Promise<void> {
+
         if (root === undefined) {
             return
         }
@@ -1710,6 +1711,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         if (!isReady) {
             return
         }
+        storage.remove('amounts')
 
         this.setState('isPreparing', this.wallet.isInitializing || this.wallet.isConnecting)
 

@@ -1,0 +1,53 @@
+.card.swap-banner-newbie {
+    background-clip: padding-box;
+    background-color: #050a2e;
+    background-image: radial-gradient(100% 100% at 100% 100%, rgba(0 56 255 / 24%) 0%, rgba(0 56 255 / 0%) 100%), 
+        linear-gradient(0deg, rgba(173 144 233 / 24%), rgba(173 144 233 / 24%));
+    border: 1px solid;
+    border-bottom: 0 none;
+    border-image-slice: 1;
+    border-image-source: radial-gradient(100% 97.92% at 0% 0%, rgb(173 144 233 / 64%) 0%, rgb(0 56 255 / 0%) 100%);
+    border-right: 0 none;
+    bottom: 24px;
+
+    // left: 0;
+    margin: auto;
+    position: fixed;
+    width: 90%;
+    z-index: 50;
+    @media only screen and (min-width: 640px) {
+        bottom: 40px;
+        right: 40px;
+        width: 392px;
+    }
+
+    h3 {
+        background: linear-gradient(90.26deg, #ad90e9 0%, #8da0ee 65.86%), #fff;
+        -webkit-background-clip: text;
+        background-clip: text;
+        border-image: none;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.25px;
+        line-height: 32px;
+        margin-bottom: 8px;
+        -webkit-text-fill-color: transparent;
+        text-fill-color: transparent;
+    }
+
+    > div {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+}
+
+.buttons-row {
+    display: flex;
+    flex-direction: row;
+
+    // gap: 16px;
+    // align-items: flex-start;
+    justify-content: space-evenly;
+    margin-top: 20px;
+}

@@ -6,12 +6,13 @@
     flex-direction: column;
     flex-shrink: 1;
     justify-content: space-between;
+    margin-bottom: 40px;
     padding: 24px;
     position: relative;
-
     @media only screen and (min-width: 1200px) {
+        // order: 9999;
+        height: 109px;
         min-width: 290px;
-        order: 9999;
     }
 
     h3 {
@@ -26,12 +27,15 @@
         font-weight: 400;
         letter-spacing: 0.5px;
         line-height: 20px;
-        margin-top: 15px
+
+        // margin-top: 10px
     }
 
     // noinspection ALL
     .swap-notation__icon-holders {
-        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        margin-bottom: 10px;
     }
 
     .swap-notation-link {
@@ -42,6 +46,15 @@
         line-height: 20px;
         text-decoration: none;
         &:hover { color: #b2cedf; }
+
+        .icon {
+            margin-left: 10px;
+            vertical-align: 2px;
+        }
+    }
+
+    .swap-notation-btn {
+        min-width: 140px;
 
         .icon {
             margin-left: 10px;
@@ -64,9 +77,10 @@
 
     &::after {
         background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQ5IiBoZWlnaHQ9IjI4OCIgdmlld0JveD0iMCAwIDI0OSAyODgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xMjQuNSAwTDI0OSA3My42NDY4TDI0OSAxNzEuNDI5TDE5OC43MjEgMTQyLjkyTDE5OC43MjEgOTkuNzc5NUwxMjQuNSA1Ny4wMTY5TDUwLjI3ODkgOTkuNzc5NUw1MC4yNzg5IDE4Ny42ODFMMTI0LjUgMjMwLjQ0M0wxODMuOTY3IDE5Ni4xODFMMjQ5IDIzMy4xNDNMMjQ5IDI4OEwxODYuNjggMjUxLjg2NEwxMjQuNSAyODcuNDZMNi41NTY5MWUtMDUgMjE2LjE4OUwyLjIzMzY3ZS0wNSA3My42NDY4TDEyNC41IDBaIiBmaWxsPSJ1cmwoI3BhaW50MF9yYWRpYWxfNjE2MV8xMzgzNjEpIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8ZGVmcz4KPHJhZGlhbEdyYWRpZW50IGlkPSJwYWludDBfcmFkaWFsXzYxNjFfMTM4MzYxIiBjeD0iMCIgY3k9IjAiIHI9IjEiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIiBncmFkaWVudFRyYW5zZm9ybT0icm90YXRlKDkwKSBzY2FsZSgyODggMjg5LjIwMykiPgo8c3RvcCBvZmZzZXQ9IjAuNDYwMTY4IiBzdG9wLWNvbG9yPSJ3aGl0ZSIvPgo8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IndoaXRlIiBzdG9wLW9wYWNpdHk9IjAiLz4KPC9yYWRpYWxHcmFkaWVudD4KPC9kZWZzPgo8L3N2Zz4K");
+        background-position: 0;
         bottom: 0;
         content: '';
-        height: 288px;
+        height: 107px;
         pointer-events: none;
         position: absolute;
         right: 0;
@@ -90,4 +104,17 @@
     footer {
         margin-top: 120px;
     }
+
+    > div {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+}
+
+.buttons-row {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
 }

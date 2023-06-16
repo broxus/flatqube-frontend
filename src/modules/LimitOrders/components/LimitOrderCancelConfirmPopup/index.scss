@@ -1,0 +1,70 @@
+@import '@/styles/variables.scss';
+
+.popup__wrap-confirm-p2p {
+    .alert {
+        background-color: #eb43617a;
+        border-left-color: #eb4361;
+        column-gap: 20px;
+        font-size: 12px;
+        line-height: 14px;
+        margin: 20px 0;
+    }
+}
+
+.popup__wrap-confirm-p2p-flex-row {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+
+    @media (max-width: $breakpoint-xsmall-max) {
+        flex-direction: column-reverse;
+        gap: 10px;
+
+    }
+}
+
+.order-title {
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 24px;
+}
+
+.order-info {
+    border-top: 1px solid rgb(255 255 255 / 8%);
+    margin: 0 auto;
+    max-width: 442px;
+    padding-bottom: 16px;
+    padding-top: 16px;
+
+    // padding: 16px;
+    width: 100%;
+
+    // border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bill-flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex-gap {
+    gap: 8px;
+}
+
+.icon-buy,
+.icon-sell {
+    border-radius: 27px;
+    font-size: small;
+    margin-left: 8px;
+    padding: 2px 8px;
+}
+
+.icon-buy {
+    background: rgb(74 180 74 / 16%);
+    color: #4ab44a;
+}
+
+.icon-sell {
+    background: rgb(235 67 97 / 16%);
+    color: rgb(235 67 97 / 100%);
+}

@@ -46,7 +46,7 @@ export function TokensList({
 }: Props): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
-
+    
     const [query, setSearchQuery] = React.useState<string>()
     const [searchResults, setSearchResults] = React.useState<TokenCache[]>([])
 

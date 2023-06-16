@@ -1,0 +1,139 @@
+@import '@/styles/variables.scss';
+
+.limit {
+    &-form-container {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        @media only screen and (max-width: $breakpoint-small-max) {
+            grid-row: 1;
+        }
+        @media only screen and (min-width: $breakpoint-medium) {
+            max-width: 450px;
+        }
+
+    }
+}
+
+.limit-icon {
+    align-items: center;
+    background-color: #c5e4f3;
+    border-radius: 100px;
+    cursor: pointer;
+    display: flex;
+    height: 32px;
+    justify-content: center;
+    margin-bottom: -11px;
+    margin-left: 15%;
+    margin-top: -17px;
+    position: absolute;
+    width: 32px;
+
+    &:hover {
+        background-color: #b2cedf;
+    }
+
+    &.disabled {
+        cursor: not-allowed;
+    }
+
+    svg { stroke: #000; }
+}
+
+.limit-field-balance {
+    max-width: 205px;
+    padding: 0 !important;
+    white-space: nowrap;
+    @media only screen and (min-width: $breakpoint-medium) {
+        max-width: unset;
+    }
+}
+
+.limit-container {
+    align-items: flex-start;
+    display: flex;
+    flex-flow: column-reverse;
+    flex-shrink: 0;
+    gap: 40px;
+    padding: 0!important;
+    @media only screen and (max-width: $breakpoint-small-max) {
+        grid-row: 1;
+    }
+
+    @media only screen and (min-width: $breakpoint-medium) {
+        max-width: 360px;
+    }
+    
+    @media only screen and (min-width: $breakpoint-large) {
+        align-items: stretch;
+        flex-flow: row nowrap;
+        flex-direction: column;
+        max-width: 460px;
+    }
+}
+
+.card.limit-card {
+    border-radius: 0;
+    min-width: 100%;
+    padding: 20px 24px;
+
+    @media only screen and (max-width: $breakpoint-large) {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+.notification_token-badge {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 8px;
+
+    &:not(:first-child) {
+        margin-top: 8px;
+    }
+}
+
+.tabs {
+    padding-left: 15px;
+}
+
+.form-fieldset.limit {
+    background-color: #050b2e50;
+}
+
+.limit {
+    &__container {
+        display: flex;
+        flex-flow: column wrap;
+        flex-direction: column-reverse;
+        gap: 20px;
+        margin-bottom: 64px;
+
+        @media only screen and (min-width: $breakpoint-medium) {
+            flex-flow: row nowrap;
+        }
+    }
+
+    &__content {
+        min-height: 100%;
+        min-width: 1px;
+        width: 100%;
+    }
+
+    &__sidebar {
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 100%;
+        width: 520px;
+        @media only screen and (min-width: $breakpoint-medium) {
+            min-width: 400px;
+            width: 400px;
+        }
+    }
+}
+
+.full-height {
+    min-height: 100%;
+}

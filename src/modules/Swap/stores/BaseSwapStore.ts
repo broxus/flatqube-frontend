@@ -126,7 +126,7 @@ export abstract class BaseSwapStore<
 
     /**
      * Returns `true` if swap process is running. Otherwise, `false`
-     * @returns {BaseSwapStoreState['isSwapping']}
+     * @returns {BaseSwapStoreState['isProcessing']}
      */
     public get isProcessing(): BaseSwapStoreState['isProcessing'] {
         return this.state.isProcessing

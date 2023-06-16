@@ -24,6 +24,7 @@ export const FarmFabricAddress = new AddressLiteral('0:c6774e6041b2ba4cf1898196d
 export const WEVERRootAddress = new AddressLiteral('0:a49cd4e158a9a15555e624759e2e4e766d22600b7800d891e46f9291f044a93d')
 
 export const USDTRootAddress = new AddressLiteral('0:a519f99bb5d6d51ef958ed24d337ad75a1c770885dcd42d51d6663f9fcdacfb2')
+// export const USDTRootAddress = new AddressLiteral('0:3e92001079098a4b0727add5597108d2d87b530dad72037dd105202e40eec5b8')
 
 export const QUBERootAddress = new AddressLiteral('0:9f20666ce123602fd7a995508aeaa0ece4f92133503c0dfbd609b3239f3901e2')
 
@@ -68,3 +69,11 @@ export const NPoolsList = new Map<
         ],
     }],
 ])
+// export const P2P_API_URL = 'https://p2p-api-test.flatqube.io'
+// export const backPK = '106925417688891724647234995036862332928925618442306815431062595410491768176622'
+
+export const P2P_API_URL = 'https://limit-api.flatqube.io'
+
+export const backPK = '107109469055807608186892190796543593557361412273437038860260422366233567094150'
+
+export const LimitOrderFactoryRoot = new AddressLiteral('0:3c8d39684cabbb780ff77710b02923c59ea2be84e211b09c3258eef344d394a4')

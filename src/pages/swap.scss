@@ -1,0 +1,68 @@
+@import '@/styles/variables.scss';
+
+.swap {
+    &__container {
+        display: flex;
+        flex-flow: column wrap;
+        gap: 20px;
+        flex-direction: column-reverse;
+
+        @media only screen and (min-width: $breakpoint-medium) {
+            flex-flow: row nowrap;
+        }
+    }
+
+    &__content {
+        min-width: 1px;
+        width: 100%;
+    }
+
+    &__sidebar {
+        max-width: 100%;
+        width: 520px;
+        margin-left: auto;
+        margin-right: auto;
+        @media only screen and (min-width: $breakpoint-medium) {
+            min-width: 400px;
+            width: 400px;
+        }
+    }
+}
+
+
+.notification_token-badge {
+    align-items: center;
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 8px;
+
+    &:not(:first-child) {
+        margin-top: 8px;
+    }
+}
+
+.tabs {
+    padding-left: 15px;
+}
+
+.form-fieldset.swap {
+    background-color: #050b2e50;
+}
+
+.transactions_list {
+    --list-grid-template: 150px minmax(25%, 45%) minmax(130px, 160px) minmax(130px, 160px) minmax(130px, 160px)!important;
+    min-height: 1px;
+}
+.transactions_list__toolbar {
+    align-items: flex-start;
+    display: flex;
+    flex-flow: column wrap;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 16px;
+
+    @media only screen and (min-width: $breakpoint-small) {
+        align-items: center;
+        flex-flow: row nowrap;
+    }
+}

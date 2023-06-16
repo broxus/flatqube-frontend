@@ -35,3 +35,9 @@ export type TransactionFailureReason<Input = any, AdditionalParams = {}> = Addit
     message?: string;
     transaction?: Transaction;
 }
+
+export type LocalStorageSwapAmounts = {
+    leftAmount?: string,
+    rightAmount?: string,
+    side?: 'ltr' | 'rtl',
+}
