@@ -37,6 +37,7 @@ export const ActionButton = observer(({
         return (
             <Button
                 block
+                size="sm"
                 type="secondary"
                 aria-disabled="true"
                 disabled
