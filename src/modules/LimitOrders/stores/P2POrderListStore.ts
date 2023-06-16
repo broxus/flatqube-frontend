@@ -284,7 +284,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
         const states = convertOrderViewFilterToStates(viewMode)
         const sortBy: LimitOrdersSort = viewMode === OrderViewMode.OPEN_ORDERS
             ? {
-                rate: isBuyOrSell === BuySellSwitch.SELL ? SortOrder.DESC : SortOrder.ASC,
+                rate: isBuyOrSell === BuySellSwitch.SELL ? SortOrder.ASC : SortOrder.DESC,
             }
             : {
                 createdAt: SortOrder.DESC,
