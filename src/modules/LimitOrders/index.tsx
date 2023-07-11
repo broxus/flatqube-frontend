@@ -17,7 +17,6 @@ import { P2PFormStore } from '@/modules/LimitOrders/stores/P2PFormStore'
 import { P2POrderListStoreProvider } from '@/modules/LimitOrders/context/P2POrderListStoreContext'
 import { P2POrderListStore } from '@/modules/LimitOrders/stores/P2POrderListStore'
 import { debug } from '@/utils'
-// import { debug } from '@/utils'
 
 import './index.scss'
 
@@ -115,7 +114,7 @@ export function Limit(): JSX.Element {
             () => store.lastUpdate,
             async () => {
                 if (graphStore.current?.graph === 'ohlcv') {
-                    await graphStore.current?.changeGraphData('ohlcv', null)
+                    graphStore.current?.changeGraphData('ohlcv', null)
                     graphStore.current?.loadOhlcvGraph()
                 }
                 else {
@@ -155,8 +154,6 @@ export function Limit(): JSX.Element {
 
     return (
         <>
-            {/* TODO another notation needed  */}
-            {/* <LimitNotation /> */}
             <SwapBanner />
             <div className="limit__container">
                 <P2PGraphStoreProvider

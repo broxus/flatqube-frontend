@@ -43,9 +43,8 @@ function Field({
     const intl = useIntl()
     const field = useField({
         decimals: nativeCoin !== undefined ? nativeCoin.decimals : token?.decimals,
-        value: props.value,
-        // eslint-disable-next-line sort-keys
         onChange: props.onChange,
+        value: props.value,
     })
     const p2pFormStore = useP2PFormStoreContext()
 

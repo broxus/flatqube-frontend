@@ -50,6 +50,11 @@ export const ItemRow = observer(({
     toggleOrderView,
 }: Props): JSX.Element => {
     const p2pOrderList = useP2POrderListStoreContext()
+    const percent = new BigNumber(expectedReceiveAmount || '')
+        .minus(new BigNumber(currentReceiveAmount || ''))
+        .dividedBy(new BigNumber(expectedReceiveAmount || ''))
+        .times(100)
+        .dp(2, BigNumber.ROUND_DOWN)
     if (!p2pOrderList.leftToken || !p2pOrderList.rightToken) {
         return <> </>
     }
@@ -107,10 +112,9 @@ export const ItemRow = observer(({
             </div>
             {toggleOrderView === OrderViewMode.MY_OPEN_ORDERS && (
                 <div
-                    className="list__cell limit-order-list__wrap-words list__cell--right visible@l"
+                    className="list__cell limit-order-list__wrap-words list__cell--right"
                     style={({
                         color: '#4AB44A',
-                        // fontSize: '12px!important',
                     })}
                 >
                     {' '}
@@ -125,13 +129,10 @@ export const ItemRow = observer(({
                     {' '}
                     {spentToken?.symbol}
                     {' '}
-                    ({new BigNumber(expectedReceiveAmount || '')
-                        .minus(new BigNumber(currentReceiveAmount || ''))
-                        .dividedBy(new BigNumber(expectedReceiveAmount || ''))
-                        .times(100)
-                        .dp(0, BigNumber.ROUND_HALF_DOWN)
-                        .toFixed()}
-                    %)
+                    ({
+                        // eslint-disable-next-line no-nested-ternary
+                        percent.eq(0) ? '0' : percent.gt(0.01) ? `~${percent.toFixed()}` : '<0.01'
+                    }%)
                     <div className="order-progress__bar">
                         <div
                             className="order-progress__progress order-progress__progress_left"

@@ -22,7 +22,6 @@ const options: Highcharts.Options = {
         height: 454,
     },
     xAxis: {
-        // tickPosition: 'inside',
         minPadding: 0,
         maxPadding: 0,
         lineWidth: 0,

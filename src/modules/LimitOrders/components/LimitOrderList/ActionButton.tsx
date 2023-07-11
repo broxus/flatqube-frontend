@@ -72,7 +72,7 @@ export const ActionButton = observer(({
                         await checkWalletConnected()
                         return
                     }
-                    p2pOrderList.setCurrentLimitOrder(limitOrder)
+                    await p2pOrderList.setCurrentLimitOrder(limitOrder)
                     p2pOrderList.setState('isCloseConfirmationAwait', true)
                 }}
             >

@@ -3,8 +3,6 @@ import { useIntl } from 'react-intl'
 
 import { notify, NotifyType } from '@/modules/Notification'
 import { LimitOrderCancelCallbackResult, LimitOrderExchangeSuccessCallbackResult, P2PStoreProviderProps } from '@/modules/LimitOrders/types'
-// import { Token } from '@/modules/TokensList/components/Token'
-// import { formattedAmount } from '@/utils'
 import { OrderStateCancelled } from '@/modules/LimitOrders/components/Notifications/OrderStateCancelled'
 import { OrderExchangeSuccess } from '@/modules/LimitOrders/components/Notifications/OrderExchangeSuccess'
 import { debug } from '@/utils'
@@ -50,10 +48,11 @@ export function useP2PNotificationCallbacks(): P2PNotifiedCallbacks {
     }, [])
 
     const onTransactionEnded = React.useCallback(({ callId }: {callId: string}) => {
-        debug('onTransactionEnded', callId, waitNotifyRef.current.has(callId))
         if (!waitNotifyRef.current.has(`w${callId}`)) {
             return
         }
+        debug('onTransactionEnded', callId, waitNotifyRef.current.has(`w${callId}`))
+        waitNotifyRef.current.delete(callId)
         notify(
             undefined,
             undefined,
@@ -63,7 +62,6 @@ export function useP2PNotificationCallbacks(): P2PNotifiedCallbacks {
                 type: NotifyType.INFO,
             },
         )
-        waitNotifyRef.current.delete(callId)
     }, [])
 
     const onOrderRootCreateSuccess = React.useCallback(({ callId }: {callId: string}) => {

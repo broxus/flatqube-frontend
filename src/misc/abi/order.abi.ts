@@ -1582,7 +1582,30 @@ export abstract class OrderAbi {
                 ],
             },
             {
-                name: 'getExpectedSpendAmount',
+                name: 'getExpectedSpentAmount',
+                inputs: [
+                    {
+                        name: 'answerId',
+                        type: 'uint32',
+                    },
+                    {
+                        name: 'amount',
+                        type: 'uint128',
+                    },
+                ],
+                outputs: [
+                    {
+                        name: 'value0',
+                        type: 'uint128',
+                    },
+                    {
+                        name: 'value1',
+                        type: 'uint128',
+                    },
+                ],
+            },
+            {
+                name: 'getExpectedReceiveAmount',
                 inputs: [
                     {
                         name: 'answerId',
@@ -2111,12 +2134,25 @@ export abstract class OrderAbi {
                         name: 'fee',
                         type: 'uint128',
                     },
+                    {
+                        name: 'initiator',
+                        type: 'address',
+                    },
                 ],
                 outputs: [],
             },
             {
                 name: 'OrderCodeUpgraded',
-                inputs: [],
+                inputs: [
+                    {
+                        name: 'oldVersion',
+                        type: 'uint32',
+                    },
+                    {
+                        name: 'newVersion',
+                        type: 'uint32',
+                    },
+                ],
                 outputs: [],
             },
         ],

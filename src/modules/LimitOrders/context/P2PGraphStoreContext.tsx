@@ -67,7 +67,6 @@ export function P2PGraphStoreProvider({
                     finally {
                         context.setState('isPreparing', false)
                     }
-                    // await context.init()
                 }
             },
             { delay: 50, fireImmediately: true },

@@ -116,7 +116,7 @@ export function SwapPoolTransactions(): JSX.Element {
                             {(() => {
                                 const isFetching = (
                                     transactionsStore.isFetching === undefined
-                                    || transactionsStore.isFetching
+                                        || transactionsStore.isFetching
                                 )
 
                                 switch (true) {

@@ -41,6 +41,7 @@ export function OrderBookWrap({
                 Number(el.rate),
                 Number(el.askSize),
             ]),
+        // eslint-disable-next-line prefer-const
         bidData = data
             ?.filter(el => el.bidSize)
             .map(el => [
@@ -48,10 +49,31 @@ export function OrderBookWrap({
                 Number(el.bidSize),
             ])
     if (orderBookPercent) {
-        askData = askData && askData?.filter(el => (el[0] < askData![0][0] * (1 + orderBookPercent / 100)))
-        bidData = bidData?.length
-            ? bidData?.filter(el => (el[0] > bidData![bidData!.length - 1][0] * (1 - orderBookPercent / 100)))
-            : bidData
+        const dataBoundary: {
+            ask?: number,
+            bid?: number,
+        } = {
+            ask: undefined,
+            bid: undefined,
+        }
+        if (askData?.length) {
+            dataBoundary.ask = askData[0][0] * (1 + orderBookPercent / 100)
+            if (bidData?.length) {
+                if (askData[0][0] < bidData![bidData!.length - 1][0]) {
+                    dataBoundary.ask = bidData![bidData!.length - 1][0] * (1 + orderBookPercent / 100)
+                }
+            }
+            askData = askData?.filter(el => (dataBoundary?.ask ? (el[0] < dataBoundary?.ask) : true))
+        }
+        if (bidData?.length) {
+            dataBoundary.bid = bidData![bidData!.length - 1][0] * (1 - orderBookPercent / 100)
+            if (askData?.length) {
+                if (askData[0][0] < bidData![bidData!.length - 1][0]) {
+                    dataBoundary.bid = askData[0][0] * (1 - orderBookPercent / 100)
+                }
+            }
+            bidData = bidData?.filter(el => (dataBoundary.bid ? (el[0] > dataBoundary.bid) : true))
+        }
     }
     return (
         <div

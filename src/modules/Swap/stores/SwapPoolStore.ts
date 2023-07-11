@@ -4,9 +4,7 @@ import {
     makeObservable,
 } from 'mobx'
 
-import { NPoolsList } from '@/config'
 import { getFullContractState, TokenUtils } from '@/misc'
-// import type { Timeframe } from '@/modules/Charts/types'
 import type { PoolResponse } from '@/modules/Pools/types'
 import { usePoolsApi } from '@/modules/Pools/hooks/useApi'
 import { BaseStore } from '@/stores/BaseStore'
@@ -21,33 +19,21 @@ import {
 
 export type SwapPoolStoreData = {
     customTokensDecimals?: Record<string, number>;
-    // graph: OhlcvBar[] | null;
+    address: string;
     lpToken?: TokenCache;
     pool?: PoolResponse;
     tokenPrices: Record<string, string>;
-    // userLpBalance?: string;
 }
 
 export type SwapPoolStoreState = {
-    // graphType: SwapPoolGraphType;
     isFetching?: boolean;
-    isFetchingGraph?: boolean;
     isFetchingPrices?: boolean;
     isInitializing?: boolean;
     isSyncingCustomTokens?: boolean;
     isSyncingLpToken?: boolean;
     isSyncingUserData?: boolean;
     notFound?: boolean;
-    // timeframe: Timeframe;
 }
-
-// export enum SwapPoolGraphType {
-//     Ohlcv,
-//     OhlcvInverse,
-//     Tvl,
-//     TvlRatio,
-//     Volume,
-// }
 
 export type SwapPoolTokenData = {
     address: string;
@@ -59,124 +45,68 @@ export type SwapPoolTokenData = {
     tvl?: string;
 }
 
-// function getPrice(
-//     leftLocked?: string | number,
-//     rightLocked?: string | number,
-//     leftDecimals?: number,
-//     rightDecimals?: number,
-// ): string {
-//     const price = (leftDecimals !== undefined && rightDecimals !== undefined)
-//         ? new BigNumber(rightLocked || 0)
-//             .shiftedBy(-rightDecimals)
-//             .div(new BigNumber(leftLocked || 0).shiftedBy(-leftDecimals))
-//             .dp(rightDecimals, BigNumber.ROUND_UP)
-//         : new BigNumber(0)
-
-//     return isGoodBignumber(price) ? price.toFixed() : '0'
-// }
-
 export class SwapPoolStore extends BaseStore<SwapPoolStoreData, SwapPoolStoreState> {
 
     protected readonly api = usePoolsApi()
 
     constructor(
-        public readonly address: string,
         public readonly wallet: WalletService,
         public readonly tokensCache: TokensCacheService,
     ) {
         super()
 
         this.setData({
-            // graph: null,
             tokenPrices: {},
         })
 
-        // this.setState(() => ({
-        //     graphType: SwapPoolGraphType.Ohlcv,
-        //     timeframe: 'H1',
-        // }))
-
         makeObservable(this, {
             customTokensDecimals: computed,
-            // fetchGraph: action.bound,
-            // graph: computed,
-            // graphType: computed,
             isFetching: computed,
-            isFetchingGraph: computed,
             isFetchingPrices: computed,
-            isNPool: computed,
             isPoolEmpty: computed,
             isStablePool: computed,
             isSyncingCustomTokens: computed,
             isSyncingLpToken: computed,
             isSyncingUserData: computed,
             lpToken: computed,
-            // ltrPrice: computed,
             notFound: computed,
-            // ohlcvGraphData: computed,
-            // ohlcvGraphInverseData: computed,
             pool: computed,
-            // rtlPrice: computed,
-            // timeframe: computed,
+            poolAddress: computed,
             tokens: computed,
-            // tvlGraphData: computed,
-            // userLpBalance: computed,
-            // userShare: computed,
-            // userUsdBalance: computed,
-            // volumeGraphData: computed,
         })
     }
 
     public async init(): Promise<void> {
-        if (this.state.isInitializing) {
+        if (this.state.isInitializing || !this.address) {
             return
         }
 
         this.setState('isInitializing', true)
 
-        if (this.pool === undefined) {
+        if (this.pool?.meta.poolAddress !== this.address) {
             await this.fetch()
         }
-
-        // if (this.graph == null) {
-        //     await this.fetchGraph()
-        // }
-
         await Promise.allSettled([
             await this.syncLpToken(),
             await this.fetchPrices(),
         ])
-
-        // this.walletDisposer = reaction(() => this.wallet.address, async (address?: string, prevAddress?: string) => {
-        //     if (address !== prevAddress) {
-        //         await this.syncPoolUserData()
-        //     }
-        // }, { fireImmediately: true })
-
         this.setState('isInitializing', false)
     }
-
-    // public dispose(): void {
-    //     this.walletDisposer?.()
-    // }
 
     protected async fetch(force?: boolean): Promise<void> {
         if (!force && this.isFetching) {
             return
         }
-
+        if (!this.address) {
+            return
+        }
         try {
             this.setState('isFetching', true)
-
             const response = await this.api.pool({
                 address: this.address,
             }, { method: 'POST' })
 
             this.setData('pool', response)
-
-            // if (this.isNPool) {
-            //     this.setState('graphType', SwapPoolGraphType.TvlRatio)
-            // }
 
             try {
                 const unavailableTokens = response.meta.currencyAddresses.filter(
@@ -238,49 +168,6 @@ export class SwapPoolStore extends BaseStore<SwapPoolStoreData, SwapPoolStoreSta
         }
     }
 
-    // public async fetchGraph(from?: number, to?: number): Promise<void> {
-    //     if (this.isFetchingGraph) {
-    //         return
-    //     }
-
-    //     try {
-    //         this.setState('isFetchingGraph', true)
-
-    //         let ohlcvKind = OhlcvKind.Price
-    //         if (this.graphType === SwapPoolGraphType.Tvl || this.graphType === SwapPoolGraphType.TvlRatio) {
-    //             ohlcvKind = OhlcvKind.Tvl
-    //         }
-    //         else if (this.graphType === SwapPoolGraphType.Volume) {
-    //             ohlcvKind = OhlcvKind.Volume
-    //         }
-
-    //         const result = await this.api.poolOhlcv({
-    //             address: this.address,
-    //         }, {
-    //             method: 'POST',
-    //         }, {
-    //             from: from || DateTime.local().minus({
-    //                 days: this.timeframe === 'D1' ? 30 : 7,
-    //             }).toUTC(undefined, {
-    //                 keepLocalTime: false,
-    //             }).toMillis(),
-    //             ohlcvKind,
-    //             poolAddress: this.address,
-    //             timeframe: this.timeframe,
-    //             to: to || DateTime.local().toUTC(undefined, {
-    //                 keepLocalTime: false,
-    //             }).toMillis(),
-    //         })
-    //         const data = result.concat(this.graph ?? [])
-
-    //         this.setData('graph', data.length > 0 ? data : null)
-    //     }
-    //     catch (e) {}
-    //     finally {
-    //         this.setState('isFetchingGraph', false)
-    //     }
-    // }
-
     protected async syncLpToken(force?: boolean): Promise<void> {
         if (!force && this.isSyncingLpToken) {
             return
@@ -317,36 +204,13 @@ export class SwapPoolStore extends BaseStore<SwapPoolStoreData, SwapPoolStoreSta
         }
     }
 
-    // protected async syncPoolUserData(): Promise<void> {
-    //     if (this.wallet.account?.address === undefined || this.lpToken === undefined) {
-    //         return
-    //     }
-
-    //     try {
-    //         this.setState('isSyncingUserData', true)
-
-    //         const userLpBalance = await TokenWalletUtils.balance({
-    //             tokenRootAddress: this.lpToken.root,
-    //             walletOwnerAddress: this.wallet.account.address,
-    //         })
-
-    //         this.setData('userLpBalance', userLpBalance)
-    //     }
-    //     catch (e) {
-    //         debug('Sync pool user data error', e)
-    //     }
-    //     finally {
-    //         this.setState('isSyncingUserData', false)
-    //     }
-    // }
+    public get address(): SwapPoolStoreData['address'] {
+        return this.data.address
+    }
 
     public get customTokensDecimals(): SwapPoolStoreData['customTokensDecimals'] {
         return this.data.customTokensDecimals
     }
-
-    // public get graph(): SwapPoolStoreData['graph'] {
-    //     return this.data.graph
-    // }
 
     public get lpToken(): SwapPoolStoreData['lpToken'] {
         return this.data.lpToken
@@ -356,20 +220,12 @@ export class SwapPoolStore extends BaseStore<SwapPoolStoreData, SwapPoolStoreSta
         return this.data.pool
     }
 
-    // public get userLpBalance(): SwapPoolStoreData['userLpBalance'] {
-    //     return this.data.userLpBalance
-    // }
-
-    // public get graphType(): SwapPoolStoreState['graphType'] {
-    //     return this.state.graphType
-    // }
+    public get poolAddress(): string | undefined {
+        return this.data.pool?.meta.poolAddress
+    }
 
     public get isFetching(): SwapPoolStoreState['isFetching'] {
         return this.state.isFetching
-    }
-
-    public get isFetchingGraph(): SwapPoolStoreState['isFetchingGraph'] {
-        return this.state.isFetchingGraph
     }
 
     public get isFetchingPrices(): SwapPoolStoreState['isFetchingPrices'] {
@@ -392,22 +248,10 @@ export class SwapPoolStore extends BaseStore<SwapPoolStoreData, SwapPoolStoreSta
         return this.state.notFound
     }
 
-    // public get timeframe(): SwapPoolStoreState['timeframe'] {
-    //     return this.state.timeframe
-    // }
-
     public getPrice(address: string): string | undefined {
         return this.data.tokenPrices[address]
     }
 
-    public get isNPool(): boolean {
-        return (
-            (this.isStablePool && this.tokens.length > 2)
-            || Array.from(NPoolsList.entries()).some(
-                ([, value]) => value.poolAddress.toString() === this.address,
-            )
-        )
-    }
 
     public get isPoolEmpty(): boolean {
         return new BigNumber(this.pool?.lpLocked || 0).isZero()
@@ -416,51 +260,6 @@ export class SwapPoolStore extends BaseStore<SwapPoolStoreData, SwapPoolStoreSta
     public get isStablePool(): boolean {
         return this.pool?.meta.pairType === 'stable'
     }
-
-    // public get ltrPrice(): string {
-    //     return (this.isStablePool ? this.pool?.stableOneSwap[0] : undefined)
-    //         ?? getPrice(
-    //             this.pool?.volumesLocked[0],
-    //             this.pool?.volumesLocked[1],
-    //             this.tokens[0]?.decimals,
-    //             this.tokens[1]?.decimals,
-    //         )
-    // }
-
-    // public get ohlcvGraphData(): OhlcvBarData[] {
-    //     return uniqBy(this.graph, 'timestamp').map<OhlcvBarData>(item => ({
-    //         close: parseFloat(item.close),
-    //         currencyVolumes: item.currencyVolumes,
-    //         high: parseFloat(item.high),
-    //         low: parseFloat(item.low),
-    //         open: parseFloat(item.open),
-    //         time: item.timestamp as Time,
-    //         tvl: parseFloat(item.tvl),
-    //         usdtVolume: item.usdtVolume,
-    //         volume: parseFloat(item.usdtVolume),
-    //     }))
-    // }
-
-    // public get ohlcvGraphInverseData(): OhlcvData[] {
-    //     return this.ohlcvGraphData.map<OhlcvData>(item => ({
-    //         close: item.open,
-    //         high: item.low,
-    //         low: item.high,
-    //         open: item.close,
-    //         time: item.time,
-    //         volume: item.volume,
-    //     }))
-    // }
-
-    // public get rtlPrice(): string {
-    //     return (this.isStablePool ? this.pool?.stableOneSwap[1] : undefined)
-    //         ?? getPrice(
-    //             this.pool?.volumesLocked[1],
-    //             this.pool?.volumesLocked[0],
-    //             this.tokens[1]?.decimals,
-    //             this.tokens[0]?.decimals,
-    //         )
-    // }
 
     public get tokens(): SwapPoolTokenData[] {
         return this.pool?.meta.currencyAddresses.map((address, idx) => {
@@ -480,44 +279,5 @@ export class SwapPoolStore extends BaseStore<SwapPoolStoreData, SwapPoolStoreSta
             }
         }) ?? []
     }
-
-    // public get tvlGraphData(): SingleValueData[] {
-    //     return uniqBy(this.graph, 'timestamp').map<SingleValueData>(item => ({
-    //         time: item.timestamp as Time,
-    //         value: parseFloat(item.tvl),
-    //     }))
-    // }
-
-    // public get userShare(): string {
-    //     if (this.isPoolEmpty) {
-    //         return '0'
-    //     }
-
-    //     if (new BigNumber(this.userLpBalance || 0).eq(this.pool?.lpLocked ?? 0)) {
-    //         return '100'
-    //     }
-    //     return new BigNumber(this.userLpBalance || 0)
-    //         .div(parseInt(this.pool?.lpLocked ?? '0', 10) || 1)
-    //         .times(100)
-    //         .toFixed()
-    // }
-
-    // public get userUsdBalance(): string {
-    //     if (this.lpToken?.root === undefined || this.lpToken.decimals === undefined) {
-    //         return '0'
-    //     }
-    //     return new BigNumber(this.userLpBalance || 0).shiftedBy(-this.lpToken.decimals).times(
-    //         this.getPrice(this.lpToken.root) ?? 0,
-    //     ).toFixed()
-    // }
-
-    // public get volumeGraphData(): SingleValueData[] {
-    //     return uniqBy(this.graph, 'timestamp').map<SingleValueData>(item => ({
-    //         time: item.timestamp as Time,
-    //         value: parseFloat(item.usdtVolume),
-    //     }))
-    // }
-
-    // protected walletDisposer: IReactionDisposer | undefined
 
 }

@@ -48,6 +48,11 @@ export function ItemCard({
     toggleOrderView,
 }: Props): JSX.Element {
     const intl = useIntl()
+    const percent = new BigNumber(expectedReceiveAmount || '')
+        .minus(new BigNumber(currentReceiveAmount || ''))
+        .dividedBy(new BigNumber(expectedReceiveAmount || ''))
+        .times(100)
+        .dp(2, BigNumber.ROUND_DOWN)
     return (
         <div className="list__card">
             <div className="list-bill unset-max-width">
@@ -222,12 +227,11 @@ export function ItemCard({
                                             className="list-bill__val "
                                             style={{ height: 'auto' }}
                                         >
-                                            {new BigNumber(expectedReceiveAmount || '')
-                                                .minus(new BigNumber(currentReceiveAmount || ''))
-                                                .dividedBy(new BigNumber(expectedReceiveAmount || ''))
-                                                .times(100)
-                                                .dp(0, BigNumber.ROUND_HALF_DOWN)
-                                                .toFixed()}
+
+                                            {
+                                                // eslint-disable-next-line no-nested-ternary
+                                                percent.eq(0) ? '0' : percent.gt(0.01) ? `~${percent.toFixed()}` : '<0.01'
+                                            }
                                             %
                                         </div>
                                     </div>

@@ -28,17 +28,13 @@ import { LocalStorageSwapAmounts } from '@/misc'
 import './index.scss'
 
 type Props = {
-    // showTokensList: (side: TokenSide) => () => void;
     onChangeLeftAmount?: (value: string, side?: Side) => void;
     onChangeRightAmount?: (value: string, side?: Side) => void;
-    // toggleHandler?: () => void;
 }
 
 export function LimitOrderForm({
-    // showTokensList,
     onChangeLeftAmount,
     onChangeRightAmount,
-    // toggleHandler,
 }: Props): JSX.Element {
     const intl = useIntl()
 
@@ -221,13 +217,8 @@ export function LimitOrderForm({
                     {() => (
                         <LimitFieldMarketPrice
                             key="marketPrice"
-                            // balance={p2p.formattedRightBalance}
                             disabled={p2pFormStore.isLoading || p2pFormStore.isLimitOrderCreating}
                             id="marketPrice"
-                            // isValid={(
-                            //     p2p.isLoading
-                            //     // || p2p.isLeftAmountValid
-                            // )}
                             readOnly={(
                                 p2pFormStore.isPreparing
                                 || p2pFormStore.isLimitOrderCreating
@@ -328,5 +319,3 @@ export function LimitOrderForm({
         </>
     )
 }
-
-// export default LimitOrderForm

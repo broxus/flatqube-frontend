@@ -114,7 +114,7 @@ export class P2PNotifyStore extends BaseStore<P2PNotifyStoreData, P2PNotifyStore
                             const { receiveToken, spentToken } = decodedTx.input.result
                             if (decodedTx?.method === 'onOrderStateFilled') {
                                 this.callbacks.onOrderStateFilled?.({
-                                    callId: getSafeProcessingId(),
+                                    callId: decodedTx.input.id ?? getSafeProcessingId(),
                                     result: {
                                         ...decodedTx.input.result,
                                         fee: decodedTx.input.fee,
@@ -127,7 +127,7 @@ export class P2PNotifyStore extends BaseStore<P2PNotifyStoreData, P2PNotifyStore
                             }
                             if (decodedTx?.method === 'onOrderPartExchangeSuccess') {
                                 this.callbacks.onOrderPartExchangeSuccess?.({
-                                    callId: getSafeProcessingId(),
+                                    callId: decodedTx.input.id ?? getSafeProcessingId(),
                                     result: {
                                         ...decodedTx.input.result,
                                         fee: decodedTx.input.fee,
@@ -165,13 +165,6 @@ export class P2PNotifyStore extends BaseStore<P2PNotifyStoreData, P2PNotifyStore
     public get lastNotifyTransactionId(): P2PNotifyStoreData['lastNotifyTransactionId'] {
         return this.data.lastNotifyTransactionId
     }
-
-    // protected orderListRefresh: (() => void | undefined) | undefined
-
-    /*
-     * Internal reaction disposers
-     * ----------------------------------------------------------------------------------
-     */
 
     protected walletReactionDisposer: IReactionDisposer | undefined
 

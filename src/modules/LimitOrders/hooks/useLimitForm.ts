@@ -123,18 +123,9 @@ export function useLimitForm(): LimitFormShape {
 
         if (!root) return
 
-        // p2pStore.setData({
-        //     rightToken: root,
-        // })
-
         if (!p2pFormStore.leftToken?.root) return
         const isReverting = root === p2pFormStore.leftToken?.root
-        // history.replace(appRoutes.limit.makeUrl({
-        //     leftTokenRoot: root,
-        //     rightTokenRoot: isReverting
-        //         ? p2pStore.leftToken?.root ?? ''
-        //         : p2pStore.rightToken?.root ?? '',
-        // }))
+
         history.replace(appRoutes.limit.makeUrl({
             leftTokenRoot: isReverting
                 ? p2pFormStore.rightToken?.root

@@ -71,7 +71,6 @@ export function P2POrderListStoreProvider({
                                 leftAmount, rightAmount,
                             })
                         }
-                        // await context.init()
                     }
                     catch (e) {
                         error('P2P Store initializing error', e)

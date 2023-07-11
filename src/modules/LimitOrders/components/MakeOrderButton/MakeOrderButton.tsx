@@ -35,27 +35,8 @@ function MakeOrderButtonComponent(): JSX.Element {
     const intl = useIntl()
     const p2pForm = useP2PFormStoreContext()
 
-    // React.useEffect(() => {
-    //   p2pForm.getLimitOrderRoot()
-    // }, [])
-
     const bothGreaterZero = p2pForm?.leftAmountNumber.isGreaterThan(0)
         && p2pForm?.rightAmountNumber.isGreaterThan(0)
-    // debug(
-    //     '+++',
-    //     p2pForm.isPreparing
-    //         || p2pForm.isBusy
-    //         || p2pForm.isLoading
-    //         || !p2pForm.tokensCache.isReady
-    //         || p2pForm.wallet.isInitializing
-    //         || p2pForm.isLimitOrderRootLoading,
-    //     p2pForm.isPreparing,
-    //     p2pForm.isBusy,
-    //     p2pForm.isLoading,
-    //     !p2pForm.tokensCache.isReady,
-    //     p2pForm.wallet.isInitializing,
-    //     p2pForm.isLimitOrderRootLoading,
-    // )
     if (
         p2pForm.isPreparing
         || p2pForm.isBusy

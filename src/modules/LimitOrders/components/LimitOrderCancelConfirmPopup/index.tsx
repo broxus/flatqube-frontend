@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-// import { reaction } from 'mobx'
 import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 import classNames from 'classnames'
@@ -66,7 +65,9 @@ function LimitOrderCancelConfirm(): JSX.Element {
                 <div className="order-info">
                     <div className="list-bill__row">
                         <h3 className="order-title">
-                            Order info
+                            {intl.formatMessage({
+                                id: 'P2P_CONFIRM_LABEL_ORDER_INFO',
+                            })}
                         </h3>
                     </div>
                     <div key="hash" className="list-bill__row">
@@ -110,8 +111,12 @@ function LimitOrderCancelConfirm(): JSX.Element {
                             })}
                             >
                                 {orderType === BuySellSwitch.BUY
-                                    ? 'Buy'
-                                    : 'Sell'}
+                                    ? intl.formatMessage({
+                                        id: 'ORDER_LIST_HEADER_BUY_CELL',
+                                    })
+                                    : intl.formatMessage({
+                                        id: 'ORDER_LIST_HEADER_SELL_CELL',
+                                    })}
                             </div>
                         </div>
                     </div>

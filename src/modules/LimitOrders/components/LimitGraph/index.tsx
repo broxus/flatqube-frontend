@@ -1,6 +1,7 @@
 import * as React from 'react'
 import classNames from 'classnames'
 import { Observer } from 'mobx-react-lite'
+import { useIntl } from 'react-intl'
 
 import { TokenCache } from '@/stores/TokensCacheService'
 import { concatSymbols, debug } from '@/utils'
@@ -12,6 +13,7 @@ import { OrderBookWrap } from '@/modules/LimitOrders/components/OrderBook'
 import { Candlestick } from '@/modules/Charts/Candlestick'
 import { Tabs } from '@/components/common/Tabs'
 import { ChartHeader } from '@/components/common/ChartHeader'
+import { Button } from '@/components/common/Button'
 
 import './index.scss'
 
@@ -25,14 +27,12 @@ type Props = {
 /* eslint-disable jsx-a11y/anchor-is-valid */
 export function LimitGraph({ baseToken, counterToken, small }: Props): JSX.Element {
     const p2pGraph = useP2PGraphStoreContext()
+    const intl = useIntl()
     const [orderBookPercent, setOrderBookPercent] = React.useState<number | undefined>(5)
     const toggleGraph = (value: P2PGraphStoreState['graph']) => async () => {
         if (value === p2pGraph.graph) return
         p2pGraph.setData('graphData', DEFAULT_GRAPH_DATA)
         p2pGraph.setState('graph', value)
-        if (value === 'ohlcv') {
-            p2pGraph.loadOhlcvGraph() // TODO temp fix to load in Chart instead of (load={p2p.loadOhlcvGraph})
-        }
     }
 
     const toggleTimeframe = (value: P2PGraphStoreState['timeframe']) => () => {
@@ -68,14 +68,30 @@ export function LimitGraph({ baseToken, counterToken, small }: Props): JSX.Eleme
                                         active: p2pGraph.graph === 'ohlcv',
                                     })}
                                 >
-                                    <a onClick={toggleGraph('ohlcv')}>Price</a>
+                                    <Button
+                                        className="limit-stats__graph-toggle"
+                                        type="link"
+                                        onClick={toggleGraph('ohlcv')}
+                                    >
+                                        {intl.formatMessage({
+                                            id: 'P2P_CHART_LABEL_PRICE',
+                                        })}
+                                    </Button>
                                 </li>
                                 <li
                                     className={classNames({
                                         active: p2pGraph.graph === 'depth',
                                     })}
                                 >
-                                    <a onClick={toggleGraph('depth')}>Depth </a>
+                                    <Button
+                                        className="limit-stats__graph-toggle"
+                                        type="link"
+                                        onClick={toggleGraph('depth')}
+                                    >
+                                        {intl.formatMessage({
+                                            id: 'P2P_CHART_LABEL_DEPTH',
+                                        })}
+                                    </Button>
                                 </li>
 
                             </ul>
@@ -113,7 +129,9 @@ export function LimitGraph({ baseToken, counterToken, small }: Props): JSX.Eleme
                                             onClick: () => setOrderBookPercent(10),
                                         }, {
                                             active: orderBookPercent === undefined,
-                                            label: 'MAX',
+                                            label: intl.formatMessage({
+                                                id: 'P2P_CHART_LABEL_MAX',
+                                            }),
                                             onClick: () => setOrderBookPercent(undefined),
                                         }]}
                                     />
@@ -133,14 +151,6 @@ export function LimitGraph({ baseToken, counterToken, small }: Props): JSX.Eleme
                             || p2pGraph.tokensCache.isFetching
                             || !p2pGraph.tokensCache.isReady
                         const isValidTokens = p2pGraph.isValidTokens === undefined || p2pGraph.isValidTokens
-                        // debug(
-                        //     '+++isDepthGraphLoading',
-                        //     isDepthGraphLoading,
-                        //     isValidTokens,
-                        //     p2pGraph.isDepthGraphLoading,
-                        //     p2pGraph.tokensCache.isFetching,
-                        //     !p2pGraph.tokensCache.isReady,
-                        // )
                         return (p2pGraph.graph === 'depth'
                             ? (
                                 <OrderBookWrap

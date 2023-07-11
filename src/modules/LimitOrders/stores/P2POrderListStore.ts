@@ -1,5 +1,5 @@
 import {
-    Address, Contract, LT_COLLATOR,
+    Address, Contract, DecodedAbiFunctionOutputs, LT_COLLATOR,
 } from 'everscale-inpage-provider'
 import {
     action,
@@ -10,6 +10,7 @@ import {
     override,
     reaction,
 } from 'mobx'
+import BigNumber from 'bignumber.js'
 
 import {
     DEFAULT_LIMIT_ORDERS_FILTERS,
@@ -27,6 +28,7 @@ import {
     LimitOrdersSort,
     OrderViewMode,
     P2PCtorOptions,
+    P2POrderExpectedAmount,
     P2POrderListStoreData,
     P2POrderListStoreState,
     SortOrder,
@@ -65,38 +67,35 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
         makeObservable<
             P2POrderListStore,
             | 'handleChangeTokens'
-            // | 'handleFormChanges'
-            // | 'handleSend'
             | 'handleTokensCacheReady'
             | 'handleWalletAccountChange'
-            // | 'makeLimitOrder'
-            // | 'getLimitOrderRoot'
             | 'setLimitOrdersFilter'
             | 'toggleRateDirection'
-            // | 'maximizeLeftAmount'
         >(this, {
+            changeLeftOrderAmount: action.bound,
             changeLimitOrderListData: action.bound,
             changeLimitOrderListLoadingState: action.bound,
-            // changeTokens: action.bound,
+            changeRightOrderAmount: action.bound,
             coinSide: computed,
+            currentLimitOrderFee: computed,
+            currentLimitOrderReceive: computed,
+            currentLimitOrderSpent: computed,
             defaultLeftTokenRoot: computed,
             defaultRightTokenRoot: computed,
             formattedLeftBalance: override,
             formattedRightBalance: override,
-            // getLimitOrderRoot: action.bound,
             handleChangeTokens: action.bound,
-            // handleFormChanges: action.bound,
-            // handleSend: action.bound,
             handleTokensCacheReady: action.bound,
             handleWalletAccountChange: action.bound,
+            initialCurrentLimitOrderFee: computed,
+            initialCurrentLimitOrderReceive: computed,
+            initialCurrentLimitOrderSpent: computed,
+            initialCurrentLimitOrderSpentMax: computed,
             isBusy: computed,
             isCancelConfirmationAwait: computed,
-            // isChangingTokens: computed,
             isCloseConfirmationAwait: computed,
             isConfirmationAwait: computed,
-            // isCreateConfirmationAwait: computed,
 
-            // isDeployConfirmationAwait: computed,
             isFetching: computed,
             isLimitOrderCanceling: computed,
             isLimitOrderClosing: computed,
@@ -106,33 +105,25 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
             isPreparing: computed,
 
             isValidTokens: computed,
-            // lastAmountChangeSide: computed,
             leftBalanceNumber: override,
             limitOrdersData: computed,
             limitOrdersFilter: computed,
 
+            loadInitialOrderAmounts: action.bound,
             loadLimitOrderList: action.bound,
             loadLimitOrderListByOrderViewMode: action.bound,
 
-            // ltrPrice: override,
-            // makeLimitOrder: action.bound,
-            // maximizeLeftAmount: action.bound,
-
             rateDirection: computed,
-            // rtlPrice: override,
             setLimitOrdersFilter: action.bound,
             toggleRateDirection: action.bound,
         })
 
         this.setData(() => ({
-            // graphData: DEFAULT_GRAPH_DATA,
             leftAmount: '',
             limitOrderRoot: undefined,
             limitOrdersList: DEFAULT_LIMIT_ORDERS_LIST,
             rightAmount: '',
-            // slippage: DEFAULT_SLIPPAGE_VALUE, // 0.5
         }))
-        // const devMode = false // process.env.NODE_ENV === 'development'
         const limitOrdersFilter = storage.get('limitOrdersFilters')
         this.setState(() => ({
             isLimitOrderListLoading: DEFAULT_LIMIT_ORDER_LIST_LOADING,
@@ -156,29 +147,6 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
             this.handleTokensCacheReady,
             { fireImmediately: true },
         )
-        // this.tokensDisposer?.()
-        // this.tokensDisposer = reaction(
-        //     () => [this.leftToken, this.rightToken],
-        //     async (
-        //         curr?: (Token | undefined)[],
-        //         prev?: (Token | undefined)[],
-        //     ) => {
-        //         if (!curr || !prev) return
-        //         const [leftToken, rightToken] = curr
-        //         const [prevLeftToken, prevRightToken] = prev
-        //         if (!leftToken || !rightToken) return
-        //         if (leftToken?.root !== prevLeftToken?.root || rightToken?.root !== prevRightToken?.root) {
-        //             debug('tokensDisposer loadLimitOrderList', leftToken?.root !== prevLeftToken?.root, rightToken?.root !== prevRightToken?.root)
-        //             await Promise.allSettled([
-        //                 this.loadLimitOrderList(),
-        //             ])
-        //         }
-        //     },
-        //     {
-        //         // delay: 50,
-        //         fireImmediately: true,
-        //     },
-        // )
     }
 
     /**
@@ -383,6 +351,19 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
     /**
      *
      */
+    public async getFeeParams(orderAddress: Address): Promise<DecodedAbiFunctionOutputs<typeof OrderAbi.Order, 'getFeeParams'>['params'] | undefined> {
+        if (!this.wallet.address) {
+            return undefined
+        }
+        return (await new staticRpc.Contract(OrderAbi.Order, orderAddress)
+            .methods.getFeeParams({
+                answerId: 0,
+            }).call({})).params
+    }
+
+    /**
+     *
+     */
     public async getWalletOf(tokenRoot: Address): Promise<Address | undefined> {
         if (!this.wallet.address) {
             return undefined
@@ -392,6 +373,151 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
                 answerId: 0,
                 walletOwner: new Address(this.wallet.address),
             }).call({})).value0
+    }
+
+    /**
+     *
+     */
+    public async getExpectedSpentAmount(amount: string): Promise<P2POrderExpectedAmount | undefined> {
+        if (!this.currentLimitOrderAddress) {
+            return undefined
+        }
+        const response = await new staticRpc.Contract(OrderAbi.Order, new Address(this.currentLimitOrderAddress))
+            .methods.getExpectedSpentAmount({
+                amount,
+                answerId: 0,
+            }).call({})
+        return {
+            amount: response.value0,
+            fee: response.value1,
+        }
+    }
+
+    /**
+     *
+     */
+    public async getExpectedReceiveAmount(amount: string): Promise<P2POrderExpectedAmount | undefined> {
+        if (!this.currentLimitOrderAddress) {
+            return undefined
+        }
+        const response = await new staticRpc.Contract(OrderAbi.Order, new Address(this.currentLimitOrderAddress))
+            .methods.getExpectedReceiveAmount({
+                amount,
+                answerId: 0,
+            }).call({})
+        return {
+            amount: response.value0,
+            fee: response.value1,
+        }
+    }
+
+    /**
+     *
+     */
+    public async changeLeftOrderAmount(value: string): Promise<void> {
+        this.setData({
+            currentLimitOrderSpent: value,
+        })
+        if (!value || !this.currentLimitOrderAddress || !this.currentLimitOrder) {
+            return
+        }
+        const spentToken = this.tokensCache.get(this.currentLimitOrder.receiveTokenRoot)
+        const receiveToken = this.tokensCache.get(this.currentLimitOrder.spentTokenRoot)
+
+        const spentAmount = new BigNumber(value ?? 0)
+            .shiftedBy(spentToken?.decimals ?? 0)
+        const orderReceiveResponse = await this.getExpectedReceiveAmount(spentAmount.toFixed())
+        const orderReceiveAmount = new BigNumber(orderReceiveResponse?.amount ?? 0)
+            .shiftedBy(-(receiveToken?.decimals || 0))
+        const fee = new BigNumber(orderReceiveResponse?.fee ?? 0)
+            .shiftedBy(-(spentToken?.decimals || 0))
+        this.setData({
+            currentLimitOrderFee: fee.toFixed(),
+            currentLimitOrderReceive: orderReceiveAmount.toFixed(),
+            // currentLimitOrderSpent: spentAmount.shiftedBy(-(spentToken?.decimals || 0)).toFixed(),
+        })
+        debug('+++changeLeftOrderAmount', {
+            currentLimitOrderFee: fee.toFixed(),
+            currentLimitOrderReceive: orderReceiveAmount.toFixed(),
+            currentLimitOrderSpent: spentAmount.shiftedBy(-(spentToken?.decimals || 0)).toFixed(),
+        })
+    }
+
+    /**
+     *
+     */
+    public async changeRightOrderAmount(value: string): Promise<void> {
+        this.setData({
+            currentLimitOrderReceive: value,
+        })
+        if (!value || !this.currentLimitOrderAddress || !this.currentLimitOrder) {
+            return
+        }
+        const spentToken = this.tokensCache.get(this.currentLimitOrder.receiveTokenRoot)
+        const receiveToken = this.tokensCache.get(this.currentLimitOrder.spentTokenRoot)
+
+        const receiveAmount = new BigNumber(value ?? 0)
+            .shiftedBy(receiveToken?.decimals || 0)
+        const orderSpentResponse = await this.getExpectedSpentAmount(receiveAmount.toFixed())
+        const spentAmount = new BigNumber(orderSpentResponse?.amount ?? 0)
+            .shiftedBy(-(spentToken?.decimals || 0))
+
+        const fee = new BigNumber(orderSpentResponse?.fee ?? 0)
+            .shiftedBy(-(spentToken?.decimals || 0))
+        this.setData({
+            currentLimitOrderFee: fee.toFixed(),
+            // currentLimitOrderReceive: receiveAmount.toFixed(),
+            currentLimitOrderSpent: spentAmount.toFixed(),
+        })
+        debug('+++changeRightOrderAmount', {
+            currentLimitOrderFee: fee.toFixed(),
+            currentLimitOrderReceive: receiveAmount.toFixed(),
+            currentLimitOrderSpent: spentAmount.toFixed(),
+        })
+    }
+
+    /**
+     *
+     */
+    public async loadInitialOrderAmounts(): Promise<void> {
+        if (!this.currentLimitOrderAddress || !this.currentLimitOrder) {
+            return
+        }
+        const spentToken = this.tokensCache.get(this.currentLimitOrder.receiveTokenRoot)
+        const receiveToken = this.tokensCache.get(this.currentLimitOrder.spentTokenRoot)
+        const balanceBN = new BigNumber(spentToken?.balance ?? 0)
+            .shiftedBy(-(spentToken?.decimals || 0))
+
+        const orderSpentResponse = await this.getExpectedSpentAmount(this.currentLimitOrder.currentSpentAmount)
+        const orderSpentAmount = new BigNumber(orderSpentResponse?.amount ?? 0)
+            .shiftedBy(-(spentToken?.decimals || 0))
+        const orderSpentAmountMax = new BigNumber(orderSpentResponse?.amount ?? 0)
+            .shiftedBy(-(spentToken?.decimals || 0))
+        const spentAmount = balanceBN.lt(orderSpentAmount) ? balanceBN : orderSpentAmount
+        const orderReceiveResponse = await this.getExpectedReceiveAmount(
+            spentAmount.shiftedBy(spentToken?.decimals ?? 0).toFixed(),
+        )
+        const orderReceiveAmount = new BigNumber(orderReceiveResponse?.amount ?? 0)
+            .shiftedBy(-(receiveToken?.decimals || 0))
+        const fee = new BigNumber(orderReceiveResponse?.fee ?? 0)
+            .shiftedBy(-(spentToken?.decimals || 0))
+        this.setData({
+            currentLimitOrderFee: fee.toFixed(),
+            currentLimitOrderReceive: orderReceiveAmount.toFixed(),
+            currentLimitOrderSpent: spentAmount.toFixed(),
+            initialCurrentLimitOrderFee: fee.toFixed(),
+            initialCurrentLimitOrderReceive: orderReceiveAmount.toFixed(),
+            initialCurrentLimitOrderSpent: spentAmount.toFixed(),
+            initialCurrentLimitOrderSpentMax: orderSpentAmountMax.toFixed(),
+        })
+        debug('+++loadInitialOrderAmounts', {
+            currentLimitOrderFee: fee.toFixed(),
+            currentLimitOrderReceive: orderReceiveAmount.toFixed(),
+            currentLimitOrderSpent: spentAmount.toFixed(),
+            initialCurrentLimitOrderFee: fee.toFixed(),
+            initialCurrentLimitOrderReceive: orderReceiveAmount.toFixed(),
+            initialCurrentLimitOrderSpent: orderSpentAmount.toFixed(),
+        })
     }
 
     /**
@@ -443,7 +569,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
                     if (decodedTx?.method === 'onOrderPartExchangeSuccess' && decodedTx.input.id.toString() === callId) {
                         debug('decodedTx onOrderPartExchangeSuccess', decodedTx)
                         this.setAsyncState(accountAddr, 'isLimitOrderClosing', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onOrderCloseSuccess?.({
                             callId,
                             result: {
@@ -459,7 +585,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
 
                     if (decodedTx?.method === 'onOrderStateFilled' && decodedTx.input.id.toString() === callId) {
                         this.setAsyncState(accountAddr, 'isLimitOrderClosing', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onOrderCloseSuccess?.({
                             callId,
                             result: {
@@ -476,7 +602,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
 
                     if (decodedTx?.method === 'onOrderReject' && decodedTx.input.id.toString() === callId) {
                         this.setAsyncState(accountAddr, 'isLimitOrderClosing', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onOrderExchangeFail?.({ callId })
                         debug('decodedTx onOrderReject', decodedTx)
                         return { input: decodedTx.input }
@@ -492,7 +618,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
                     .methods.buildPayload({
                         callbackId: callId,
                         cancelPayload: null,
-                        deployWalletValue: 100000000, // TODO may be need to change value
+                        deployWalletValue: 100000000,
                         recipient: new Address(this.wallet.address),
                         successPayload: null,
                     }).call()).value0,
@@ -505,7 +631,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
             const message = await new rpc.Contract(TokenAbi.Wallet, remainingGasTo)
                 .methods.transfer({
                     amount,
-                    deployWalletValue: '100000000', // TODO may be need to change value
+                    deployWalletValue: '100000000',
                     notify: true,
                     payload,
                     recipient: new Address(accountAddr),
@@ -576,7 +702,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
                     })
                     if (decodedTx?.method === 'onOrderStateCancelled' && decodedTx.input.id.toString() === callId) {
                         this.setAsyncState(accountAddr, 'isLimitOrderCanceling', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onOrderStateCancelled?.({
                             callId,
                             result: {
@@ -590,7 +716,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
 
                     if (decodedTx?.method === 'onOrderStateCancelledReject' && decodedTx.input.id.toString() === callId) {
                         this.setAsyncState(accountAddr, 'isLimitOrderCanceling', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onError?.({ callId })
                         debug('decodedTx onOrderStateCancelledReject', decodedTx)
                         return { input: decodedTx.input, transaction }
@@ -607,7 +733,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
                 .cancel({
                     callbackId: callId,
                 }).sendDelayed({
-                    amount: '1000000000', // 1 ever
+                    amount: '1000000000',
                     bounce: true,
                     from: new Address(this.wallet.address),
                 })
@@ -637,6 +763,64 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
     public get currentLimitOrder(): P2POrderListStoreData['currentLimitOrder'] {
         return this.data.currentLimitOrder
     }
+
+    /**
+     *
+     */
+    public get currentLimitOrderAddress(): string | undefined {
+        return this.data.currentLimitOrder?.accountAddr
+    }
+
+    /**
+     *
+     */
+    public get currentLimitOrderSpent(): P2POrderListStoreData['currentLimitOrderSpent'] {
+        return this.data.currentLimitOrderSpent
+    }
+
+    /**
+     *
+     */
+    public get currentLimitOrderReceive(): P2POrderListStoreData['currentLimitOrderReceive'] {
+        return this.data.currentLimitOrderReceive
+    }
+
+    /**
+     *
+     */
+    public get currentLimitOrderFee(): P2POrderListStoreData['currentLimitOrderReceive'] {
+        return this.data.currentLimitOrderFee
+    }
+
+    /**
+     *
+     */
+    public get initialCurrentLimitOrderSpent(): P2POrderListStoreData['initialCurrentLimitOrderSpent'] {
+        return this.data.initialCurrentLimitOrderSpent
+    }
+
+    /**
+     *
+     */
+    public get initialCurrentLimitOrderSpentMax(): P2POrderListStoreData['initialCurrentLimitOrderSpent'] {
+        return this.data.initialCurrentLimitOrderSpentMax
+    }
+
+    /**
+     *
+     */
+    public get initialCurrentLimitOrderReceive(): P2POrderListStoreData['initialCurrentLimitOrderReceive'] {
+        return this.data.initialCurrentLimitOrderReceive
+    }
+
+    /**
+     *
+     */
+    public get initialCurrentLimitOrderFee(): P2POrderListStoreData['initialCurrentLimitOrderReceive'] {
+        return this.data.initialCurrentLimitOrderFee
+    }
+
+
     /*
      * Public actions. Useful in UI
      * ----------------------------------------------------------------------------------
@@ -665,7 +849,6 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
         this.loadLimitOrderList()
     }
 
-    // TODO may be need to add some data to reset
     /**
      * Full reset P2P
      * instances to their default.
@@ -683,11 +866,13 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
      * Use this method to change current limit order instead of direct change value via `setData`
      * @param {LimitOrderItem} limitOrder
      */
-    public setCurrentLimitOrder(limitOrder?: LimitOrderItem & LimitOrderExchange): void {
+    public async setCurrentLimitOrder(limitOrder?: LimitOrderItem & LimitOrderExchange): Promise<void> {
         if (!limitOrder) {
             return
         }
-        this.setData('currentLimitOrder', limitOrder)
+        const feeParams = await this.getFeeParams(new Address(limitOrder.accountAddr))
+        this.setData('currentLimitOrder', { ...limitOrder, feeParams })
+        await this.loadInitialOrderAmounts()
     }
 
     /*
@@ -753,7 +938,6 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
         return this.options?.defaultRightTokenAddress?.toString()
     }
 
-    // TODO need to refactor
     /**
      * Returns combined `isLoading` state from direct swap, cross-pair swap.
      * @returns {boolean}
@@ -792,7 +976,6 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
         debug('+++ forceInvalidate')
 
         this.reset()
-        // this.setData('limitOrdersList', DEFAULT_LIMIT_ORDERS)
         this.resetLimitOrdersData()
     }
 
@@ -852,7 +1035,6 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
             return
         }
         this.setState('isPreparing', this.wallet.isInitializing || this.wallet.isConnecting)
-        // this.setState('isValidTokens', this.leftToken !== undefined && this.rightToken !== undefined)
 
         if (this.data.leftToken !== undefined && this.data.rightToken !== undefined) {
             this.walletAccountDisposer?.()
@@ -874,7 +1056,6 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
                 rightToken: this.options.defaultRightTokenAddress?.toString(),
             })
 
-            // this.setState('isMultiple', true)
             this.walletAccountDisposer?.()
             this.walletAccountDisposer = reaction(
                 () => this.wallet.account?.address,
@@ -900,7 +1081,6 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
                     [leftToken, rightToken],
                     [prevLeftToken, prevRightToken],
                 ) => (
-                    // (leftToken === prevRightToken && rightToken === prevLeftToken)
                     (leftToken === prevLeftToken && rightToken === prevRightToken)
                 ),
                 fireImmediately: true,
@@ -932,7 +1112,6 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
             this.rightToken?.root && this.tokensCache.watch(this.rightToken.root, 'p2p-orderlist'),
         ])
     }
-
 
     /*
      * Internal swap processing results handlers

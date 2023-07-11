@@ -7,7 +7,6 @@ import { Checkbox } from '@/components/common/Checkbox'
 import { Tabs } from '@/components/common/Tabs'
 
 type Props = {
-    // setToggleOrderView?: (type: OrderViewMode) => void,
     toggleOrderView: OrderViewMode,
     setOnlyMyOrders: (isOnlyMyOrders: boolean) => void,
     onlyMyOrders: boolean,
@@ -16,7 +15,6 @@ type Props = {
     isWalletConected: boolean,
 }
 function TableControl({
-    // setToggleOrderView,
     toggleOrderView,
     onlyMyOrders,
     setOnlyMyOrders,

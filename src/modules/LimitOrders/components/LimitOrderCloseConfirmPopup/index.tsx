@@ -10,8 +10,9 @@ import { Icon } from '@/components/common/Icon'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { useP2POrderListStoreContext } from '@/modules/LimitOrders/context/P2POrderListStoreContext'
 import { LimitBill } from '@/modules/LimitOrders/components/LimitBill'
-import { truncateDecimals } from '@/utils'
 import { calcSwapDirection } from '@/modules/LimitOrders/utils'
+import { useField } from '@/hooks/useField'
+import { debug, isGoodBignumber } from '@/utils'
 
 import './index.scss'
 
@@ -23,13 +24,13 @@ const formatOrderAmountToInputValue = (value?: string, decimals?: number): strin
 
 
 const disabledBtnText = (
-    { isOverValuate, isWalletBalanceNotEnough }:
-        { isOverValuate: boolean, isWalletBalanceNotEnough: boolean },
+    { isOverValuate, isEnoughWalletBalance }:
+        { isOverValuate: boolean, isEnoughWalletBalance: boolean },
 ): string => {
     switch (true) {
         case isOverValuate:
             return 'P2P_LIMIT_ORDER_OVER_VALUE'
-        case isWalletBalanceNotEnough:
+        case !isEnoughWalletBalance:
             return 'P2P_LIMIT_ORDER_WALLET_BALANCE_NOT_ENOUGH'
         default:
             return 'SWAP_BTN_TEXT_ENTER_AN_AMOUNT'
@@ -41,86 +42,84 @@ function LimitOrderCloseConfirm(): JSX.Element {
 
     const p2pOrderList = useP2POrderListStoreContext()
 
-    const [isWarning] = React.useState(false) // setWarning
-    const [isChanged] = React.useState(false) // setIsChanged
-
     const {
-        currentSpentAmount: currentRightAmount,
-        currentReceiveAmount: currentLeftAmount,
+        currentSpentAmount,
         receiveTokenRoot,
         spentTokenRoot,
+        feeParams,
     } = p2pOrderList.currentLimitOrder || {
         currentReceiveAmount: undefined,
         currentSpentAmount: undefined,
     }
     const leftToken = p2pOrderList.tokensCache.get(receiveTokenRoot)
-    const [leftAmount, setLeftAmount] = React.useState(
-        formatOrderAmountToInputValue(currentLeftAmount, leftToken?.decimals),
-    )
-
     const rightToken = p2pOrderList.tokensCache.get(spentTokenRoot)
-    const [rightAmount, setRightAmount] = React.useState(
-        formatOrderAmountToInputValue(currentRightAmount, rightToken?.decimals),
-    )
 
-    const calcBuyBySell = (sell?: string): BigNumber => new BigNumber(sell ?? '')
-        .shiftedBy(leftToken?.decimals || 0)
-        .dividedBy(currentLeftAmount ?? 1)
-        .times(currentRightAmount ?? 1)
-        .shiftedBy(-1 * (rightToken?.decimals || 0))
-        .dp((rightToken?.decimals || 0), BigNumber.ROUND_HALF_DOWN)
+    const initialOrderReceive = new BigNumber(currentSpentAmount ?? 0).shiftedBy(-(rightToken?.decimals ?? 0)).toFixed()
 
-    const calcSellByBuy = (buy?: string): BigNumber => new BigNumber(buy ?? '')
-        .shiftedBy(rightToken?.decimals || 0)
-        .dividedBy(currentRightAmount ?? 1)
-        .times(currentLeftAmount ?? 1)
-        .shiftedBy(-1 * (leftToken?.decimals || 0))
-        .dp(leftToken?.decimals || 0, BigNumber.ROUND_HALF_DOWN)
+    const feePercent = feeParams
+        ? new BigNumber(feeParams.numerator)
+            .div(new BigNumber(feeParams.denominator))
+            .times(100)
+            .dp(2, BigNumber.ROUND_UP)
+            .toFixed()
+        : '-'
+
 
     const onDismiss = (): void => {
         p2pOrderList.setState('isCloseConfirmationAwait', false)
     }
 
-    const isOverValuate = new BigNumber(leftAmount)
-        .gt(new BigNumber(currentLeftAmount ?? '')
-            .shiftedBy(-(leftToken?.decimals || 0)))
-        || new BigNumber(rightAmount)
-            .gt(new BigNumber(currentRightAmount ?? '')
-                .shiftedBy(-(rightToken?.decimals || 0)))
+    const isOverValuate = new BigNumber(p2pOrderList.currentLimitOrderSpent)
+        .gt(new BigNumber(p2pOrderList.initialCurrentLimitOrderSpentMax ?? ''))
+        || new BigNumber(p2pOrderList.currentLimitOrderReceive)
+            .gt(new BigNumber(initialOrderReceive ?? ''))
 
-    const isWalletBalanceNotEnough = leftToken?.balance
-        ? new BigNumber(leftAmount)
+    const isEnoughWalletBalance = leftToken?.balance
+        ? !(new BigNumber(p2pOrderList.currentLimitOrderSpent)
             .gt(new BigNumber(leftToken?.balance ?? '')
-                .shiftedBy(-(leftToken?.decimals || 0)))
+                .shiftedBy(-(leftToken?.decimals || 0))))
         : true
 
+    const onChangeLeftAmount = async (value: string): Promise<void> => {
+        await p2pOrderList.changeLeftOrderAmount(value)
+    }
 
-    const isInvalidValue = !new BigNumber(leftAmount).gt(0) || !new BigNumber(rightAmount).gt(0)
+    const isValidValue = isGoodBignumber(p2pOrderList.currentLimitOrderSpent, true)
+    && isGoodBignumber(p2pOrderList.currentLimitOrderReceive, true)
 
     const onSubmit = async (): Promise<void> => {
-        if (isOverValuate || isWalletBalanceNotEnough || isInvalidValue) {
+        if (isOverValuate || !isEnoughWalletBalance || !isValidValue) {
             return
         }
         p2pOrderList.setState('isCloseConfirmationAwait', false)
-        await p2pOrderList.acceptLimitOrder(new BigNumber(leftAmount).shiftedBy(leftToken?.decimals || 0).toFixed())
+        await p2pOrderList.acceptLimitOrder(new BigNumber(p2pOrderList.currentLimitOrderSpent)
+            .shiftedBy(leftToken?.decimals || 0).toFixed())
     }
 
-    const onBlur = (event: React.BaseSyntheticEvent, decimals?: number): void => {
-        const { value } = event.target
-        if (value.length === 0) {
-            return
-        }
-        const validatedAmount = truncateDecimals(value, decimals)
-        if (value !== validatedAmount && validatedAmount != null) {
-            // eslint-disable-next-line no-param-reassign
-            event.target.value = validatedAmount
-        }
-        else if (validatedAmount == null) {
-            // eslint-disable-next-line no-param-reassign
-            event.target.value = ''
-        }
-    }
-
+    const leftField = useField({
+        decimals: leftToken?.decimals,
+        onChange: async (value: string): Promise<void> => {
+            await p2pOrderList.changeLeftOrderAmount(value)
+        },
+        value: p2pOrderList.currentLimitOrderSpent,
+    })
+    const rightField = useField({
+        decimals: rightToken?.decimals,
+        onChange: async (value: string) => {
+            await p2pOrderList.changeRightOrderAmount(value)
+        },
+        value: p2pOrderList.currentLimitOrderReceive,
+    })
+    debug(
+        '+++isOverValuate isEnoughWalletBalance isValidValue',
+        isOverValuate,
+        isEnoughWalletBalance,
+        isValidValue,
+        p2pOrderList.currentLimitOrderSpent,
+        p2pOrderList.initialCurrentLimitOrderSpentMax,
+        p2pOrderList.currentLimitOrderReceive,
+        initialOrderReceive,
+    )
     return ReactDOM.createPortal(
         <div className="popup">
             <div onClick={onDismiss} className="popup-overlay" />
@@ -137,11 +136,12 @@ function LimitOrderCloseConfirm(): JSX.Element {
                         id: 'SWAP_POPUP_CONFORMATION_TITLE',
                     })}
                 </h2>
-
                 <fieldset
-                    className={classNames('form-fieldset form-fieldset--small form-fieldset--dark', {
+                    className={classNames('form-fieldset form-fieldset--dark', {
                         // checking: p2p.tokensCache.isTokenUpdatingBalance(token?.root) && !props.disabled,
-                        invalid: isOverValuate || isWalletBalanceNotEnough || !new BigNumber(leftAmount).gt(0),
+                        invalid: isOverValuate
+                            || !isEnoughWalletBalance
+                            || !isGoodBignumber(p2pOrderList.currentLimitOrderSpent, true),
                     })}
                 >
                     <div className="form-fieldset__header">
@@ -150,22 +150,6 @@ function LimitOrderCloseConfirm(): JSX.Element {
                                 id: 'P2P_FIELD_LABEL_LEFT',
                             })}
                         </div>
-                    </div>
-                    <div className="form-fieldset__main">
-                        <input
-                            className="form-input"
-                            type="number"
-                            value={leftAmount}
-                            onChange={e => {
-                                setLeftAmount(e.target.value)
-                                const newVal = new BigNumber(e.target.value)
-                                    .dp(leftToken?.decimals || 0, BigNumber.ROUND_HALF_DOWN)
-                                    .toFixed()
-                                const calcOtherSide = calcBuyBySell(newVal)
-                                setRightAmount(Number.isNaN(calcOtherSide) ? '' : calcOtherSide.toFixed())
-                            }}
-                            onBlur={e => onBlur(e, leftToken?.decimals)}
-                        />
                         <div className="btn form-drop form-drop-extra">
                             <span className="form-drop__logo">
                                 <TokenIcon
@@ -179,13 +163,55 @@ function LimitOrderCloseConfirm(): JSX.Element {
                                 {leftToken?.symbol}
                             </span>
                         </div>
-
+                    </div>
+                    <div className="form-fieldset__main">
+                        <input
+                            autoComplete="off"
+                            className="form-input"
+                            type="text"
+                            inputMode="decimal"
+                            pattern="^[0-9]*[.]?[0-9]*$"
+                            placeholder="0.0"
+                            value={p2pOrderList.currentLimitOrderSpent}
+                            onChange={leftField.onChange}
+                            onBlur={leftField.onBlur}
+                        />
+                        <div className="form-fieldset__footer">
+                            <div className="form-fieldset__footer-inner">
+                                <Button
+                                    key="max-button"
+                                    className="form-btn-max"
+                                    // disabled={props.disabled}
+                                    size="xs"
+                                    type="link"
+                                    onClick={async () => {
+                                        const balanceBN = new BigNumber(leftToken?.balance ?? 0)
+                                        const initialCurrentLimitOrderSpent = new BigNumber(
+                                            p2pOrderList.initialCurrentLimitOrderSpent ?? 0,
+                                        )
+                                        const newValue = balanceBN.lt(initialCurrentLimitOrderSpent)
+                                            ? balanceBN.toFixed()
+                                            : initialCurrentLimitOrderSpent.toFixed()
+                                        await onChangeLeftAmount(newValue)
+                                    }}
+                                >
+                                    Max
+                                </Button>
+                                <div key="token-balance" className="swap-field-balance truncate">
+                                    {intl.formatMessage({
+                                        id: 'SWAP_FIELD_TOKEN_WALLET_BALANCE',
+                                    }, {
+                                        balance: formatOrderAmountToInputValue(leftToken?.balance, leftToken?.decimals),
+                                    })}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </fieldset>
 
                 <fieldset
                     className={classNames('form-fieldset form-fieldset--small form-fieldset--dark', {
-                        invalid: isOverValuate || !new BigNumber(rightAmount).gt(0),
+                        invalid: isOverValuate || !new BigNumber(p2pOrderList.currentLimitOrderReceive).gt(0),
                     })}
                 >
                     <div className="form-fieldset__header">
@@ -197,18 +223,15 @@ function LimitOrderCloseConfirm(): JSX.Element {
                     </div>
                     <div className="form-fieldset__main">
                         <input
+                            autoComplete="off"
                             className="form-input"
-                            type="number"
-                            value={rightAmount}
-                            onChange={e => {
-                                setRightAmount(e.target.value)
-                                const newVal = new BigNumber(e.target.value)
-                                    .dp(rightToken?.decimals || 0, BigNumber.ROUND_HALF_DOWN)
-                                    .toFixed()
-                                const calcOtherSide = calcSellByBuy(newVal)
-                                setLeftAmount(Number.isNaN(calcOtherSide) ? '' : calcOtherSide.toFixed())
-                            }}
-                            onBlur={e => onBlur(e, rightToken?.decimals)}
+                            type="text"
+                            inputMode="decimal"
+                            pattern="^[0-9]*[.]?[0-9]*$"
+                            placeholder="0.0"
+                            value={p2pOrderList.currentLimitOrderReceive}
+                            onChange={rightField.onChange}
+                            onBlur={rightField.onBlur}
                         />
                         <div className="btn form-drop form-drop-extra">
                             <span className="form-drop__logo">
@@ -227,7 +250,7 @@ function LimitOrderCloseConfirm(): JSX.Element {
                     </div>
                 </fieldset>
 
-                {isWarning
+                {/* {isWarning
                     && (
                         <div className="alert">
                             <div>
@@ -237,20 +260,28 @@ function LimitOrderCloseConfirm(): JSX.Element {
                                 </p>
                             </div>
                         </div>
-                    )}
+                    )} */}
                 <LimitBill
                     key="bill"
-                    leftAmount={leftAmount}
+                    leftAmount={formatOrderAmountToInputValue(
+                        p2pOrderList.currentLimitOrder?.expectedReceiveAmount,
+                        leftToken?.decimals,
+                    )}
                     leftToken={leftToken}
-                    rightAmount={rightAmount}
+                    rightAmount={formatOrderAmountToInputValue(
+                        p2pOrderList.currentLimitOrder?.currentSpentAmount,
+                        rightToken?.decimals,
+                    )}
                     rightToken={rightToken}
                     rateDirection={calcSwapDirection(
                         p2pOrderList.leftToken?.root !== leftToken?.root,
                         p2pOrderList.rateDirection,
                     )}
                     toggleRateDirection={p2pOrderList.toggleRateDirection}
+                    fee={`${p2pOrderList.currentLimitOrderFee} ${leftToken?.symbol}`}
+                    feePercent={feePercent}
                 />
-                {(isOverValuate || isWalletBalanceNotEnough || isInvalidValue)
+                {(isOverValuate || !isEnoughWalletBalance || !isValidValue)
                     ? (
                         <Button
                             block
@@ -259,7 +290,7 @@ function LimitOrderCloseConfirm(): JSX.Element {
                             disabled
                         >
                             {intl.formatMessage({
-                                id: disabledBtnText({ isOverValuate, isWalletBalanceNotEnough }),
+                                id: disabledBtnText({ isEnoughWalletBalance, isOverValuate }),
                             })}
                         </Button>
                     )
@@ -268,7 +299,7 @@ function LimitOrderCloseConfirm(): JSX.Element {
                             block
                             size="lg"
                             type="primary"
-                            disabled={isChanged}
+                            // disabled={isChanged}
                             onClick={onSubmit}
                         >
                             {intl.formatMessage({

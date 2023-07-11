@@ -52,17 +52,8 @@ export function CardPrice({
                         direction ? leftAmount : rightAmount,
                         direction ? leftToken.decimals : rightToken?.decimals,
                     ).toFixed())
-                    // debug('rate', direction, rate, leftToken.symbol, leftAmount, rightToken.symbol, rightAmount, leftToken.decimals, rightToken.decimals)
 
                     return (
-                        // <>
-                        //     {Number.isNaN(Number(rate)) ? '--' : rate}
-                        //     <PairIcons
-                        //         small
-                        //         leftToken={leftToken}
-                        //         rightToken={rightToken}
-                        //     />
-                        // </>
                         <span
                             style={({
                                 textAlign: 'left',

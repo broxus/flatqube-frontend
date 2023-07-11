@@ -299,7 +299,7 @@ export class SwapGraphStore extends BaseStore<SwapGraphStoreData, SwapGraphStore
      * ----------------------------------------------------------------------------------
      */
     public async setTokens(leftToken: Token, rightToken: Token): Promise<void> {
-        await this.setData({ leftToken, rightToken })
+        this.setData({ leftToken, rightToken })
     }
 
     /**
@@ -313,7 +313,6 @@ export class SwapGraphStore extends BaseStore<SwapGraphStoreData, SwapGraphStore
         this.reset()
     }
 
-    // TODO may be need to add some data to reset
     /**
      * Full reset
      * instances to their default.
@@ -364,7 +363,6 @@ export class SwapGraphStore extends BaseStore<SwapGraphStoreData, SwapGraphStore
      */
     public get isBusy(): boolean {
         return this.isPreparing
-        // TODO Add more state
     }
 
     /*

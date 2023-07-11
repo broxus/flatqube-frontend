@@ -5,23 +5,20 @@ import { useIntl } from 'react-intl'
 import { AccountExplorerLink } from '@/components/common/AccountExplorerLink'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { LimitOrderExchangeSuccessCallbackResult } from '@/modules/LimitOrders/types'
-import { formattedTokenAmount, isMobile } from '@/utils'
-// import { TransactionExplorerLink } from '@/components/common/TransactionExplorerLink'
+import { debug, formattedTokenAmount, isMobile } from '@/utils'
 
 
 export function OrderExchangeSuccess({
+    result,
     result: {
         spentToken,
         spentAmount,
         receiveToken,
         receiveAmount,
-        // currentSpentTokenAmount,
-        // currentReceiveTokenAmount,
-        // fee,
     },
 }: { result: LimitOrderExchangeSuccessCallbackResult }): JSX.Element {
     const intl = useIntl()
-
+    debug('+++result OrderExchangeSuccess', result)
     return (
         <>
             <div className="notification-body">

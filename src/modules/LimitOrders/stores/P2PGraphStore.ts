@@ -51,8 +51,6 @@ export class P2PGraphStore extends P2PBaseStore<P2PGraphStoreData, P2PGraphStore
         makeObservable<
             P2PGraphStore,
             | 'handleChangeTokens'
-            // | 'handleFormChanges'
-            // | 'handleSend'
             | 'handleTokensCacheReady'
             | 'handleWalletAccountChange'
             | 'loadOhlcvGraph'
@@ -61,11 +59,7 @@ export class P2PGraphStore extends P2PBaseStore<P2PGraphStoreData, P2PGraphStore
             changeGraphData: action.bound,
             defaultLeftTokenRoot: computed,
             defaultRightTokenRoot: computed,
-            // formattedLeftBalance: override,
-            // formattedRightBalance: override,
             handleChangeTokens: action.bound,
-            // handleFormChanges: action.bound,
-            // handleSend: action.bound,
             handleTokensCacheReady: action.bound,
             handleWalletAccountChange: action.bound,
             isBusy: computed,
@@ -108,37 +102,21 @@ export class P2PGraphStore extends P2PBaseStore<P2PGraphStoreData, P2PGraphStore
             this.handleTokensCacheReady,
             { fireImmediately: true },
         )
-        // this.tokensDisposer?.()
-        // this.tokensDisposer = reaction(
-        //     () => [this.leftToken, this.rightToken],
-        //     async (
-        //         curr?: (Token | undefined)[],
-        //         prev?: (Token | undefined)[],
-        //     ) => {
-        //         if (!curr || !prev) return
-        //         const [leftToken, rightToken] = curr
-        //         const [prevLeftToken, prevRightToken] = prev
-        //         if (!leftToken || !rightToken) return
-        //         if (leftToken?.root !== prevLeftToken?.root || rightToken?.root !== prevRightToken?.root) {
-        //             if (this.state.graph === 'ohlcv') {
-        //                 await this.changeGraphData('ohlcv', null)
-        //                 await this.loadOhlcvGraph()
-        //             }
-        //             else {
-        //                 await this.loadDepthGraph()
-        //             }
-        //         }
-        //     },
-        //     {
-        //         fireImmediately: true,
-        //     },
-        // )
         this.timeframeDisposer = reaction(
             () => this.state.timeframe,
             async (timeframe, prevTimeframe) => {
                 debug('timeframeDisposer', timeframe)
                 if (timeframe !== prevTimeframe) {
-                    await this.changeGraphData('ohlcv', null)
+                    this.changeGraphData('ohlcv', null)
+                    await this.loadOhlcvGraph()
+                }
+            },
+        )
+        this.graphTypeDisposer = reaction(
+            () => this.state.graph,
+            async graphType => {
+                debug('graphTypeDisposer', graphType)
+                if (graphType === 'ohlcv' && !this.data.graphData.ohlcv) {
                     await this.loadOhlcvGraph()
                 }
             },
@@ -172,7 +150,7 @@ export class P2PGraphStore extends P2PBaseStore<P2PGraphStoreData, P2PGraphStore
      * @param {number} [to]
      */
     public async loadOhlcvGraph(fromArg?: number, toArg?: number): Promise<void> {
-        debug('loadOhlcvGraph')
+        debug('loadOhlcvGraph', fromArg, toArg)
         if (this.isOhlcvGraphLoading) {
             return
         }
@@ -305,9 +283,9 @@ export class P2PGraphStore extends P2PBaseStore<P2PGraphStoreData, P2PGraphStore
         this.formDataDisposer?.()
         this.tokensChangeDisposer?.()
         this.tokensCacheDisposer?.()
-        // this.tokensDisposer?.()
         this.walletAccountDisposer?.()
         this.timeframeDisposer?.()
+        this.graphTypeDisposer?.()
         this.reset()
     }
 
@@ -401,7 +379,6 @@ export class P2PGraphStore extends P2PBaseStore<P2PGraphStoreData, P2PGraphStore
         return this.options?.defaultRightTokenAddress?.toString()
     }
 
-    // TODO need to refactor
     /**
      * Returns combined `isLoading` state from direct swap, cross-pair swap.
      * @returns {boolean}
@@ -530,7 +507,6 @@ export class P2PGraphStore extends P2PBaseStore<P2PGraphStoreData, P2PGraphStore
                 rightToken: this.options.defaultRightTokenAddress?.toString(),
             })
 
-            // this.setState('isMultiple', true)
             this.walletAccountDisposer?.()
             this.walletAccountDisposer = reaction(
                 () => this.wallet.account?.address,
@@ -607,10 +583,10 @@ export class P2PGraphStore extends P2PBaseStore<P2PGraphStoreData, P2PGraphStore
 
     protected tokensCacheDisposer: IReactionDisposer | undefined
 
-    // protected tokensDisposer: IReactionDisposer | undefined
-
     protected walletAccountDisposer: IReactionDisposer | undefined
 
     protected timeframeDisposer: IReactionDisposer | undefined
+
+    protected graphTypeDisposer: IReactionDisposer | undefined
 
 }

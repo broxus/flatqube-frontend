@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
-// import { observer } from 'mobx-react-lite'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
@@ -8,7 +7,6 @@ import { SwapDirection } from '@/modules/Swap/types'
 import { formattedAmount } from '@/utils'
 import { Token } from '@/misc'
 import { calcRate } from '@/modules/LimitOrders/utils'
-// import { useP2PStoreContext } from '@/modules/LimitOrders/context/P2PStoreContext'
 import { WalletNativeCoin } from '@/stores/WalletService'
 
 import './index.scss'
@@ -35,7 +33,6 @@ export function OrderRate({
     toggleRateDirection,
 }: Props): JSX.Element {
     const intl = useIntl()
-    // const p2p = useP2PStoreContext()
 
     if (leftToken === undefined || rightToken === undefined || leftAmount === undefined || rightAmount === undefined) {
         return <> </>
@@ -46,7 +43,6 @@ export function OrderRate({
             whiteSpace: 'normal',
         }
         : undefined
-    // const { rateDirection } = p2p
     const targetDirection = inverse ? SwapDirection.RTL : SwapDirection.LTR
     const direction = (rateDirection === targetDirection)
     const rate = formattedAmount(calcRate(

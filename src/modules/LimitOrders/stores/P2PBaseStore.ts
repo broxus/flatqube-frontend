@@ -3,7 +3,6 @@ import { Address } from 'everscale-inpage-provider'
 import { computed, makeObservable } from 'mobx'
 
 import { DEFAULT_DECIMALS } from '@/modules/Swap/constants'
-// import type { SwapBill } from '@/modules/Swap/types'
 import { BaseStore } from '@/stores/BaseStore'
 import type { TokenCache, TokensCacheService } from '@/stores/TokensCacheService'
 import { formattedTokenAmount, isGoodBignumber } from '@/utils'
@@ -18,10 +17,8 @@ export abstract class P2PBaseStore<
         super()
 
         this.setData(() => ({
-            // bill: {},
             leftAmount: '',
             rightAmount: '',
-            // slippage: DEFAULT_SLIPPAGE_VALUE,
         }))
 
         makeObservable<
@@ -29,7 +26,6 @@ export abstract class P2PBaseStore<
             | 'leftTokenAddress'
             | 'rightTokenAddress'
         >(this, {
-            // bill: computed,
             formattedLeftBalance: computed,
             formattedRightBalance: computed,
             isEnoughTokenBalance: computed,
@@ -50,7 +46,6 @@ export abstract class P2PBaseStore<
             rightTokenAddress: computed,
             rightTokenDecimals: computed,
             rtlPrice: computed,
-            // slippage: computed,
         })
     }
 
@@ -60,13 +55,6 @@ export abstract class P2PBaseStore<
      * ----------------------------------------------------------------------------------
      */
 
-    /**
-     * Returns bill data
-     * @returns {P2PBaseStoreData['bill']}
-     */
-    // public get bill(): P2PBaseStoreData['bill'] {
-    //     return this.data.bill
-    // }
 
     /**
      * Returns memoized left amount value
@@ -99,14 +87,6 @@ export abstract class P2PBaseStore<
     public get rightAmount(): P2PBaseStoreData['rightAmount'] {
         return this.data.rightAmount
     }
-
-    /**
-     * Returns memoized slippage tolerance value
-     * @returns {P2PBaseStoreData['slippage']}
-     */
-    // public get slippage(): P2PBaseStoreData['slippage'] {
-    //     return this.data.slippage
-    // }
 
     /**
      * Returns `true` if swap process is running. Otherwise, `false`

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { reaction } from 'mobx'
+import { reaction, toJS } from 'mobx'
 
 import { useSwapPoolStoreContext } from '@/modules/Swap/context/SwapPoolStoreProvider'
 import { SwapPoolTransactionsStore } from '@/modules/Swap/stores/SwapPoolTransactionsStore'
@@ -21,9 +21,15 @@ export function SwapPoolTransactionsStoreProvider(props: SwapPoolTransactionsSto
     const context = React.useMemo(() => new SwapPoolTransactionsStore(swapPoolStore), [])
 
     React.useEffect(() => reaction(
-        () => [swapPoolStore.tokensCache.isReady, swapPoolStore.pool?.meta.currencyAddresses],
-        async ([isTokensCacheReady, currencyAddresses]) => {
-            if (isTokensCacheReady && currencyAddresses !== undefined && (currencyAddresses as string[]).length > 0) {
+        () => toJS(swapPoolStore?.pool?.meta.poolAddress),
+        async poolAddress => {
+            const currencyAddresses = swapPoolStore?.pool?.meta.currencyAddresses
+            if (swapPoolStore.tokensCache.isReady && swapPoolStore.pool?.meta.currencyAddresses !== undefined
+                    && (swapPoolStore.pool?.meta.currencyAddresses as string[]).length > 0) {
+                context.setData({
+                    currencyAddresses: currencyAddresses ?? [],
+                    poolAddress: poolAddress ?? '',
+                })
                 await context.fetch()
             }
         },

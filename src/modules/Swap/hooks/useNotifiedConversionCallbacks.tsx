@@ -61,7 +61,7 @@ export function useNotifiedConversionCallbacks(props: ConversionTransactionCallb
                             onClick={stopEventPropagate}
                         >
                             {intl.formatMessage({
-                                id: 'LIQUIDITY_ADD_NOTIFICATION_TRANSACTION_DETAILS_LINK_TXT',
+                                id: 'CONVERSION_NOTIFICATION_UNWRAP_FAILURE_TITLE',
                             })}
                         </TransactionExplorerLink>
                     </div>

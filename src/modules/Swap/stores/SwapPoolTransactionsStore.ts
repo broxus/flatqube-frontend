@@ -1,4 +1,6 @@
-import { computed, makeObservable } from 'mobx'
+import {
+    action, computed, makeObservable,
+} from 'mobx'
 
 import { usePoolsApi } from '@/modules/Pools/hooks/useApi'
 import { SwapPoolStore } from '@/modules/Swap/stores/SwapPoolStore'
@@ -8,6 +10,8 @@ import { BaseStore } from '@/stores/BaseStore'
 
 export type SwapPoolTransactionsStoreData = {
     transactions: PoolTransactionResponse[];
+    currencyAddresses: string[];
+    poolAddress: string;
 }
 
 export type SwapPoolTransactionsStoreState = {
@@ -43,7 +47,9 @@ export class SwapPoolTransactionsStore extends BaseStore<
         }))
 
         makeObservable(this, {
+            currencyAddresses: computed,
             eventType: computed,
+            fetch: action.bound,
             isDepositEventType: computed,
             isFetching: computed,
             isSwapEventType: computed,
@@ -51,6 +57,7 @@ export class SwapPoolTransactionsStore extends BaseStore<
             onlyUserTransactions: computed,
             ordering: computed,
             pagination: computed,
+            poolAddress: computed,
             transactions: computed,
         })
     }
@@ -66,19 +73,18 @@ export class SwapPoolTransactionsStore extends BaseStore<
             const response = await this.api.transactions({}, {
                 method: 'POST',
             }, {
-                currencyAddresses: this.pool.pool?.meta.currencyAddresses,
+                currencyAddresses: this.currencyAddresses,
                 displayTotalCount: this.pagination.currentPage === 1 || this.pagination.totalCount === undefined,
                 eventType: this.eventType.length > 0 ? this.eventType : null,
                 limit: this.pagination.limit,
                 offset: this.pagination.limit * (this.pagination.currentPage - 1),
                 ordering: this.state.ordering,
-                poolAddress: this.pool.address,
+                poolAddress: this.poolAddress,
                 timestampBlockGe: this.state.timestampBlockGe,
                 timestampBlockLe: this.state.timestampBlockLe,
                 userAddress: this.onlyUserTransactions ? this.pool.wallet.address : undefined,
                 whiteListUri: this.pool.tokensCache.tokensList.uri,
             })
-
             this.setData('transactions', Array.isArray(response.transactions) ? response.transactions : [])
 
             const totalCount = (this.pagination.currentPage === 1 || this.pagination.totalCount === undefined)
@@ -101,6 +107,14 @@ export class SwapPoolTransactionsStore extends BaseStore<
 
     public get transactions(): SwapPoolTransactionsStoreData['transactions'] {
         return this.data.transactions
+    }
+
+    public get currencyAddresses(): SwapPoolTransactionsStoreData['currencyAddresses'] {
+        return this.data.currencyAddresses
+    }
+
+    public get poolAddress(): SwapPoolTransactionsStoreData['poolAddress'] {
+        return this.data.poolAddress
     }
 
     public get eventType(): SwapPoolTransactionsStoreState['eventType'] {

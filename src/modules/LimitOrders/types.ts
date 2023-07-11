@@ -1,4 +1,6 @@
-import { Address, Contract, Transaction } from 'everscale-inpage-provider'
+import {
+    Address, Contract, DecodedAbiFunctionOutputs, Transaction,
+} from 'everscale-inpage-provider'
 import BigNumber from 'bignumber.js'
 import { ObservableMap } from 'mobx'
 import { DateTime } from 'luxon'
@@ -10,6 +12,7 @@ import { SwapDirection } from '@/modules/Swap/types'
 import { TokensCacheService } from '@/stores/TokensCacheService'
 import { WalletService } from '@/stores/WalletService'
 import { BaseSwapStoreData } from '@/modules/Swap/stores/BaseSwapStore'
+import { OrderAbi } from '@/misc/abi/order.abi'
 
 export type LimitOrderRequest = {
     accountAddr?: string;
@@ -89,6 +92,7 @@ export type LimitOrderItem = {
     swapAttempt: number;
     updatedAt: number;
     updatedAtUtc: string;
+    feeParams?: DecodedAbiFunctionOutputs<typeof OrderAbi.Order, 'getFeeParams'>['params'];
 }
 
 export type LimitOrderExchangeItem = {
@@ -167,11 +171,9 @@ export type OrderBookData = {
     rate: string | number,
 }
 
-// export type GraphData = OhlcvGraphModel & LimitOrderGraphItem
 export type P2PPairStoreGraphData = {
     ohlcv: OhlcvGraphModel[] | LimitOrderGraphItem[] | null;
     depth: OrderBookData[] | null;
-    // volume: VolumeGraphModel[] | null;
 }
 
 export enum OrderViewMode {
@@ -197,16 +199,10 @@ export type P2PPair = {
         left: number;
         right: number;
     };
-    // feeParams?: {
-    //     beneficiaryNumerator?: string;
-    //     denominator?: string;
-    //     numerator?: string;
-    // },
     roots?: {
         left: Address;
         right: Address;
     };
-    // state?: FullContractState;
     symbols?: {
         left: string;
         right: string;
@@ -223,13 +219,11 @@ export interface CurrencyPrices {
 
 
 export interface P2PBaseStoreData {
-    // bill: SwapBill;
     leftAmount: string;
     leftToken?: string;
     ltrPrice?: string;
     rightAmount: string;
     rightToken?: string;
-    // slippage: string;
     rtlPrice?: string;
 }
 
@@ -238,7 +232,6 @@ export interface P2PBaseStoreState {
 }
 
 export interface P2PStoreData extends BaseSwapStoreData {
-    // pair?: P2PPair;
     limitOrdersList: Record<OrderViewMode, LimitOrdersPaginationResponse>;
     limitOrderRoot?: Address;
     currentLimitOrder?: LimitOrderItem;
@@ -249,7 +242,6 @@ export interface P2PStoreState {
     coinSide?: TokenSide;
     rateDirection?: SwapDirection;
 
-    // timeframe: Timeframe;
     limitOrdersFilter: Record<OrderViewMode, LimitOrdersFilter>;
     lastAmountChangeSide?: Side;
     priceLock: boolean;
@@ -257,8 +249,6 @@ export interface P2PStoreState {
 
     // async states
     isChangingTokens: boolean;
-    // isOhlcvGraphLoading: boolean;
-    // isDepthGraphLoading: boolean;
     isPreparing: boolean;
     isLimitOrderListLoading: Record<OrderViewMode, boolean | undefined>;
     isLimitOrderCreating: boolean;
@@ -274,20 +264,15 @@ export interface P2PStoreState {
     isCloseConfirmationAwait: boolean;
     isCancelConfirmationAwait: boolean;
     isDeployConfirmationAwait: boolean;
-    // isShowChartModal: boolean;
 }
 export interface P2PFormStoreData extends P2PBaseStoreData {
     limitOrderRoot?: Address;
-    // limitOrdersList: Record<OrderViewMode, LimitOrdersPaginationResponse>;
-    // currentLimitOrder?: LimitOrderItem;
     currencyPrices: CurrencyPrices;
 }
 
 export interface P2PFormStoreState {
     rateDirection?: SwapDirection;
 
-    // timeframe: Timeframe;
-    // limitOrdersFilter: Record<OrderViewMode, LimitOrdersFilter>;
     lastAmountChangeSide?: Side;
     priceLock: boolean;
     isValidTokens: boolean;
@@ -298,10 +283,7 @@ export interface P2PFormStoreState {
     isInitialized: boolean;
     isChangingTokens: boolean;
     isPreparing: boolean;
-    // isLimitOrderListLoading: Record<OrderViewMode, boolean | undefined>;
     isLimitOrderCreating: boolean;
-    // isLimitOrderCanceling: ObservableMap<string, boolean>;
-    // isLimitOrderClosing: ObservableMap<string, boolean>;
     isLimitOrderRootLoading: boolean;
     isLimitOrderRootDeploying: boolean;
     isLimitOrderRootDeployed: boolean;
@@ -310,9 +292,6 @@ export interface P2PFormStoreState {
     // confirmation popups state
     isCreateConfirmationAwait: boolean;
     isDeployConfirmationAwait: boolean;
-    // isCloseConfirmationAwait: boolean;
-    // isCancelConfirmationAwait: boolean;
-    // isShowChartModal: boolean;
 }
 
 export interface P2PGraphStoreData extends P2PBaseStoreData {
@@ -331,20 +310,9 @@ export interface P2PGraphStoreState {
     isOhlcvGraphLoading: boolean;
     isDepthGraphLoading: boolean;
     isPreparing: boolean;
-    // isLimitOrderListLoading: Record<OrderViewMode, boolean | undefined>;
-    // isLimitOrderCreating: boolean;
-    // isLimitOrderCanceling: ObservableMap<string, boolean>;
-    // isLimitOrderClosing: ObservableMap<string, boolean>;
-    // isLimitOrderRootLoading: boolean;
-    // isLimitOrderRootDeploying: boolean;
-    // isLimitOrderRootDeployed: boolean;
     isFetching: boolean;
 
     // confirmation popups state
-    // isCreateConfirmationAwait: boolean;
-    // isCloseConfirmationAwait: boolean;
-    // isCancelConfirmationAwait: boolean;
-    // isDeployConfirmationAwait: boolean;
     isShowChartModal: boolean;
 }
 
@@ -352,6 +320,13 @@ export interface P2POrderListStoreData extends P2PBaseStoreData {
     limitOrdersList: Record<OrderViewMode, LimitOrdersPaginationResponse>;
     limitOrderRoot?: Address;
     currentLimitOrder?: LimitOrderItem;
+    currentLimitOrderFee: string;
+    currentLimitOrderSpent: string;
+    currentLimitOrderReceive: string;
+    initialCurrentLimitOrderFee: string;
+    initialCurrentLimitOrderSpent: string;
+    initialCurrentLimitOrderSpentMax: string;
+    initialCurrentLimitOrderReceive: string;
 }
 
 export interface P2POrderListStoreState {
@@ -379,7 +354,6 @@ export type LimitOrdersFilter = {
 }
 
 export type P2PStoreProviderProps = React.PropsWithChildren<{
-    // beforeInit?: (formStore: P2PStore) => Promise<void>;
     tokensCache: TokensCacheService;
     wallet: WalletService;
 } & P2PCtorOptions>
@@ -466,4 +440,9 @@ export type P2PFormOptions = NotifyCallbacks & {
 export type P2POrderListOptions = NotifyCallbacks & {
     defaultLeftTokenAddress?: string;
     defaultRightTokenAddress?: string;
+}
+
+export type P2POrderExpectedAmount = {
+    amount?: string;
+    fee?: string;
 }

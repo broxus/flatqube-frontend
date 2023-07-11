@@ -9,23 +9,16 @@ import { OrderRate } from '@/modules/LimitOrders/components/OrderRate'
 import { SwapDirection } from '@/modules/Swap/types'
 
 type Props = {
-    // fee?: string;
+    fee?: string;
+    feePercent?: string;
     leftToken?: TokenCache | WalletNativeCoin;
     rightToken?: TokenCache | WalletNativeCoin;
-    // slippage?: string;
     leftAmount?: string,
     rightAmount?: string,
     child?: React.ReactElement,
     rateDirection?: SwapDirection,
     toggleRateDirection: () => void,
 }
-
-// const calcFee = (amount: string = '0', decimals: number = 0): string => new BigNumber(amount)
-//     .dividedBy(0.9)
-//     .plus(new BigNumber(1)
-//         .shiftedBy(-decimals))
-//     .minus(amount)
-//     .toFixed()
 
 export function LimitBill({
     leftToken,
@@ -35,8 +28,8 @@ export function LimitBill({
     child,
     rateDirection,
     toggleRateDirection,
-    // fee = calcFee(leftAmount, leftToken?.decimals),
-    // slippage,
+    fee,
+    feePercent,
 }: Props): JSX.Element | null {
     const intl = useIntl()
 
@@ -70,6 +63,44 @@ export function LimitBill({
                     />
                 </div>
             </div>
+            {fee && (
+                <div key="fee" className="list-bill__row">
+                    <div className="list-bill__info">
+                        <span>
+                            {intl.formatMessage({
+                                id: 'SWAP_BILL_LABEL_FEE',
+                            })}
+                        </span>
+                        <span className="list-bill__icn">
+                            <Icon icon="info" />
+                        </span>
+                    </div>
+                    <div
+                        className="list-bill__val"
+                    >
+                        {fee}
+                    </div>
+                </div>
+            )}
+            {feePercent && (
+                <div key="feePercent" className="list-bill__row">
+                    <div className="list-bill__info">
+                        <span>
+                            {intl.formatMessage({
+                                id: 'SWAP_BILL_LABEL_FEE_PERCENT',
+                            })}
+                        </span>
+                        <span className="list-bill__icn">
+                            <Icon icon="info" />
+                        </span>
+                    </div>
+                    <div
+                        className="list-bill__val"
+                    >
+                        {`${feePercent}%`}
+                    </div>
+                </div>
+            )}
             {child}
         </div>
     )

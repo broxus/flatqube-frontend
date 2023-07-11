@@ -61,20 +61,13 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
         makeObservable<
             P2PFormStore,
             | 'handleChangeTokens'
-            // | 'handleFormChanges'
-            // | 'handleSend'
             | 'handleTokensCacheReady'
             | 'handleWalletAccountChange'
             | 'makeLimitOrder'
             | 'getLimitOrderRoot'
-            // | 'setLimitOrdersFilter'
             | 'toggleRateDirection'
             | 'maximizeLeftAmount'
         >(this, {
-            // changeLimitOrderListData: action.bound,
-            // changeLimitOrderListLoadingState: action.bound,
-            // changeTokens: action.bound,
-            // coinSide: computed,
             changeLeftAmount: action.bound,
             defaultLeftTokenRoot: computed,
             defaultRightTokenRoot: computed,
@@ -83,24 +76,17 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
             formattedRightBalance: override,
             getLimitOrderRoot: action.bound,
             handleChangeTokens: action.bound,
-            // handleFormChanges: action.bound,
-            // handleSend: action.bound,
             handleTokensCacheReady: action.bound,
             handleWalletAccountChange: action.bound,
             isBusy: computed,
-            // isCancelConfirmationAwait: computed,
             isChangingTokens: computed,
-            // isCloseConfirmationAwait: computed,
             isConfirmationAwait: computed,
             isCreateConfirmationAwait: computed,
             isCurrencyAvailable: computed,
             isDeployConfirmationAwait: computed,
             isFetching: computed,
             isInitialized: computed,
-            // isLimitOrderCanceling: computed,
-            // isLimitOrderClosing: computed,
             isLimitOrderCreating: computed,
-            // isLimitOrderListLoading: computed,
             isLimitOrderRootDeployed: computed,
             isLimitOrderRootDeploying: computed,
             isLimitOrderRootLoading: computed,
@@ -113,14 +99,8 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
             lastAmountChangeSide: computed,
             lastUpdate: computed,
             leftBalanceNumber: override,
-            // limitOrdersData: computed,
-            // limitOrdersFilter: computed,
-
-            // loadLimitOrderList: action.bound,
-            // loadLimitOrderListByOrderViewMode: action.bound,
 
             ltrMarketPrice: computed,
-            // ltrPrice: computed,
             makeLimitOrder: action.bound,
             maximizeLeftAmount: action.bound,
 
@@ -128,16 +108,13 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
             rateDirection: computed,
             rtlMarketPrice: computed,
             rtlPrice: override,
-            // setLimitOrdersFilter: action.bound,
             toggleDirection: action.bound,
             toggleRateDirection: action.bound,
         })
 
         this.setData(() => ({
-            // graphData: DEFAULT_GRAPH_DATA,
             leftAmount: '',
             limitOrderRoot: undefined,
-            // limitOrdersList: DEFAULT_LIMIT_ORDERS_LIST,
             rightAmount: '',
         }))
         this.setState(() => ({
@@ -551,7 +528,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
                     debug('decodedTx', decodedTx)
                     if (decodedTx?.method === 'onOrderCreateOrderReject' && decodedTx.input.id.toString() === callId) {
                         this.setState('isLimitOrderCreating', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onOrderCreateOrderReject?.({ callId, input: decodedTx.input })
                         debug('decodedTx onOrderCreateOrderReject', decodedTx)
                         return { input: decodedTx.input }
@@ -559,7 +536,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
 
                     if (decodedTx?.method === 'onOrderCreateOrderSuccess' && decodedTx.input.id.toString() === callId) {
                         this.setState('isLimitOrderCreating', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onOrderCreateOrderSuccess?.({ callId, input: decodedTx.input, transaction })
                         debug('decodedTx onOrderCreateOrderSuccess', decodedTx)
                         return { input: decodedTx.input, transaction }
@@ -578,7 +555,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
                 .decimalPlaces(0)
             const buildPayloadArg = {
                 backMatchingPK: backPK,
-                backPK, // constant = '106925417688891724647234995036862332928925618442306815431062595410491768176622',
+                backPK,
                 callbackId: callId,
                 cancelPayload: null,
                 expectedTokenAmount: buyAmountBN.toFixed(),
@@ -634,7 +611,6 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
             this.options?.onTransactionEnded?.({ callId })
             this.setState('isLimitOrderCreating', false)
             await unsubscribeTransactionSubscriber(callId)
-            // this.refresh()
         }
     }
 
@@ -709,7 +685,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
 
                     if (decodedTx?.method === 'onOrderRootCreateReject' && decodedTx.input.id.toString() === callId) {
                         this.setState('isLimitOrderRootDeploying', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onOrderRootCreateReject?.({ callId })
                         debug('decodedTx onOrderRootCreateReject', decodedTx)
                         return { input: decodedTx.input, transaction }
@@ -717,7 +693,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
 
                     if (decodedTx?.method === 'onOrderRootCreateSuccess' && decodedTx.input.id.toString() === callId) {
                         this.setState('isLimitOrderRootDeploying', false)
-                        this.options?.onTransactionEnded?.({ callId })
+                        // this.options?.onTransactionEnded?.({ callId })
                         this.options?.onOrderRootCreateSuccess?.({ callId, input: decodedTx.input, transaction })
                         debug('decodedTx onOrderCreateOrderSuccess', decodedTx)
                         return { input: decodedTx.input, transaction }
@@ -736,12 +712,6 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
                     amount: '5000000000',
                     from: new Address(this.wallet.address),
                 })
-            // const subscriber = new rpc.Subscriber()
-            // await subscriber.trace(transaction)
-            //     .tap((tx: any) => {
-            //         debug(`+++ deployLimitOrderRoot Account ${tx.account.toString()}: found tx ${tx.id.hash}`)
-            //     })
-            //     .finished()
 
             debug('await message.transaction')
             await message.transaction
@@ -797,13 +767,10 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
         this.formDataDisposer?.()
         this.tokensChangeDisposer?.()
         this.tokensCacheDisposer?.()
-        // this.tokensDisposer?.()
         this.walletAccountDisposer?.()
         this.reset()
     }
 
-
-    // TODO may be need to add some data to reset
     /**
      * Full reset P2P
      * instances to their default.
@@ -910,7 +877,6 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
         return this.options?.defaultRightTokenAddress?.toString()
     }
 
-    // TODO need to refactor
     /**
      * Returns combined `isLoading` state from direct swap, cross-pair swap.
      * @returns {boolean}
@@ -1063,7 +1029,6 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
                 rightToken: this.options.defaultRightTokenAddress?.toString(),
             })
 
-            // this.setState('isMultiple', true)
             this.walletAccountDisposer?.()
             this.walletAccountDisposer = reaction(
                 () => this.wallet.account?.address,
@@ -1149,8 +1114,6 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
     protected tokensChangeDisposer: IReactionDisposer | undefined
 
     protected tokensCacheDisposer: IReactionDisposer | undefined
-
-    // protected tokensDisposer: IReactionDisposer | undefined
 
     protected walletAccountDisposer: IReactionDisposer | undefined
 

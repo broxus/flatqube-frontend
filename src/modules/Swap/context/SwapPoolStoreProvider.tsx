@@ -4,7 +4,9 @@ import { SwapPoolStore } from '@/modules/Swap/stores/SwapPoolStore'
 import { useTokensCache } from '@/stores/TokensCacheService'
 import { useWallet } from '@/stores/WalletService'
 
-export type SwapPoolStoreProviderProps = React.PropsWithChildren<{ address: string }>
+export type SwapPoolStoreProviderProps = React.PropsWithChildren<{
+    beforeInit?: (store: SwapPoolStore) => Promise<void>;
+}>
 
 // @ts-ignore
 export const SwapPoolStoreContext = React.createContext<SwapPoolStore>()
@@ -14,9 +16,13 @@ export function useSwapPoolStoreContext(): SwapPoolStore {
 }
 
 export function SwapPoolStoreProvider(props: SwapPoolStoreProviderProps): JSX.Element {
-    const { address, children } = props
+    const { beforeInit, children } = props
 
-    const context = React.useMemo(() => new SwapPoolStore(address, useWallet(), useTokensCache()), [address])
+    const context = React.useMemo(() => new SwapPoolStore(useWallet(), useTokensCache()), [])
+
+    React.useEffect(() => {
+        beforeInit?.(context)
+    }, [context])
 
     return (
         <SwapPoolStoreContext.Provider value={context}>

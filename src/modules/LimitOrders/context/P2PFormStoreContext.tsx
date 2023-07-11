@@ -71,7 +71,6 @@ export function P2PFormStoreProvider({
                                 leftAmount, rightAmount,
                             })
                         }
-                        // await context.init() // duplicate init
                     }
                     catch (e) {
                         error('P2P Store initializing error', e)

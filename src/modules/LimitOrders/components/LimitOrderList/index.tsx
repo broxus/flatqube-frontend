@@ -114,18 +114,6 @@ function LimitOrderListComponent({
         || !p2pOrderList.tokensCache.isReady
         || p2pOrderList.wallet.isInitializing)
         && p2pOrderList.isValidTokens
-    // debug(
-    //     '+++isPlaceHolderVisible',
-    //     isPlaceHolderVisible,
-    //     p2pOrderList.isPreparing,
-    //     p2pOrderList.isLoading,
-    //     !p2pOrderList.tokensCache.isReady,
-    //     p2pOrderList.wallet.isInitializing,
-    //     p2pOrderList.isValidTokens,
-    //     p2pOrderList.isValidTokens,
-    //     `-${OrderViewMode[viewMode]}`,
-    //     p2pOrderList.isLimitOrderListLoading[viewMode],
-    // )
 
     const p2pNotifyCallbacks = useP2PNotificationCallbacks()
     const globalP2PNotify = useP2PNotifyStore(p2pNotifyCallbacks)
@@ -143,7 +131,6 @@ function LimitOrderListComponent({
         p2pOrderList.isValidTokens,
         p2pOrderList.limitOrdersData[viewMode].items.length > 0,
     )
-    // debug('isEmptyList', viewMode, isEmptyList, p2p.isValidTokens, p2p.limitOrdersData[viewMode].items)
     return (
         <>
             <SectionTitle size="small">
@@ -208,7 +195,7 @@ function LimitOrderListComponent({
                                             })}
                                         </div>
                                     )}
-                                    <div className={classNames('list__cell', 'visible@l', {
+                                    <div className={classNames('list__cell', {
                                         'list__cell--left': viewMode !== OrderViewMode.ORDERS_HISTORY,
                                         'list__cell--right': viewMode === OrderViewMode.ORDERS_HISTORY,
                                     })}

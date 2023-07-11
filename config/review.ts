@@ -69,8 +69,10 @@ export const NPoolsList = new Map<
         ],
     }],
 ])
+
 // export const P2P_API_URL = 'https://p2p-api-test.flatqube.io'
 // export const backPK = '106925417688891724647234995036862332928925618442306815431062595410491768176622'
+// export const LimitOrderFactoryRoot = new AddressLiteral('0:8948e51f0a2e672d2627837af1edaa398fdfe0230edd3daca36eb96acfa38a81')
 
 export const P2P_API_URL = 'https://limit-api.flatqube.io'
 

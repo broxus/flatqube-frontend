@@ -13,7 +13,6 @@ import { SwapDirection } from '../Swap/types'
 
 export function convertOrderViewFilterToStates(
     type: OrderViewMode,
-    // onlyActiveOrders: boolean,
 ): LimitOrderState[] | undefined {
     switch (type) {
         case OrderViewMode.OPEN_ORDERS:

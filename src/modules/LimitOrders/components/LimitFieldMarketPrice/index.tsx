@@ -21,37 +21,12 @@ type Props = {
     id?: string;
     isMultiple?: boolean;
     isValid?: boolean;
-    // nativeCoin?: WalletNativeCoin;
     readOnly?: boolean;
     showMaximizeButton?: boolean;
-    // token?: TokenCache;
     value?: string;
     onChange?: (value: string) => void;
     onMarketPrice?: () => void;
     onToggleTokensList?: () => void;
-}
-
-enum Sign {
-    'above' = 'above',
-    'below' = 'below',
-    'price' = 'price'
-}
-const calcPercent = (p2p: P2PFormStore): { text: string, sign: Sign | '-' } => {
-    if (!p2p.rtlPrice || !p2p.rtlMarketPrice || +p2p.rtlPrice === 0 || +p2p.rtlMarketPrice === 0) {
-        return {
-            sign: '-',
-            text: '-',
-        }
-    }
-    const value = new BigNumber((+p2p.rtlPrice / +p2p.rtlMarketPrice - 1) * 100)
-    return {
-        // eslint-disable-next-line no-nested-ternary
-        sign: value.toNumber() > 0
-            ? Sign.above : value.toNumber() < 0
-                ? Sign.below
-                : Sign.price,
-        text: value.lt(1000) ? value.toFixed(2) : '> 1000',
-    }
 }
 
 function FieldMarketPrice({
@@ -59,6 +34,37 @@ function FieldMarketPrice({
     ...props
 }: Props): JSX.Element {
     const intl = useIntl()
+    const Sign = {
+        above: intl.formatMessage({
+            id: 'P2P_BTN_TEXT_MARKET_PRICE_DIRECTION_ABOVE',
+        }),
+        below: intl.formatMessage({
+            id: 'P2P_BTN_TEXT_MARKET_PRICE_DIRECTION_BELOW',
+        }),
+        price: intl.formatMessage({
+            id: 'P2P_BTN_TEXT_MARKET_PRICE_DIRECTION_PRICE',
+        }),
+    } as const
+    const calcPercent = (p2p: P2PFormStore): { text: string, sign: string} => {
+        if (!p2p.rtlPrice || !p2p.rtlMarketPrice || +p2p.rtlPrice === 0 || +p2p.rtlMarketPrice === 0) {
+            return {
+                sign: '-',
+                text: '-',
+            }
+        }
+        const value = new BigNumber(p2p.rtlPrice)
+            .div(p2p.rtlMarketPrice)
+            .minus(1)
+            .times(100)
+        return {
+            // eslint-disable-next-line no-nested-ternary
+            sign: value.toNumber() > 0
+                ? Sign.above : value.toNumber() < 0
+                    ? Sign.below
+                    : Sign.price,
+            text: value.lt(1000) ? value.toFixed(2) : '> 1000',
+        }
+    }
     const p2pFormStore = useP2PFormStoreContext()
 
     const field = useField({
@@ -114,7 +120,9 @@ function FieldMarketPrice({
                                     type="secondary"
                                     onClick={props.onMarketPrice}
                                 >
-                                    Market price
+                                    {intl.formatMessage({
+                                        id: 'P2P_BTN_TEXT_MARKET_PRICE',
+                                    })}
                                 </Button>
                             )}
                         <Button
