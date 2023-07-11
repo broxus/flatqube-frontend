@@ -645,7 +645,7 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
         return (
             (this.data.leftToken ? this.tokensCache.isCustomToken(this.data.leftToken) : undefined)
             || (this.data.rightToken ? this.tokensCache.isCustomToken(this.data.rightToken) : undefined)
-        ) ?? true
+        ) ?? false
     }
 
     /*

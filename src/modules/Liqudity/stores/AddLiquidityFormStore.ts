@@ -1452,7 +1452,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
         return (
             (this.data.leftToken ? this.tokensCache.isCustomToken(this.data.leftToken) : undefined)
             || (this.data.rightToken ? this.tokensCache.isCustomToken(this.data.rightToken) : undefined)
-        ) ?? true
+        ) ?? false
     }
 
     /*

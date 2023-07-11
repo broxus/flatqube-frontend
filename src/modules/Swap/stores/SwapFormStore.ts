@@ -1628,7 +1628,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         return (
             (this.data.leftToken ? this.tokensCache.isCustomToken(this.data.leftToken) : undefined)
             || (this.data.rightToken ? this.tokensCache.isCustomToken(this.data.rightToken) : undefined)
-        ) ?? true
+        ) ?? false
     }
 
     /**
