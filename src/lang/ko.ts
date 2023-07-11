@@ -149,7 +149,7 @@ export default {
     SWAP_COMBINED_NOTATION_HOW_TO_LINK_TEXT: '환전방법 안내',
 
     SWAP_CUSTOM_TOKENS_ALERT: '누구나 블록체인에서 토큰을 만들 수 있지만, 그것이 플랫큐브의 화이트리스트에 없을 경우 사전에 세심히 먼저 조사하세요. 확실한 사전검증하기 전에 절대 섣불리 (화이트리스트에 없는) 토큰으로 환전하지 마십시오. ',
-    
+
     SWAP_NOTIFICATION_TRANSACTION_PENDING_TITLE: "환전이 완료될 때까지 기다리십시오.",
     SWAP_NOTIFICATION_SUCCESS_TITLE: '환전이 완료되었습니다',
     SWAP_NOTIFICATION_FAILURE_TITLE: '환전이 취소되었습니다',

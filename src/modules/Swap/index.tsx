@@ -198,13 +198,9 @@ export function Swap(): JSX.Element {
                             </Observer>
 
                             <Observer>
-                                {() => (
-                                    formStore.leftToken !== undefined
-                                    && formStore.rightToken !== undefined
-                                    && formStore.hasCustomToken
-                                        ? (
-                                            <CustomTokensAlerts />
-                                        ) : null)}
+                                {() => (formStore.hasCustomToken ? (
+                                    <CustomTokensAlerts />
+                                ) : null)}
                             </Observer>
 
                             {/*
