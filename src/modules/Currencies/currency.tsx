@@ -16,10 +16,12 @@ import {
     CurrencyTransactionsStoreProvider,
     useCurrencyStoreContext,
 } from '@/modules/Currencies/providers'
+import { useTokensCache } from '@/stores/TokensCacheService'
+import { Warning } from '@/components/common/Warning'
 
 export function Currency(): JSX.Element {
     const intl = useIntl()
-
+    const tokensCache = useTokensCache()
     const currencyStore = useCurrencyStoreContext()
 
     React.useEffect(() => reaction(() => currencyStore.tokensCache.isReady, async isReady => {
@@ -34,6 +36,14 @@ export function Currency(): JSX.Element {
                 <NotFoundError />
             ) : (
                 <>
+                    {tokensCache.isCustomToken(currencyStore.address) && (
+                        <Warning
+                            className="margin-bottom"
+                            text={intl.formatMessage({ id: 'CURRENCY_CUSTOM_TOKEN_ALERT' })}
+                            theme="warning"
+                        />
+                    )}
+
                     <CurrencyPageHeader />
 
                     <section className="section">

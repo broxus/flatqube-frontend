@@ -64,7 +64,7 @@ export function SwapPoolTransactionsWrap({ notFound } : { notFound?: boolean }):
                     </section>
                 )
                 : (
-                    <div style={({ marginTop: '64px' })}>
+                    <div>
                         <section className="section">
                             <header className="section__header">
                                 <SectionTitle size="small">
@@ -100,7 +100,9 @@ export function SwapPoolTransactionsWrap({ notFound } : { notFound?: boolean }):
                             </div>
                             <div className="card card--flat card--xsmall">
                                 <div className="list transactions_list">
-                                    <SwapTransactionsListPlaceholder />
+                                    {transactionsStore.isFetching
+                                        ? <SwapTransactionsListPlaceholder />
+                                        : <SwapTransactionsListEmpty />}
                                 </div>
                             </div>
                         </section>

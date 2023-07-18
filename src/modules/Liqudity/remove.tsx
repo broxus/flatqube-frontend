@@ -9,7 +9,7 @@ import { useParams } from 'react-router-dom'
 import { AmountInput } from '@/components/common/AmountInput'
 import { Warning } from '@/components/common/Warning'
 import { Placeholder } from '@/components/common/Placeholder'
-import { RemoveLiquiditySubmitButton } from '@/modules/Liqudity/components'
+import { CustomTokensAlerts, RemoveLiquiditySubmitButton } from '@/modules/Liqudity/components'
 import { useRemoveLiquidityFormStoreContext } from '@/modules/Liqudity/context'
 import { useRemoveLiquidityForm } from '@/modules/Liqudity/hooks'
 import { Token } from '@/modules/TokensList/components/Token'
@@ -107,6 +107,10 @@ export function RemoveLiquidity(): JSX.Element {
                                         />
                                     </div>
                                 </div>
+
+                                {formStore.hasCustomToken && (
+                                    <CustomTokensAlerts />
+                                )}
 
                                 {(
                                     formStore.wallet.isReady

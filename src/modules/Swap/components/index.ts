@@ -1,4 +1,5 @@
 export * from '@/modules/Swap/components/ConversionSubmitButton'
+export * from '@/modules/Swap/components/CustomTokensAlerts'
 export * from '@/modules/Swap/components/LiquidityStableSwapSubmitButton'
 export * from '@/modules/Swap/components/MultiSwapConfirmationPopup'
 export * from '@/modules/Swap/components/Notifications'

@@ -46,7 +46,7 @@ export const SwapReferrerAddress = new AddressLiteral('0:00000000000000000000000
 
 export const TokenListURI = 'https://raw.githubusercontent.com/broxus/flatqube-assets/master/manifest.json'
 
-export const MinWalletVersion = '0.2.31' 
+export const MinWalletVersion = '0.2.31'
 
 export const API_URL = 'https://api.flatqube.io/v1'
 

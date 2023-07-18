@@ -133,6 +133,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
             handleChangeTokens: action.bound,
             handleTokensCacheReady: action.bound,
             handleWalletAccountChange: action.bound,
+            hasCustomToken: computed,
             isAutoExchangeAvailable: computed,
             isAutoExchangeEnabled: computed,
             isAwaitingLeftDeposit: computed,
@@ -804,7 +805,7 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
             const { dynamicGas, fixedValue } = (await dexGasValuesContract(DexGasValuesAddress)
                 .methods.getPoolDirectNoFeeWithdrawGas({
                     deployWalletValue,
-                    N: 2
+                    N: 2,
                 })
                 .call())
                 .value0
@@ -1052,11 +1053,11 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
 
         await DexAccountUtils.withdrawToken(this.dex.address, {
             amount: params.amount,
+            deployWalletGrams,
             lastLt: this.dex.accountState?.lastTransactionId?.lt,
             recipientAddress: this.wallet.account.address,
             sendGasTo: this.wallet.account.address,
             tokenAddress: params.tokenAddress,
-            deployWalletGrams,
             // eslint-disable-next-line sort-keys
             onSend: params?.onSend,
             onTransactionFailure: params?.onTransactionFailure,
@@ -1440,6 +1441,17 @@ export class AddLiquidityFormStore extends BaseStore<AddLiquidityFormStoreData, 
             return false
         }
         return new BigNumber(this.rightAmount || 0).shiftedBy(this.rightDecimals ?? 0).lte(this.dexRightBalance ?? 0)
+    }
+
+    public get hasCustomToken(): boolean {
+        if (!this.tokensCache.isReady) {
+            return false
+        }
+
+        return (
+            (this.data.leftToken ? this.tokensCache.isCustomToken(this.data.leftToken) : undefined)
+            || (this.data.rightToken ? this.tokensCache.isCustomToken(this.data.rightToken) : undefined)
+        ) ?? true
     }
 
     /*

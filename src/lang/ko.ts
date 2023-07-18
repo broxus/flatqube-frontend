@@ -148,6 +148,8 @@ export default {
     SWAP_COMBINED_NOTATION_P2: '원하실 경우 EVER 또는 wEVER 잔액만 사용하여 환전할 수도 있습니다.',
     SWAP_COMBINED_NOTATION_HOW_TO_LINK_TEXT: '환전방법 안내',
 
+    SWAP_CUSTOM_TOKENS_ALERT: '누구나 블록체인에서 토큰을 만들 수 있지만, 그것이 플랫큐브의 화이트리스트에 없을 경우 사전에 세심히 먼저 조사하세요. 확실한 사전검증하기 전에 절대 섣불리 (화이트리스트에 없는) 토큰으로 환전하지 마십시오. ',
+    
     SWAP_NOTIFICATION_TRANSACTION_PENDING_TITLE: "환전이 완료될 때까지 기다리십시오.",
     SWAP_NOTIFICATION_SUCCESS_TITLE: '환전이 완료되었습니다',
     SWAP_NOTIFICATION_FAILURE_TITLE: '환전이 취소되었습니다',
@@ -190,6 +192,7 @@ export default {
     POOLS_LIST_EMPTY_NOTE: 'Here you can find list of all liquidity pools',
 
     POOL_BREADCRUMB_ROOT: '모든 풀',
+    POOL_CUSTOM_TOKEN_ALERT: '이 풀(pool)에는 화이트리스트에 없는 토큰이 포함되어 있습니다. 이용하시기 전에 필히 사전검증을 하시기 바랍니다.',
     POOL_BREADCRUMB_POOL_ITEM: '{label} 풀',
     POOL_TOKEN_PRICE_RATES: '1 {leftSymbol} = {amount} {rightSymbol}',
     POOL_STABLE_TOKEN_PRICE_RATES: '{symbol} = ${amount}',
@@ -242,6 +245,7 @@ export default {
     POOL_TRANSACTION_EVENT_WITHDRAW: '인출',
 
 
+    LIQUIDITY_CUSTOM_TOKENS_ALERT: '누구나 블록체인에서 토큰을 만들 수 있지만, 그것이 플랫큐브의 화이트리스트에 없을 경우 사전에 세심히 먼저 조사하세요. 확실한 사전검증하기 전에 절대 섣불리 (화이트리스트에 없는) 토큰으로 환전하지 마십시오. ',
     LIQUIDITY_ADD_HEADER_TITLE: '유동성 추가',
     LIQUIDITY_ADD_FIELD_TOKEN_WALLET_BALANCE: '잔고: {balance}',
     LIQUIDITY_ADD_FIELD_LABEL_LEFT: '왼쪽',
@@ -354,6 +358,7 @@ export default {
     CURRENCIES_LIST_HEADER_TVL_CELL: 'TVL',
     CURRENCIES_LIST_EMPTY: 'Tokens list is empty',
     CURRENCIES_LIST_EMPTY_NOTE: 'Here you can find list of all tokens',
+    CURRENCY_CUSTOM_TOKEN_ALERT: '누구나 블록체인에서 토큰을 만들 수 있지만, 그것이 플랫큐브의 화이트리스트에 없을 경우 사전에 세심히 먼저 조사하세요. 확실한 사전검증하기 전에 절대 섣불리 (화이트리스트에 없는) 토큰으로 환전하지 마십시오.',
     CURRENCY_BREADCRUMB_ROOT: '토큰',
     CURRENCY_ADD_LIQUIDITY_BTN_TEXT: '유동성 추가',
     CURRENCY_TRADE_BTN_TEXT: '트레이드',

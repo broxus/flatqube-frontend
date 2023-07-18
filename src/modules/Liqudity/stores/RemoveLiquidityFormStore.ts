@@ -85,6 +85,7 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
             handleTokensCacheReady: action.bound,
             handleTokensChange: action.bound,
             handleWalletAccountChange: action.bound,
+            hasCustomToken: computed,
             isAmountValid: computed,
             isAwaitingConfirmation: computed,
             isCheckingDexAccount: computed,
@@ -633,6 +634,17 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
 
     public get rightToken(): TokenCache | undefined {
         return this.tokensCache.get(this.data.rightToken)
+    }
+
+    public get hasCustomToken(): boolean {
+        if (!this.tokensCache.isReady) {
+            return false
+        }
+
+        return (
+            (this.data.leftToken ? this.tokensCache.isCustomToken(this.data.leftToken) : undefined)
+            || (this.data.rightToken ? this.tokensCache.isCustomToken(this.data.rightToken) : undefined)
+        ) ?? true
     }
 
     /*

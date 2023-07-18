@@ -148,6 +148,8 @@ export default {
     SWAP_COMBINED_NOTATION_P2: 'EVERとWEVERの両方を使用してスワップ可能です。',
     SWAP_COMBINED_NOTATION_HOW_TO_LINK_TEXT: 'スワップ方法のご案内',
 
+    SWAP_CUSTOM_TOKENS_ALERT: 'We strongly urge our users to remain vigilant when trading on our decentralized exchange. Please exercise caution before taking any action and do your own research.',
+
     SWAP_NOTIFICATION_TRANSACTION_PENDING_TITLE: 'Wait until the swap is completed',
     SWAP_NOTIFICATION_SUCCESS_TITLE: 'The swap has been completed',
     SWAP_NOTIFICATION_FAILURE_TITLE: 'The swap has been canceled',
@@ -190,6 +192,7 @@ export default {
     POOLS_LIST_EMPTY_NOTE: 'Here you can find list of all liquidity pools',
 
     POOL_BREADCRUMB_ROOT: 'すべてのプール',
+    POOL_CUSTOM_TOKEN_ALERT: 'This pool includes a non-whitelist token. Do your own research before interacting with it.',
     POOL_BREADCRUMB_POOL_ITEM: '{label} プール',
     POOL_TOKEN_PRICE_RATES: '1 {leftSymbol} = {amount} {rightSymbol}',
     POOL_STABLE_TOKEN_PRICE_RATES: '{symbol} = ${amount}',
@@ -242,6 +245,7 @@ export default {
     POOL_TRANSACTION_EVENT_WITHDRAW: '削除',
 
 
+    LIQUIDITY_CUSTOM_TOKENS_ALERT: 'We strongly urge our users to remain vigilant when trading on our decentralized exchange. Please exercise caution before taking any action and do your own research.',
     LIQUIDITY_ADD_HEADER_TITLE: '流動性追加',
     LIQUIDITY_ADD_FIELD_TOKEN_WALLET_BALANCE: '残高: {balance}',
     LIQUIDITY_ADD_FIELD_LABEL_LEFT: '左側',
@@ -354,6 +358,7 @@ export default {
     CURRENCIES_LIST_HEADER_TVL_CELL: 'TVL',
     CURRENCIES_LIST_EMPTY: 'Tokens list is empty',
     CURRENCIES_LIST_EMPTY_NOTE: 'Here you can find list of all tokens',
+    CURRENCY_CUSTOM_TOKEN_ALERT: 'Anyone can create a token on the blockchain. This one is not whitelisted by FlatQube – do your own research before interacting with it.',
     CURRENCY_BREADCRUMB_ROOT: 'トークン',
     CURRENCY_ADD_LIQUIDITY_BTN_TEXT: '流動性の追加',
     CURRENCY_TRADE_BTN_TEXT: 'トレード',

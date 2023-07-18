@@ -10,6 +10,7 @@ import {
     ConversionSubmitButton,
     LiquidityStableSwapSubmitButton,
     MultiSwapConfirmationPopup,
+    CustomTokensAlerts,
     SwapBill,
     SwapConfirmationPopup,
     SwapField,
@@ -196,8 +197,18 @@ export function Swap(): JSX.Element {
                                 )}
                             </Observer>
 
+                            <Observer>
+                                {() => (
+                                    formStore.leftToken !== undefined
+                                    && formStore.rightToken !== undefined
+                                    && formStore.hasCustomToken
+                                        ? (
+                                            <CustomTokensAlerts />
+                                        ) : null)}
+                            </Observer>
 
-                            {/* <Observer>
+                            {/*
+                            <Observer>
                                 {() => {
                                     switch (true) {
                                         case formStore.route !== undefined:

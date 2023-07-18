@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 
 import { Icon } from '@/components/common/Icon'
+import { CustomTokensAlerts } from '@/modules/Liqudity/components/CustomTokensAlerts'
 import { useAddLiquidityFormStoreContext } from '@/modules/Liqudity/context'
 
 import './index.scss'
@@ -13,6 +14,9 @@ function AddLiquidityAnnotationsInternal(): JSX.Element | null {
     const formStore = useAddLiquidityFormStoreContext()
 
     switch (true) {
+        case formStore.hasCustomToken:
+            return <CustomTokensAlerts />
+
         case !formStore.wallet.isReady:
         case formStore.isCheckingDexAccount === undefined || formStore.isCheckingDexAccount:
             return null

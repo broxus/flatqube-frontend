@@ -24,6 +24,7 @@ import { NativeScrollArea } from '@/components/common/NativeScrollArea'
 import { appRoutes, URLTokensParams } from '@/routes'
 import { WEVERRootAddress } from '@/config'
 import { LocalStorageSwapAmounts } from '@/misc'
+import { CustomTokensAlerts } from '@/modules/LimitOrders/components/CustomTokensAlerts'
 
 import './index.scss'
 
@@ -238,6 +239,11 @@ export function LimitOrderForm({
                             }}
                         />
                     )}
+                </Observer>
+                <Observer>
+                    {() => (p2pFormStore.hasCustomToken ? (
+                        <CustomTokensAlerts />
+                    ) : null)}
                 </Observer>
                 <Observer>
                     {() => (!p2pFormStore.isLimitOrderRootDeployed

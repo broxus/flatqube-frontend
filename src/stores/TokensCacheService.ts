@@ -300,9 +300,7 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
     }
 
     public isCustomToken(root: string): boolean {
-        return this.tokensList.tokens.find(
-            token => token.address === root,
-        ) === undefined && !getImportedTokens().includes(root)
+        return !this.tokensList.tokens?.some(token => token.address === root)
     }
 
     /**

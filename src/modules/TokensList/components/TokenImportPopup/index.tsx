@@ -60,7 +60,7 @@ export function TokenImportPopup({ onImportConfirm }: Props): JSX.Element | null
                 </Observer>
 
                 <div
-                    className="popup-txt"
+                    className="popup-txt text-danger"
                     dangerouslySetInnerHTML={{
                         __html: intl.formatMessage({
                             id: 'TOKENS_LIST_POPUP_IMPORT_TOKEN_WARNING',

@@ -4,12 +4,14 @@ import classNames from 'classnames'
 import './index.scss'
 
 type Props = {
-    title: string,
+    className?: string
+    title?: string,
     text?: string,
     theme?: 'danger' | 'warning'
 }
 
 export function Warning({
+    className,
     title,
     text,
     theme = 'danger',
@@ -18,12 +20,12 @@ export function Warning({
         <div
             className={classNames('warning', {
                 [`warning_theme_${theme}`]: Boolean(theme),
-            })}
+            }, className)}
         >
-            <h4 className="warning__title">{title}</h4>
+            {title && <h4 key="title" className="warning__title">{title}</h4>}
 
             {text && (
-                <div className="warning__text" dangerouslySetInnerHTML={{ __html: text }} />
+                <div key="text" className="warning__text" dangerouslySetInnerHTML={{ __html: text }} />
             )}
         </div>
     )

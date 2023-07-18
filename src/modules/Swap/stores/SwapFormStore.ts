@@ -165,6 +165,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             handleSend: action.bound,
             handleTokensCacheReady: action.bound,
             handleWalletAccountChange: action.bound,
+            hasCustomToken: computed,
             isCalculating: computed,
             isCoinBasedSwapMode: computed,
             isCoinToTip3Valid: computed,
@@ -1498,7 +1499,11 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
     }
 
     public get isUnwrapValid(): boolean {
-        return this.wallet.address !== undefined && this.leftToken?.wallet !== undefined && this.isEnoughTokenBalance
+        return (
+            this.wallet.address !== undefined
+            && this.leftToken?.wallet !== undefined
+            && this.isEnoughTokenBalance
+        )
     }
 
     public get isDepositOneCoinValid(): boolean {
@@ -1613,6 +1618,17 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
                     && new BigNumber(this.leftToken.balance || 0).gte(this.bill.amount || 0)
                 )
         }
+    }
+
+    public get hasCustomToken(): boolean {
+        if (!this.tokensCache.isReady) {
+            return false
+        }
+
+        return (
+            (this.data.leftToken ? this.tokensCache.isCustomToken(this.data.leftToken) : undefined)
+            || (this.data.rightToken ? this.tokensCache.isCustomToken(this.data.rightToken) : undefined)
+        ) ?? true
     }
 
     /**

@@ -78,6 +78,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
             handleChangeTokens: action.bound,
             handleTokensCacheReady: action.bound,
             handleWalletAccountChange: action.bound,
+            hasCustomToken: computed,
             isBusy: computed,
             isChangingTokens: computed,
             isConfirmationAwait: computed,
@@ -489,6 +490,28 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
      */
     public get isLimitOrderRootDeploying(): P2PFormStoreState['isLimitOrderRootDeploying'] {
         return this.state.isLimitOrderRootDeploying
+    }
+
+    /**
+     *
+     */
+    public get hasCustomToken(): boolean {
+        if (
+            !this.tokensCache.isReady
+            || this.data.leftToken === undefined
+            || this.data.rightToken === undefined
+        ) {
+            return false
+        }
+        debug(
+            '+++hasCustomToken',
+            this.data.leftToken,
+            this.tokensCache.isCustomToken(this.data.leftToken),
+            this.data.rightToken,
+            this.tokensCache.isCustomToken(this.data.rightToken),
+        )
+        return this.tokensCache.isCustomToken(this.data.leftToken)
+            || this.tokensCache.isCustomToken(this.data.rightToken)
     }
 
     /**

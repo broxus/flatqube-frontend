@@ -18,10 +18,12 @@ import {
     usePoolStoreContext,
 } from '@/modules/Pools/context'
 import { WalletMiddleware } from '@/modules/WalletMiddleware'
+import { Warning } from '@/components/common/Warning'
+import { useTokensCache } from '@/stores/TokensCacheService'
 
 export function Pool(): JSX.Element {
     const intl = useIntl()
-
+    const tokensCache = useTokensCache()
     const poolStore = usePoolStoreContext()
 
     React.useEffect(() => reaction(
@@ -42,6 +44,14 @@ export function Pool(): JSX.Element {
                 <NotFoundError />
             ) : (
                 <>
+                    {poolStore.tokens.some(token => tokensCache.isCustomToken(token.address)) && (
+                        <Warning
+                            className="margin-bottom"
+                            text={intl.formatMessage({ id: 'POOL_CUSTOM_TOKEN_ALERT' })}
+                            theme="warning"
+                        />
+                    )}
+
                     <PoolPageHeader />
 
                     <section className="section">
