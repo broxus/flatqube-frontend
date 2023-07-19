@@ -254,8 +254,8 @@ export class SwapGraphStore extends BaseStore<SwapGraphStoreData, SwapGraphStore
      *
      */
     public get isInvertGraph(): boolean | undefined {
-        debug('this.data.poolData?.left, this.leftToken?.root, this.data.poolData?.right, this.rightToken?.root', this.data.poolData?.left, this.leftToken?.root, this.data.poolData?.right, this.rightToken?.root)
-        return this.data.poolData?.left === this.leftToken?.root && this.data.poolData?.right === this.rightToken?.root
+        debug('this.data.poolData?.left, this.leftToken?.root', this.data.poolData?.left, this.leftToken?.root)
+        return this.data.poolData?.left !== this.leftToken?.root
     }
 
     /**

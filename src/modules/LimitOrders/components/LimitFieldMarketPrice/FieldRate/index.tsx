@@ -29,8 +29,8 @@ export function FieldRate({
             <Observer>
                 {() => (
                     <PairIcons
-                        leftToken={p2pFormStore.rateDirection === SwapDirection.LTR ? leftToken : rightToken}
-                        rightToken={p2pFormStore.rateDirection === SwapDirection.LTR ? rightToken : leftToken}
+                        leftToken={p2pFormStore.rateDirection === SwapDirection.RTL ? leftToken : rightToken}
+                        rightToken={p2pFormStore.rateDirection === SwapDirection.RTL ? rightToken : leftToken}
                         small
                     />
                 )}

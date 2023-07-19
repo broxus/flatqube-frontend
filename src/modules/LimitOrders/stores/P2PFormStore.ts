@@ -203,9 +203,11 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
         else if (value && !!this.rightAmount && +this.leftAmount !== 0) {
             const ltrPrice = new BigNumber(value)
                 .dividedBy(this.rightAmount)
+                .dp(this.leftToken?.decimals ?? 0)
                 .toFixed()
             const rtlPrice = new BigNumber(this.rightAmount)
                 .dividedBy(value)
+                .dp(this.rightToken?.decimals ?? 0)
                 .toFixed()
             this.setData({
                 ltrPrice,
@@ -246,10 +248,12 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
         }
         else if (value && !!this.leftAmount && +this.rightAmount !== 0) {
             const ltrPrice = new BigNumber(this.leftAmount)
+                .dp(this.leftToken?.decimals ?? 0)
                 .dividedBy(value)
                 .toFixed()
             const rtlPrice = new BigNumber(value)
                 .dividedBy(this.leftAmount)
+                .dp(this.rightToken?.decimals ?? 0)
                 .toFixed()
             this.setData({
                 ltrPrice,
@@ -340,9 +344,11 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
                 if (currencyPrices.leftPrice && currencyPrices.rightPrice) {
                     currencyPrices.ltrMarketPrice = currencyPrices.rightPrice
                         .dividedBy(currencyPrices.leftPrice)
+                        .dp(this.leftToken.decimals)
                         .toFixed()
                     currencyPrices.rtlMarketPrice = currencyPrices.leftPrice
                         .dividedBy(currencyPrices.rightPrice)
+                        .dp(this.rightToken.decimals)
                         .toFixed()
                     this.setData({
                         ltrPrice: currencyPrices.ltrMarketPrice,

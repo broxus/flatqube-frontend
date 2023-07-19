@@ -68,7 +68,7 @@ function FieldMarketPrice({
     const p2pFormStore = useP2PFormStoreContext()
 
     const field = useField({
-        decimals: p2pFormStore.rateDirection === SwapDirection.RTL
+        decimals: p2pFormStore.rateDirection === SwapDirection.LTR
             ? p2pFormStore.leftToken?.decimals
             : p2pFormStore.rightToken?.decimals,
         value: props.value,
