@@ -2,7 +2,7 @@ export abstract class OrderAbi {
 
     static Root = {
         'ABI version': 2,
-        version: '2.2',
+        version: '2.3',
         header: [
             'pubkey',
             'time',
@@ -566,7 +566,7 @@ export abstract class OrderAbi {
 
     static Factory = {
         'ABI version': 2,
-        version: '2.2',
+        version: '2.3',
         header: [
             'pubkey',
             'time',
@@ -640,6 +640,30 @@ export abstract class OrderAbi {
                 ],
             },
             {
+                name: 'setManager',
+                inputs: [
+                    {
+                        name: 'answerId',
+                        type: 'uint32',
+                    },
+                    {
+                        name: '_newManager',
+                        type: 'address',
+                    },
+                ],
+                outputs: [
+                    {
+                        name: 'value0',
+                        type: 'address',
+                    },
+                ],
+            },
+            {
+                name: 'revokeManager',
+                inputs: [],
+                outputs: [],
+            },
+            {
                 name: 'getOwner',
                 inputs: [
                     {
@@ -656,6 +680,21 @@ export abstract class OrderAbi {
             },
             {
                 name: 'getPendingOwner',
+                inputs: [
+                    {
+                        name: 'answerId',
+                        type: 'uint32',
+                    },
+                ],
+                outputs: [
+                    {
+                        name: 'value0',
+                        type: 'address',
+                    },
+                ],
+            },
+            {
+                name: 'getManager',
                 inputs: [
                     {
                         name: 'answerId',
@@ -782,7 +821,7 @@ export abstract class OrderAbi {
                         type: 'address',
                     },
                     {
-                        name: 'manager',
+                        name: '_manager',
                         type: 'uint256',
                     },
                 ],
@@ -1127,6 +1166,20 @@ export abstract class OrderAbi {
                 outputs: [],
             },
             {
+                name: 'SetNewManager',
+                inputs: [
+                    {
+                        name: 'oldManager',
+                        type: 'address',
+                    },
+                    {
+                        name: 'newManager',
+                        type: 'address',
+                    },
+                ],
+                outputs: [],
+            },
+            {
                 name: 'OrderFactoryUpgrade',
                 inputs: [
                     {
@@ -1277,6 +1330,10 @@ export abstract class OrderAbi {
                 type: 'address',
             },
             {
+                name: 'manager',
+                type: 'address',
+            },
+            {
                 components: [
                     {
                         name: 'numerator',
@@ -1323,7 +1380,7 @@ export abstract class OrderAbi {
 
     static Order = {
         'ABI version': 2,
-        version: '2.2',
+        version: '2.3',
         header: [
             'pubkey',
             'time',
