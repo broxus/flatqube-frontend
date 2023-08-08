@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import type { TokenIconProps } from '@/components/common/TokenIcon'
 import { TokenIcons } from '@/components/common/TokenIcons'
 import { appRoutes } from '@/routes'
+import { checkForScam } from '@/utils'
 
 import styles from './index.module.scss'
 
@@ -17,7 +18,11 @@ type Props = {
     size?: TokenIconProps['size'];
 }
 
-export function PoolTokensBadge({ items, linkable = true, poolAddress, size }: Props): JSX.Element {
+export function PoolTokensBadge({
+    items, linkable = true, poolAddress, size,
+}: Props): JSX.Element {
+    const isScam = items.some(item => item.symbol && checkForScam(item.symbol))
+
     return (
         <div className={styles.pool_tokens_badge}>
             <TokenIcons icons={items ?? []} size={size} />
@@ -26,6 +31,9 @@ export function PoolTokensBadge({ items, linkable = true, poolAddress, size }: P
                     {items.map(item => item.symbol).join('/')}
                 </Link>
             ) : <span>{items?.map(item => item.symbol).join('/')}</span>}
+            {isScam && (
+                <span className="text-danger">[SCAM]</span>
+            )}
         </div>
     )
 }

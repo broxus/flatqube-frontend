@@ -11,6 +11,7 @@ import { useField } from '@/hooks/useField'
 import { WalletNativeCoin } from '@/stores/WalletService'
 import type { TokenCache } from '@/stores/TokensCacheService'
 import { useSwapFormStoreContext } from '@/modules/Swap/context'
+import { checkForScam } from '@/utils'
 
 
 type Props = {
@@ -48,6 +49,8 @@ function Field({
         onChange: props.onChange,
     })
     const formStore = useSwapFormStoreContext()
+
+    const isScam = token?.symbol && checkForScam(token.symbol)
 
     return (
         <label className="form-label" htmlFor={props.id}>
@@ -130,6 +133,12 @@ function Field({
                                         <span className="form-drop__name">
                                             {nativeCoin?.symbol || token?.symbol}
                                         </span>
+                                        {isScam && (
+                                            <span className="form-drop__suffix">
+                                                &nbsp;
+                                                <span className="text-danger">[SCAM]</span>
+                                            </span>
+                                        )}
                                         <span className="form-drop__arrow">
                                             <Icon icon="arrowDown" ratio={1.2} />
                                         </span>

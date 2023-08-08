@@ -317,6 +317,10 @@ button.form-submit {
         }
     }
 
+    &__suffix {
+        line-height: normal;
+    }
+
     &-extra {
         flex-flow: row nowrap;
         min-width: fit-content;

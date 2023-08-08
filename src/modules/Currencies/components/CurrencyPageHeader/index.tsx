@@ -12,7 +12,7 @@ import { TokenIcon } from '@/components/common/TokenIcon'
 import { USDTRootAddress, WEVERRootAddress } from '@/config'
 import { useCurrencyStoreContext } from '@/modules/Currencies/providers'
 import { appRoutes } from '@/routes'
-import { formattedAmount, sliceAddress } from '@/utils'
+import { checkForScam, formattedAmount, sliceAddress } from '@/utils'
 
 import styles from './index.module.scss'
 
@@ -20,6 +20,8 @@ export function CurrencyPageHeader(): JSX.Element {
     const intl = useIntl()
 
     const currencyStore = useCurrencyStoreContext()
+
+    const symbol = currencyStore.token?.symbol || currencyStore.currency?.currency
 
     return (
         <Observer>
@@ -102,8 +104,11 @@ export function CurrencyPageHeader(): JSX.Element {
                                             <div className={styles.currency_header__title}>
                                                 {currencyStore.token?.name || currencyStore.currency?.currency}
                                                 <span className="text-muted">
-                                                    {currencyStore.token?.symbol || currencyStore.currency?.currency}
+                                                    {symbol}
                                                 </span>
+                                                {symbol && checkForScam(symbol) && (
+                                                    <span className="text-danger">[SCAM]</span>
+                                                )}
                                             </div>
                                             <div className={styles.currency_header__price}>
                                                 {`$${formattedAmount(currencyStore.currency?.price)}`}

@@ -11,6 +11,7 @@ import { LimitBill } from '@/modules/LimitOrders/components/LimitBill'
 import { calcSwapDirection } from '@/modules/LimitOrders/utils'
 
 import './index.scss'
+import { checkForScam } from '@/utils'
 
 
 function LimitOrderCreateConfirm(): JSX.Element {
@@ -20,6 +21,9 @@ function LimitOrderCreateConfirm(): JSX.Element {
 
     const [isWarning] = React.useState(false) // setWarning
     const [isChanged] = React.useState(false) // setChangedTo
+
+    const isLeftScam = p2pFormStore.leftToken?.symbol && checkForScam(p2pFormStore.leftToken.symbol)
+    const isRightScam = p2pFormStore.rightToken?.symbol && checkForScam(p2pFormStore.rightToken.symbol)
 
     const onDismiss = (): void => {
         p2pFormStore.setState('isCreateConfirmationAwait', false)
@@ -74,6 +78,12 @@ function LimitOrderCreateConfirm(): JSX.Element {
                             <span className="form-drop__name">
                                 {p2pFormStore.leftToken?.symbol}
                             </span>
+                            {isLeftScam && (
+                                <>
+                                    &nbsp;
+                                    <span className="text-danger">[SCAM]</span>
+                                </>
+                            )}
                         </div>
 
                     </div>
@@ -106,6 +116,12 @@ function LimitOrderCreateConfirm(): JSX.Element {
                             <span className="form-drop__name">
                                 {p2pFormStore.rightToken?.symbol}
                             </span>
+                            {isRightScam && (
+                                <>
+                                    &nbsp;
+                                    <span className="text-danger">[SCAM]</span>
+                                </>
+                            )}
                         </div>
 
                     </div>

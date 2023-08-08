@@ -9,6 +9,7 @@ import { TokensList } from '@/modules/TokensList'
 import { useTokensCache } from '@/stores/TokensCacheService'
 
 import './index.scss'
+import { checkForScam } from '@/utils'
 
 type Props = {
     disabled?: boolean;
@@ -31,12 +32,14 @@ export function TokenSelector({
 }: Props): JSX.Element {
     const intl = useIntl()
     const tokensCache = useTokensCache()
-    const token = root && tokensCache.get(root)
+    const token = tokensCache.get(root)
     const [listVisible, setListVisible] = React.useState(false)
 
     const placeholder = intl.formatMessage({
         id: 'TOKEN_SELECTOR_PLACEHOLDER',
     })
+
+    const isScam = token?.symbol && checkForScam(token.symbol)
 
     const close = () => {
         setListVisible(false)
@@ -91,6 +94,12 @@ export function TokenSelector({
                     <span className="token-selector__symbol">
                         {token ? token.symbol : placeholder}
                     </span>
+                    {isScam && (
+                        <>
+                            &nbsp;
+                            <span className="text-danger">[SCAM]</span>
+                        </>
+                    )}
                 </span>
                 <Icon icon="arrowDown" />
             </Button>

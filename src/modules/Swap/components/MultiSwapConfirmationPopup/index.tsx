@@ -11,6 +11,7 @@ import { TokenIcons } from '@/components/common/TokenIcons'
 import { SwapBill } from '@/modules/Swap/components/SwapBill'
 import { useSwapFormStoreContext } from '@/modules/Swap/context'
 import { useNotifiedSwapCallbacks } from '@/modules/Swap/hooks/useNotifiedSwapCallbacks'
+import { checkForScam } from '@/utils'
 
 import './index.scss'
 
@@ -24,6 +25,8 @@ function ConfirmationPopup(): JSX.Element {
     const [leftAmount, setLeftAmount] = React.useState(formStore.leftAmount)
     const [rightAmount, setRightAmount] = React.useState(formStore.rightAmount)
     const [isChanged, setChangedTo] = React.useState(false)
+
+    const isScam = formStore.rightToken?.symbol && checkForScam(formStore.rightToken.symbol)
 
     const onUpdate = () => {
         setMinExpectedAmount(formStore.bill.minExpectedAmount)
@@ -181,6 +184,12 @@ function ConfirmationPopup(): JSX.Element {
                             <span className="form-drop__name">
                                 {formStore.rightToken?.symbol}
                             </span>
+                            {isScam && (
+                                <span className="form-drop__suffix">
+                                    &nbsp;
+                                    <span className="text-danger">[SCAM]</span>
+                                </span>
+                            )}
                         </div>
                     </div>
                 </fieldset>

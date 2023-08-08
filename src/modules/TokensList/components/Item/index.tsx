@@ -8,6 +8,7 @@ import { TokenIcon } from '@/components/common/TokenIcon'
 import { useTokenBalanceWatcher } from '@/hooks/useTokenBalanceWatcher'
 import { TokenImportPopup } from '@/modules/TokensList/components/TokenImportPopup'
 import { TokenCache, useTokensCache } from '@/stores/TokensCacheService'
+import { checkForScam } from '@/utils'
 
 
 export type ItemProps = {
@@ -25,6 +26,8 @@ export function Item({ disabled, token, onSelect }: ItemProps): JSX.Element {
         unwatchOnUnmount: false,
         watchOnMount: false,
     })
+
+    const isScam = token?.symbol && checkForScam(token.symbol)
 
     const onClick = () => {
         onSelect?.(token.root)
@@ -57,6 +60,12 @@ export function Item({ disabled, token, onSelect }: ItemProps): JSX.Element {
                     <div className="popup-item__main">
                         <div className="popup-item__name" title={token.symbol}>
                             {token.symbol}
+                            {isScam && (
+                                <>
+                                    &nbsp;
+                                    <span className="text-danger">[SCAM]</span>
+                                </>
+                            )}
                         </div>
                         <div className="popup-item__txt" title={token.name}>
                             {token.name}

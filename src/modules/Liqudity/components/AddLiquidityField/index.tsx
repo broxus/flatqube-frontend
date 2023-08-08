@@ -9,6 +9,7 @@ import { TokenIcon } from '@/components/common/TokenIcon'
 import { useField } from '@/hooks/useField'
 import { useAddLiquidityFormStoreContext } from '@/modules/Liqudity/context'
 import type { TokenCache } from '@/stores/TokensCacheService'
+import { checkForScam } from '@/utils'
 
 
 type Props = {
@@ -44,6 +45,8 @@ function Field({
         onChange: props.onChange,
     })
     const formStore = useAddLiquidityFormStoreContext()
+
+    const isScam = token?.symbol && checkForScam(token.symbol)
 
     return (
         <label className="form-label" htmlFor={props.id}>
@@ -92,6 +95,12 @@ function Field({
                                         <span className="form-drop__name">
                                             {token?.symbol}
                                         </span>
+                                        {isScam && (
+                                            <span className="form-drop__suffix">
+                                                &nbsp;
+                                                <span className="text-danger">[SCAM]</span>
+                                            </span>
+                                        )}
                                         <span className="form-drop__arrow">
                                             <Icon icon="arrowDown" ratio={1.2} />
                                         </span>

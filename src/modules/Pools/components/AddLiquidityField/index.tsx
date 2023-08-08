@@ -9,6 +9,7 @@ import { TokenIcon } from '@/components/common/TokenIcon'
 import { useField } from '@/hooks/useField'
 import type { LiquidityStablePoolTokenData } from '@/misc'
 import { useAddLiquidityFormStoreContext } from '@/modules/Pools/context'
+import { checkForScam } from '@/utils'
 
 type Props = {
     balance?: string;
@@ -48,6 +49,8 @@ function Field({
             props.onChange?.(value)
         },
     })
+
+    const isScam = token.symbol && checkForScam(token.symbol)
 
     const onMaximize = () => {
         const address = token.address.toString()
@@ -95,6 +98,11 @@ function Field({
                         <span className="form-drop__name">
                             {token.symbol}
                         </span>
+                        {isScam && (
+                            <span className="text-danger">
+                                [SCAM]
+                            </span>
+                        )}
                     </Button>
                 </div>
                 <div className="form-fieldset__footer">
