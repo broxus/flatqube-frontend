@@ -7,12 +7,14 @@ import { QubeDaoLastEpochDetails } from '@/modules/QubeDao/components/QubeDaoLas
 import { QubeDaoEpochStoreProvider } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
 import { QubeDaoEpochsStoreProvider } from '@/modules/QubeDao/providers/QubeDaoEpochsStoreProvider'
 import { QubeDaoCandidatesStoreProvider } from '@/modules/QubeDao/providers/QubeDaoCandidatesStoreProvider'
+import { RecentProposals } from '@/modules/Governance/components/RecentProposals'
 
 export function QubeDaoIndex(): JSX.Element {
     return (
         <>
             <QubeDaoEpochStoreProvider>
                 <QubeDaoBaseStats />
+                <RecentProposals />
                 <QubeDaoLastEpochDetails />
             </QubeDaoEpochStoreProvider>
             <QubeDaoEpochsStoreProvider>

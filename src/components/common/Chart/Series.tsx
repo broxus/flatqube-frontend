@@ -14,6 +14,7 @@ import {
     SeriesContext,
 } from '@/components/common/Chart/Context'
 import { getChartOptions } from '@/components/common/Chart/config'
+import { error } from '@/utils'
 
 type Props<TSeriesType extends SeriesType> = SeriesPartialOptionsMap[TSeriesType] &
     React.PropsWithChildren<{
@@ -129,11 +130,16 @@ const SeriesInternal = React.forwardRef(
         React.useImperativeHandle(ref, () => seriesApi, [type])
 
         React.useEffect(() => {
-            if (data) {
-                seriesApi.api().setData(data)
+            try {
+                if (data) {
+                    seriesApi.api().setData(data)
+                }
+                else {
+                    seriesApi.remove()
+                }
             }
-            else {
-                seriesApi.remove()
+            catch (e) {
+                error(e)
             }
         }, [data])
 

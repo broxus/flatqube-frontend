@@ -264,6 +264,7 @@ export class QubeDaoBaseStatsStore extends BaseStore<QubeDaoBaseStatsStoreData, 
     }
 
     public get tokenBalancesStats(): SingleValueData[] {
+        return []
         return this.balancesStats.map(data => ({
             time: DateTime.fromSeconds(data.day).toObject(),
             value: parseFloat(formattedTokenAmount(

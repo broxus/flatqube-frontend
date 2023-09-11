@@ -41,6 +41,9 @@ import CreateCandidate from '@/pages/dao/whitelisting'
 import Builder from '@/pages/builder'
 import CreateToken from '@/pages/builder/create'
 import CustomToken from '@/pages/builder/token'
+import Proposals from '@/pages/governance/proposals'
+import ProposalCreate from '@/pages/governance/proposals/create'
+import Proposal from '@/pages/governance/proposals/item'
 import { appRoutes } from '@/routes'
 import { useWallet } from '@/stores/WalletService'
 import { isMobile, noop } from '@/utils'
@@ -158,6 +161,15 @@ export function App(): JSX.Element {
                                 </Route>
                                 <Route exact path={appRoutes.builderItem.path}>
                                     <CustomToken />
+                                </Route>
+                                <Route exact path={appRoutes.daoProposals.path}>
+                                    <Proposals />
+                                </Route>
+                                <Route exact path={appRoutes.daoProposalsCreate.path}>
+                                    <ProposalCreate />
+                                </Route>
+                                <Route exact path={appRoutes.daoProposal.path}>
+                                    <Proposal />
                                 </Route>
                             </Switch>
                         </main>

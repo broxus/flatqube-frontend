@@ -32,6 +32,7 @@
         font-weight: 400;
         justify-content: space-between;
         line-height: 22px;
+        gap: 8px;
     }
 
     &_stat_weight_grid {
@@ -39,4 +40,13 @@
         gap: 8px;
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+.card {
+    overflow: hidden;
+}
+
+.amount {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

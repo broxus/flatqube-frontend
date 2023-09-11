@@ -20,7 +20,7 @@ export default function Page(): JSX.Element {
                         })}
                         {' '}
                         <sup>
-                            <Badge type="yellow">
+                            <Badge type="yellow" size="sm">
                                 {intl.formatMessage({
                                     id: 'GAUGE_OLD',
                                 })}

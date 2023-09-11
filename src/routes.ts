@@ -100,6 +100,13 @@ export const tokensApiRoutes = {
     token: new Route<URLAddressParam>('/root_contract/root_address/:address'),
 }
 
+export const governanceRoutes = {
+    proposals: new Route('/proposals/search'),
+    proposalsByIds: new Route('/proposals'),
+    proposalsCount: new Route('/voters/proposals/count'),
+    userProposals: new Route<{ voter: string }>('/voters/:voter/search'),
+    votes: new Route('/votes/search'),
+}
 
 export const appRoutes = {
     home: new Route('/'),
@@ -121,6 +128,9 @@ export const appRoutes = {
     daoBalance: new Route('/dao/balance'),
     daoEpoch: new Route<{ epochNum: string }>('/dao/epochs/:epochNum'),
     daoWhitelisting: new Route('/dao/whitelisting'),
+    daoProposals: new Route('/dao/proposals'),
+    daoProposalsCreate: new Route('/dao/proposals/create'),
+    daoProposal: new Route<{ id: string }>('/dao/proposals/:id([0-9]+)?'),
     builder: new Route('/builder'),
     builderCreate: new Route('/builder/create'),
     builderItem: new Route<{ tokenRoot: string }>('/builder/:tokenRoot([0][:][0-9a-f]{64})'),

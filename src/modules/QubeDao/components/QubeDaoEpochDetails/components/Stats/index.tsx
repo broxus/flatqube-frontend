@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
+import classNames from 'classnames'
 
 import { TokenAmountBadge } from '@/components/common/TokenAmountBadge'
 import { useQubeDaoEpochContext } from '@/modules/QubeDao/providers/QubeDaoEpochStoreProvider'
@@ -30,7 +31,7 @@ export function Stats(): JSX.Element {
                 )
                 return (
                     <div className={styles.stats_grid}>
-                        <div className="card card--xsmall card--flat">
+                        <div className={classNames('card card--xsmall card--flat', styles.card)}>
                             <div className={styles.stats_stat_term}>
                                 {intl.formatMessage({
                                     id: 'QUBE_DAO_EPOCH_STAT_DISTRIBUTION_TERM',
@@ -54,7 +55,7 @@ export function Stats(): JSX.Element {
                                 {(isFetchingEpoch || isFetchingTokenPrice) ? (
                                     <Placeholder height={18} width={50} />
                                 ) : (isGoodBignumber(epochStore.distributionPrice) && (
-                                    <span className="text-sm">
+                                    <span className={classNames('text-sm', styles.amount)}>
                                         {`~$${formattedAmount(epochStore.distributionPrice)}`}
                                     </span>
                                 ))}

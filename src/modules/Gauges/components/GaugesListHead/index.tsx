@@ -28,7 +28,7 @@ export function GaugesListHead(): JSX.Element {
             })}
             {' '}
             <sup>
-                <Badge>
+                <Badge size="sm">
                     {intl.formatMessage({
                         id: 'GAUGE_NEW',
                     })}

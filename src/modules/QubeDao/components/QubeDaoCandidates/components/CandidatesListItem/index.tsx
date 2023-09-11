@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import * as React from 'react'
 import BigNumber from 'bignumber.js'
 import { observer } from 'mobx-react-lite'
@@ -8,6 +9,7 @@ import { useQubeDaoCandidatesContext } from '@/modules/QubeDao/providers/QubeDao
 import { useQubeDaoContext } from '@/modules/QubeDao/providers/QubeDaoProvider'
 import type { QubeDaoWhitelistGaugeResponse } from '@/modules/QubeDao/types'
 import { formattedAmount, formattedTokenAmount } from '@/utils'
+import { Badge } from '@/components/common/Badge'
 
 type Props = {
     candidate: QubeDaoWhitelistGaugeResponse;
@@ -34,11 +36,17 @@ function CandidatesListItemInternal({ candidate }: Props): JSX.Element {
             </div>
             <div className="list__cell list__cell--left">
                 {candidate.isActive ? (
-                    <div className="label label--success">
-                        {intl.formatMessage(
+                    <Badge
+                        type={candidate.daoApprove ? 'green' : candidate.isActive ? 'default' : 'disabled'}
+                    >
+                        {candidate.daoApprove ? intl.formatMessage(
                             { id: 'QUBE_DAO_CANDIDATES_LIST_STATUS_SUCCESS_CELL' },
+                        ) : candidate.isActive ? intl.formatMessage(
+                            { id: 'QUBE_DAO_CANDIDATES_LIST_STATUS_PENDING_DAO_CELL' },
+                        ) : intl.formatMessage(
+                            { id: 'QUBE_DAO_CANDIDATES_LIST_STATUS_NOT_ACTIVE_CELL' },
                         )}
-                    </div>
+                    </Badge>
                 ) : '—'}
             </div>
             <div className="list__cell list__cell--right">

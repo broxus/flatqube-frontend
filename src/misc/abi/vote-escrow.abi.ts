@@ -344,8 +344,9 @@ export abstract class VoteEscrowAbi {
                 ],
             },
             {
-                name: 'acceptOwnership',
+                name: 'setManager',
                 inputs: [
+                    { name: 'new_manager', type: 'address' },
                     { components: [{ name: 'call_id', type: 'uint32' }, { name: 'nonce', type: 'uint32' }, { name: 'send_gas_to', type: 'address' }], name: 'meta', type: 'tuple' },
                 ],
                 outputs: [
@@ -488,6 +489,22 @@ export abstract class VoteEscrowAbi {
                 inputs: [
                     { name: 'gauge', type: 'address' },
                     { components: [{ name: 'call_id', type: 'uint32' }, { name: 'nonce', type: 'uint32' }, { name: 'send_gas_to', type: 'address' }], name: 'meta', type: 'tuple' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'approveGaugeDAO',
+                inputs: [
+                    { name: 'gauge', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'removeGaugeDAO',
+                inputs: [
+                    { name: 'gauge', type: 'address' },
                 ],
                 outputs: [
                 ],
@@ -788,7 +805,7 @@ export abstract class VoteEscrowAbi {
                 ],
                 outputs: [
                     { name: '_owner', type: 'address' },
-                    { name: '_pendingOwner', type: 'address' },
+                    { name: '_manager', type: 'address' },
                     { name: '_qube', type: 'address' },
                     { name: '_dao', type: 'address' },
                     { name: '_qubeWallet', type: 'address' },
@@ -997,6 +1014,14 @@ export abstract class VoteEscrowAbi {
                 ],
             },
             {
+                name: 'gaugeDaoApproved',
+                inputs: [
+                ],
+                outputs: [
+                    { name: 'gaugeDaoApproved', type: 'map(address,bool)' },
+                ],
+            },
+            {
                 name: 'currentVotingVotes',
                 inputs: [
                 ],
@@ -1028,10 +1053,11 @@ export abstract class VoteEscrowAbi {
                 ],
             },
             {
-                name: 'NewPendingOwner',
+                name: 'NewManager',
                 inputs: [
                     { name: 'call_id', type: 'uint32' },
-                    { name: 'pending_owner', type: 'address' },
+                    { name: 'prev_manager', type: 'address' },
+                    { name: 'new_manager', type: 'address' },
                 ],
                 outputs: [
                 ],
@@ -1070,6 +1096,24 @@ export abstract class VoteEscrowAbi {
             },
             {
                 name: 'GaugeRemoveWhitelist',
+                inputs: [
+                    { name: 'call_id', type: 'uint32' },
+                    { name: 'gauge', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'GaugeDAOApprove',
+                inputs: [
+                    { name: 'call_id', type: 'uint32' },
+                    { name: 'gauge', type: 'address' },
+                ],
+                outputs: [
+                ],
+            },
+            {
+                name: 'GaugeDAORemoveApprove',
                 inputs: [
                     { name: 'call_id', type: 'uint32' },
                     { name: 'gauge', type: 'address' },
@@ -1357,7 +1401,7 @@ export abstract class VoteEscrowAbi {
             { name: 've_account_version', type: 'uint32' },
             { name: 've_version', type: 'uint32' },
             { name: 'owner', type: 'address' },
-            { name: 'pendingOwner', type: 'address' },
+            { name: 'manager', type: 'address' },
             { name: 'qube', type: 'address' },
             { name: 'qubeWallet', type: 'address' },
             { name: 'dao', type: 'address' },
@@ -1393,6 +1437,7 @@ export abstract class VoteEscrowAbi {
             { name: 'maxGaugesPerVote', type: 'uint32' },
             { name: 'gaugesNum', type: 'uint32' },
             { name: 'gaugeWhitelist', type: 'map(address,bool)' },
+            { name: 'gaugeDaoApproved', type: 'map(address,bool)' },
             { name: 'currentVotingVotes', type: 'map(address,uint128)' },
             { name: 'gaugeDowntimes', type: 'map(address,uint8)' },
             { name: 'gaugeWhitelistPrice', type: 'uint128' },

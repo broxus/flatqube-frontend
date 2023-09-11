@@ -504,7 +504,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
             })
         }
         catch (e) {
-            debug('Sync balances error: ', e)
+            error('Sync balances error: ', e)
             this.setData({
                 unlockedAmount: undefined,
                 userBalance: undefined,

@@ -71,3 +71,7 @@ export const P2P_API_URL = 'https://p2p-api-stg.bf.works'
 export const backPK = '106925417688891724647234995036862332928925618442306815431062595410491768176622'
 
 export const LimitOrderFactoryRoot = new AddressLiteral('0:454563a88fb03a3afa5e882ac57dd0042feaeb5af075123b0d13fd963c2e48a6')
+
+export const DaoIndexerApiBaseUrl = 'https://dao.flatqube.io/v1'
+
+export const DaoRootContractAddress = new AddressLiteral('0:30a16f53b909a0ae53580eab9532ab8e4e03889bfb00283ab5d543612c485188')

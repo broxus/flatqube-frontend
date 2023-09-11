@@ -1,0 +1,13 @@
+.proposal-candidate-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .token-icons {
+        display: flex;
+
+        svg {
+            display: block;
+        }
+    }
+}

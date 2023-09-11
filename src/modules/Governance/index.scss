@@ -1,0 +1,23 @@
+.proposal-layout-content {
+    align-items: flex-start;
+    column-gap: 40px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    margin: 0 0 40px;
+
+    @media only screen and (max-width: 1169px) {
+        align-items: initial;
+        display: flex;
+        flex-direction: column-reverse;
+        row-gap: 40px;
+    }
+}
+
+.proposal-layout-sidebar {
+    position: sticky;
+    top: 100px;
+
+    @media only screen and (max-width: 1169px) {
+        position: static;
+    }
+}

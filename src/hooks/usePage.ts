@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable sort-keys */
 type Page = {
     block: () => void;
     unblock: () => void;

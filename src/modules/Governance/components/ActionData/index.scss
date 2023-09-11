@@ -1,0 +1,9 @@
+.action-data {
+    word-break: break-word;
+
+    &__address {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+}

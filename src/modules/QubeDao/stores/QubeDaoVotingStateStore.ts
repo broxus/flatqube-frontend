@@ -266,13 +266,13 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
     protected async syncWhitelistGauges(): Promise<void> {
         try {
             type ResponseTuple = [
-                DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Root, 'gaugeWhitelist'>,
+                DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Root, 'gaugeDaoApproved'>,
                 DecodedAbiFunctionOutputs<typeof VoteEscrowAbi.Root, 'getVotingDetails'>,
             ]
 
-            const [whitelist, details] = await Promise.allSettled([
+            const [daoApproved, details] = await Promise.allSettled([
                 this.dao.veContract
-                    .methods.gaugeWhitelist({})
+                    .methods.gaugeDaoApproved({})
                     .call({ cachedState: this.dao.veContractCachedState }),
                 this.dao.veContract
                     .methods.getVotingDetails({})
@@ -281,7 +281,7 @@ export class QubeDaoVotingStateStore extends BaseStore<QubeDaoVotingStateStoreDa
                 r => (r.status === 'fulfilled' ? r.value : undefined),
             )) as ResponseTuple
 
-            const gauges = whitelist.gaugeWhitelist.filter(([, enabled]) => enabled).map(([address, enabled]) => ({
+            const gauges = daoApproved.gaugeDaoApproved.filter(([, enabled]) => enabled).map(([address, enabled]) => ({
                 address: address.toString(),
                 enabled,
             }))

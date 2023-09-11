@@ -6,6 +6,10 @@
     letter-spacing: 0.2px;
     border-radius: 16px;
 
+    &.md {
+        padding: 4px 8px;
+    }
+
     &.blue {
         background: #2B63F1;
         color: #fff;
@@ -15,4 +19,25 @@
         background: #E6AC00;
         color: #000;
     }
+
+    &.green {
+        background: rgba(74, 180, 74, 0.16);
+        color: #4ab44a;
+    }
+
+    &.red {
+        background: rgba(235, 67, 97, 0.16);
+        color: #eb4361;
+    }
+
+    &.default {
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+    }
+
+    &.disabled {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.48);
+    }
+
 }

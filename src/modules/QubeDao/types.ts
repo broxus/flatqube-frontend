@@ -367,6 +367,7 @@ export type QubeDaoWhitelistGaugeResponse = {
     address: string;
     averageAmount: string;
     averagePercentage: string;
+    daoApprove: boolean,
     isActive: boolean;
     lastEpochAmount: string;
     lastEpochPercentage: string;
