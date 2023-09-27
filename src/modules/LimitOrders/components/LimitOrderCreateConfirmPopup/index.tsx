@@ -9,9 +9,9 @@ import { TokenIcon } from '@/components/common/TokenIcon'
 import { useP2PFormStoreContext } from '@/modules/LimitOrders/context/P2PFormStoreContext'
 import { LimitBill } from '@/modules/LimitOrders/components/LimitBill'
 import { calcSwapDirection } from '@/modules/LimitOrders/utils'
+import { checkForScam } from '@/utils'
 
 import './index.scss'
-import { checkForScam } from '@/utils'
 
 
 function LimitOrderCreateConfirm(): JSX.Element {
@@ -22,8 +22,8 @@ function LimitOrderCreateConfirm(): JSX.Element {
     const [isWarning] = React.useState(false) // setWarning
     const [isChanged] = React.useState(false) // setChangedTo
 
-    const isLeftScam = p2pFormStore.leftToken?.symbol && checkForScam(p2pFormStore.leftToken.symbol)
-    const isRightScam = p2pFormStore.rightToken?.symbol && checkForScam(p2pFormStore.rightToken.symbol)
+    const isLeftScam = checkForScam(p2pFormStore.leftToken?.symbol, p2pFormStore.leftToken?.root)
+    const isRightScam = checkForScam(p2pFormStore.rightToken?.symbol, p2pFormStore.rightToken?.root)
 
     const onDismiss = (): void => {
         p2pFormStore.setState('isCreateConfirmationAwait', false)

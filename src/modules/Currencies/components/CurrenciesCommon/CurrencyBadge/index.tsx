@@ -39,7 +39,7 @@ export function CurrencyBadge({ address, linkable = true, size = 'small', token 
             ) : (
                 <div>
                     {token?.symbol || sliceAddress(token?.root ?? address)}
-                    {token?.symbol && checkForScam(token.symbol) && (
+                    {checkForScam(token?.symbol, token?.root) && (
                         <>
                             &nbsp;
                             <span className="text-danger">[SCAM]</span>

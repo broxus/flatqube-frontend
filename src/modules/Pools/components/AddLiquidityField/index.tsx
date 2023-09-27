@@ -50,7 +50,7 @@ function Field({
         },
     })
 
-    const isScam = token.symbol && checkForScam(token.symbol)
+    const isScam = checkForScam(token.symbol, token.address.toString())
 
     const onMaximize = () => {
         const address = token.address.toString()

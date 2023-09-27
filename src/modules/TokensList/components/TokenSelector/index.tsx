@@ -7,9 +7,9 @@ import { Icon } from '@/components/common/Icon'
 import { TokenIcon } from '@/components/common/TokenIcon'
 import { TokensList } from '@/modules/TokensList'
 import { useTokensCache } from '@/stores/TokensCacheService'
+import { checkForScam } from '@/utils'
 
 import './index.scss'
-import { checkForScam } from '@/utils'
 
 type Props = {
     disabled?: boolean;
@@ -39,7 +39,7 @@ export function TokenSelector({
         id: 'TOKEN_SELECTOR_PLACEHOLDER',
     })
 
-    const isScam = token?.symbol && checkForScam(token.symbol)
+    const isScam = checkForScam(token?.symbol, token?.root)
 
     const close = () => {
         setListVisible(false)

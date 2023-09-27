@@ -25,8 +25,8 @@ function ConfirmationPopup(): JSX.Element {
     const [rightAmount, setRightAmount] = React.useState(formStore.rightAmount)
     const [isChanged, setChangedTo] = React.useState(false)
 
-    const isLeftScam = formStore.leftToken?.symbol && checkForScam(formStore.leftToken.symbol)
-    const isRightScam = formStore.rightToken?.symbol && checkForScam(formStore.rightToken.symbol)
+    const isLeftScam = checkForScam(formStore.leftToken?.symbol, formStore.leftToken?.root)
+    const isRightScam = checkForScam(formStore.rightToken?.symbol, formStore.rightToken?.root)
 
     const onUpdate = () => {
         setMinExpectedAmount(formStore.bill.minExpectedAmount)

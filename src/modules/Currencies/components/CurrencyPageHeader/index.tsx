@@ -106,7 +106,7 @@ export function CurrencyPageHeader(): JSX.Element {
                                                 <span className="text-muted">
                                                     {symbol}
                                                 </span>
-                                                {symbol && checkForScam(symbol) && (
+                                                {checkForScam(symbol, currencyStore.currency?.address) && (
                                                     <span className="text-danger">[SCAM]</span>
                                                 )}
                                             </div>

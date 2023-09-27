@@ -27,7 +27,7 @@ export function Item({ disabled, token, onSelect }: ItemProps): JSX.Element {
         watchOnMount: false,
     })
 
-    const isScam = token?.symbol && checkForScam(token.symbol)
+    const isScam = checkForScam(token.symbol, token.root)
 
     const onClick = () => {
         onSelect?.(token.root)

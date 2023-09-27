@@ -89,7 +89,6 @@ export class RemoveLiquidityFormStore extends BaseStore<RemoveLiquidityFormStore
             isAmountValid: computed,
             isAwaitingConfirmation: computed,
             isCheckingDexAccount: computed,
-            hasCustomToken: computed,
             isInverted: computed,
             isPoolConnected: computed,
             isPoolDataAvailable: computed,

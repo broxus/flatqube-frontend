@@ -49,7 +49,7 @@ function Field({
     })
     const p2pFormStore = useP2PFormStoreContext()
 
-    const isScam = token?.symbol && checkForScam(token.symbol)
+    const isScam = checkForScam(token?.symbol, token?.root)
 
     return (
         <label className="form-label" htmlFor={props.id}>

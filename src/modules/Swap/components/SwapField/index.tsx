@@ -50,7 +50,7 @@ function Field({
     })
     const formStore = useSwapFormStoreContext()
 
-    const isScam = token?.symbol && checkForScam(token.symbol)
+    const isScam = checkForScam(token?.symbol, token?.root)
 
     return (
         <label className="form-label" htmlFor={props.id}>

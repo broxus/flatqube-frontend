@@ -75,3 +75,8 @@ export const LimitOrderFactoryRoot = new AddressLiteral('0:454563a88fb03a3afa5e8
 export const DaoIndexerApiBaseUrl = 'https://dao.flatqube.io/v1'
 
 export const DaoRootContractAddress = new AddressLiteral('0:30a16f53b909a0ae53580eab9532ab8e4e03889bfb00283ab5d543612c485188')
+
+export const ScamTokens = [
+    new AddressLiteral('0:1b056cffcd9f5dc9e30a8dd13346463f7a914292d6b25571c44ae24648bbfdd6'),
+    new AddressLiteral('0:63f338a42ad02ddec8c3b7b12c46dc6cf609e601e96dba2ce0df3ee86843e66f'),
+]

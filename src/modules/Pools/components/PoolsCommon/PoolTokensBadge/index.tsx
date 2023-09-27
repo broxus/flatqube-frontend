@@ -21,7 +21,7 @@ type Props = {
 export function PoolTokensBadge({
     items, linkable = true, poolAddress, size,
 }: Props): JSX.Element {
-    const isScam = items.some(item => item.symbol && checkForScam(item.symbol))
+    const isScam = items.some(item => checkForScam(item.symbol, item.address))
 
     return (
         <div className={styles.pool_tokens_badge}>

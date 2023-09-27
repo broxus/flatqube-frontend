@@ -7,9 +7,11 @@ import { checkForScam } from '@/utils'
 import './index.scss'
 
 export function TokenBadge(props: TokenIconProps & { symbol?: string }): JSX.Element {
-    const { className, symbol, ...restProps } = props
+    const {
+        address, className, symbol, ...restProps
+    } = props
 
-    const isScam = symbol && checkForScam(symbol)
+    const isScam = checkForScam(symbol, address)
 
     return (
         <div className="token_badge">
