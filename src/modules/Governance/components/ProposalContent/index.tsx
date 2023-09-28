@@ -9,6 +9,7 @@ import { EthActionData, TonActionData } from '@/modules/Governance/components/Ac
 import { ProposalConfig } from '@/modules/Governance/components/ProposalContent/Config'
 import { ProposalInfo } from '@/modules/Governance/components/ProposalContent/Info'
 import { useProposalContext } from '@/modules/Governance/providers'
+import { Icon } from '@/components/common/Icon'
 
 import './index.scss'
 
@@ -32,8 +33,7 @@ export function ProposalContentInner(): JSX.Element | null {
                         })}
                     </div>
 
-                    {/* TODO: Discussion link */}
-                    {/* {proposal.link ? (
+                    {proposal.link ? (
                         <a
                             href={proposal.link}
                             target="_blank"
@@ -45,7 +45,7 @@ export function ProposalContentInner(): JSX.Element | null {
                             })}
                             <Icon icon="externalLink" ratio={0.75} />
                         </a>
-                    ) : null} */}
+                    ) : null}
                 </div>
 
                 <div className="proposal-content__body">
