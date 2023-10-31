@@ -47,21 +47,24 @@ export function TonActionData({
                         </div>
                     ),
                 }] : [],
-                ...(data?.type === ProposalType.NewCandidate || data?.type === ProposalType.RemoveCandidate) ? [{
-                    key: intl.formatMessage({
-                        id: 'PROPOSAL_ACTION_GAUGE',
-                    }),
-                    value: (
-                        <div className="action-data">
-                            <CandidateItem
-                                copy
-                                asLink
-                                address={data.gaugeData.address}
-                                tokensInfo={data.gaugeData.poolTokens}
-                            />
-                        </div>
-                    ),
-                }] : [],
+                ...((
+                    data?.type === ProposalType.NewCandidate
+                    || data?.type === ProposalType.RemoveCandidate
+                ) && data.gaugeData) ? [{
+                        key: intl.formatMessage({
+                            id: 'PROPOSAL_ACTION_GAUGE',
+                        }),
+                        value: (
+                            <div className="action-data">
+                                <CandidateItem
+                                    copy
+                                    asLink
+                                    address={data.gaugeData.address}
+                                    tokensInfo={data.gaugeData.poolTokens}
+                                />
+                            </div>
+                        ),
+                    }] : [],
                 {
                     key: intl.formatMessage({
                         id: 'PROPOSAL_ACTION_PAYLOAD',
