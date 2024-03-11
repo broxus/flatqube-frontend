@@ -12,7 +12,7 @@ export function Markdown({
     value,
 }: Props): JSX.Element {
     return (
-        <ReactMarkdown className="markdown" plugins={[remarkGfm]}>
+        <ReactMarkdown className="markdown" remarkPlugins={[remarkGfm]}>
             {value}
         </ReactMarkdown>
     )
