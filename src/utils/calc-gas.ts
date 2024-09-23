@@ -1,5 +1,8 @@
 import BigNumber from 'bignumber.js'
 
 export function calcGas(fixedValue: string, dynamicGas: string): string {
-    return new BigNumber(fixedValue).plus(new BigNumber(dynamicGas).plus(100000).times(1000)).toFixed()
+    return BigNumber(fixedValue)
+        .plus(BigNumber(dynamicGas).plus(100_000).times(1_000))
+        .plus(1_000_000_000)
+        .toFixed()
 }
