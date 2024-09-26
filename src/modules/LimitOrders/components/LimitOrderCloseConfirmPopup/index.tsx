@@ -17,7 +17,7 @@ import { debug, isGoodBignumber } from '@/utils'
 import './index.scss'
 
 const formatOrderAmountToInputValue = (value?: string, decimals?: number): string => (
-    new BigNumber(value ?? '')
+    new BigNumber(value ?? 0)
         .shiftedBy(-(decimals ?? 0))
         .toFixed()
 )
