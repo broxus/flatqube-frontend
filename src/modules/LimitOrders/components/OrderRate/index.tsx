@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl'
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { SwapDirection } from '@/modules/Swap/types'
-import { formattedAmount } from '@/utils'
+import { formattedTokenAmount } from '@/utils'
 import { Token } from '@/misc'
 import { calcRate } from '@/modules/LimitOrders/utils'
 import { WalletNativeCoin } from '@/stores/WalletService'
@@ -45,7 +45,7 @@ export function OrderRate({
         : undefined
     const targetDirection = inverse ? SwapDirection.RTL : SwapDirection.LTR
     const direction = (rateDirection === targetDirection)
-    const rate = formattedAmount(calcRate(
+    const rate = formattedTokenAmount(calcRate(
         direction ? leftAmount : rightAmount,
         direction ? leftToken.decimals : rightToken?.decimals,
         direction ? rightAmount : leftAmount,

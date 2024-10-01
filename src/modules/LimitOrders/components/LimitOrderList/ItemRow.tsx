@@ -36,8 +36,6 @@ export const ItemRow = observer(({
         receiveToken,
         formatedSpentAmount,
         formatedReceiveAmount,
-        selectedSpentAmount,
-        selectedReceiveAmount,
     },
     limitOrder,
     limitOrder: {
@@ -75,8 +73,8 @@ export const ItemRow = observer(({
                     inverse
                     leftToken={receiveToken}
                     rightToken={spentToken}
-                    leftAmount={selectedReceiveAmount}
-                    rightAmount={selectedSpentAmount}
+                    leftAmount={expectedReceiveAmount}
+                    rightAmount={initialSpentAmount}
                     rateDirection={calcSwapDirection(
                         p2pOrderList.leftToken?.root === receiveToken?.root,
                         p2pOrderList.rateDirection,
