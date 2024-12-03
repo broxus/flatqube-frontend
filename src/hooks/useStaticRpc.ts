@@ -1,4 +1,4 @@
-import { ProviderRpcClient } from 'everscale-inpage-provider'
+import { ProviderRpcClient, StaticProviderAdapter } from 'everscale-inpage-provider'
 import { EverscaleStandaloneClient } from 'everscale-standalone-client'
 
 import { debug } from '@/utils'
@@ -12,10 +12,11 @@ export function useStaticRpc(): ProviderRpcClient {
             'color: #bae701',
         )
         rpc = new ProviderRpcClient({
-            fallback: () => EverscaleStandaloneClient.create({
-                connection: 'mainnetJrpc',
-            }),
-            forceUseFallback: true,
+            provider: new StaticProviderAdapter(
+                EverscaleStandaloneClient.create({
+                    connection: 'mainnetJrpc',
+                }),
+            ),
         })
     }
     return rpc
