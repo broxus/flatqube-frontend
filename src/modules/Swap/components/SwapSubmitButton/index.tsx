@@ -1,6 +1,9 @@
 import * as React from 'react'
 import { observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
+import { TvmConnectButton } from '@broxus/tvm-connect/lib'
+import Media from 'react-media'
+import { useConfig } from '@broxus/react-uikit'
 
 import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
@@ -10,7 +13,40 @@ import { SwapDirection } from '@/modules/Swap/types'
 
 function SubmitButton(): JSX.Element {
     const intl = useIntl()
+    const config = useConfig()
     const formStore = useSwapFormStoreContext()
+
+    if (!formStore.wallet.isConnected && !formStore.isPreparing) {
+        return (
+            <Media query={{ minWidth: config.breakpoints.m ?? 960 }}>
+                {match => (
+                    <TvmConnectButton
+                        popupType={match ? undefined : 'drawer'}
+                        trigger={({ connect, disabled }) => (
+                            <Button
+                                aria-disabled={disabled}
+                                block
+                                disabled={disabled}
+                                size="lg"
+                                type="primary"
+                                className="form-submit"
+                                onClick={connect}
+                            >
+                                {intl.formatMessage({
+                                    id: 'EVER_WALLET_CONNECT_BTN_TEXT',
+                                })}
+                            </Button>
+                        )}
+                        standalone={formStore.wallet.service.providers?.length === 1}
+                    >
+                        {intl.formatMessage({
+                            id: 'EVER_WALLET_CONNECT_BTN_TEXT',
+                        })}
+                    </TvmConnectButton>
+                )}
+            </Media>
+        )
+    }
 
     if (
         formStore.isPreparing === undefined
@@ -36,16 +72,6 @@ function SubmitButton(): JSX.Element {
     let buttonText: React.ReactNode = intl.formatMessage({ id: 'SWAP_BTN_TEXT_SUBMIT' })
 
     switch (true) {
-        case formStore.wallet.account === undefined:
-            buttonProps.disabled = formStore.wallet.isConnecting
-            buttonProps.onClick = async () => {
-                await formStore.wallet.connect()
-            }
-            buttonText = intl.formatMessage({
-                id: 'EVER_WALLET_CONNECT_BTN_TEXT',
-            })
-            break
-
         case formStore.leftToken === undefined || formStore.rightToken === undefined:
             buttonProps.disabled = true
             buttonText = intl.formatMessage({

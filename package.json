@@ -24,12 +24,15 @@
     },
     "dependencies": {
         "@broxus/await-semaphore": "^0.1.5",
-        "@broxus/react-uikit": "^0.2.2",
+        "@broxus/js-core": "^0.30.5",
+        "@broxus/js-utils": "^1.3.13",
+        "@broxus/react-uikit": "^0.17.4",
+        "@broxus/tvm-connect": "^2.13.16",
         "bignumber.js": "^9.1.1",
         "buffer": "^6.0.3",
         "classnames": "^2.3.2",
         "everscale-inpage-provider": "^0.4.0",
-        "everscale-standalone-client": "^2.1.16",
+        "everscale-standalone-client": "^2.1.27",
         "highcharts": "^10.3.3",
         "highcharts-react-official": "^3.2.0",
         "lightweight-charts": "^4.0.0",
@@ -114,9 +117,9 @@
         "ts-node": "^10.9.1",
         "typescript": "^4.9.4",
         "uuid": "^9.0.0",
-        "webpack": "^5.76.2",
-        "webpack-cli": "^5.0.1",
-        "webpack-dev-server": "^4.11.1"
+        "webpack": "^5.97.1",
+        "webpack-cli": "^5.1.4",
+        "webpack-dev-server": "^4.15.2"
     },
     "lint-staged": {
         "**/*.{js,jsx,ts,tsx}": "npm run lint:fix",

@@ -1,9 +1,10 @@
 import React from 'react'
+import { IntlProvider } from 'react-intl'
 
 import en from '@/lang/en'
 import ja from '@/lang/ja'
 import ko from '@/lang/ko'
-import { storage } from '@/utils'
+import { noop, storage } from '@/utils'
 
 const messagesList = { en, ja, ko } as const
 
@@ -82,7 +83,15 @@ export function LocalizationProvider({ children }: Props): JSX.Element {
 
     return (
         <LocalizationContext.Provider value={context}>
-            {children}
+            <IntlProvider
+                key="intl"
+                locale={context.locale}
+                defaultLocale="en"
+                messages={context.messages}
+                onError={noop}
+            >
+                {children}
+            </IntlProvider>
         </LocalizationContext.Provider>
     )
 }

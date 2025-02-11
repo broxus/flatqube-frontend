@@ -266,3 +266,67 @@ ul.summary {
         transform: rotate(360deg);
     }
 }
+
+:root {
+    --global-color: #fff;
+    --global-muted-color: rgb(255 255 255 / 64%);
+    --global-xsmall-font-size: 13px;
+    --base-body-color: #fff;
+    --grid-gutter-horizontal: 20px;
+    --grid-gutter-horizontal-l: 20px;
+    --text-meta-color: rgb(255 255 255 / 64%);
+    --text-meta-font-size: 13px;
+    --text-muted-color: rgb(255 255 255 / 64%);
+    --text-xsmall-font-size: 13px;
+}
+
+.tvm-connect-connector {
+}
+
+
+.tvm-connect-modal {
+    --tvm-connect-modal-content-background: rgb(40 42 55 / 98%);
+    --tvm-connect-modal-title-color: #fff;
+
+    [class*=truncate] {
+        padding: 0;
+    }
+
+    img {
+        display: inline-block;
+    }
+
+    .uk-text-center {
+        text-align: center;
+    }
+}
+
+.tvm-connect-drawer {
+    --tvm-connect-drawer-content-background: rgb(40 42 55 / 98%);
+    --tvm-connect-drawer-title-color: #fff;
+    --tvm-connect-modal-content-background: rgb(40 42 55 / 98%);
+
+    [class*=truncate] {
+        padding: 0;
+    }
+
+    img {
+        display: inline-block;
+    }
+
+    .uk-text-center {
+        text-align: center;
+    }
+}
+
+.tvm-connect-provider-button {
+    --tvm-connect-provider-button-hover-border: #c5e4f3;
+}
+
+.tvm-connect-dropdown {
+    --tvm-connect-dropdown-background: rgb(40 42 55 / 98%);
+
+    .uk-button-link {
+        text-decoration: none !important;
+    }
+}

@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { Settings } from 'luxon'
-import { IntlProvider } from 'react-intl'
 import {
     Redirect,
     Route,
@@ -8,14 +7,14 @@ import {
     Switch,
 } from 'react-router-dom'
 import { toast, ToastContainer } from 'react-toastify'
-import { Observer } from 'mobx-react-lite'
+import { observer } from 'mobx-react-lite'
+import { TvmWalletServiceProvider } from '@broxus/tvm-connect/lib'
 
 import { ScrollManager } from '@/components/layout/ScrollManager'
 import { Footer } from '@/components/layout/Footer'
-import { WalletConnectingModal } from '@/components/common/WalletConnectingModal'
-import { WalletUpdateModal } from '@/components/common/WalletUpdateModal'
 import { Header } from '@/components/layout/Header'
 import { LocalizationContext } from '@/context/Localization'
+import { useTvmWallet } from '@/hooks'
 import { TokensUpgradesModal } from '@/modules/TokensUpgrades'
 import Swap from '@/pages/swap'
 import Limit from '@/pages/limit'
@@ -45,29 +44,21 @@ import Proposals from '@/pages/governance/proposals'
 import ProposalCreate from '@/pages/governance/proposals/create'
 import Proposal from '@/pages/governance/proposals/item'
 import { appRoutes } from '@/routes'
-import { useWallet } from '@/stores/WalletService'
-import { isMobile, noop } from '@/utils'
-import { P2PGlobalNotify } from '@/modules/LimitOrders/context/P2PGlobalNotifyContext'
+import { isMobile } from '@/utils'
 
 import './App.scss'
 
 
-export function App(): JSX.Element {
-    const wallet = useWallet()
+export const App = observer(() => {
     const localization = React.useContext(LocalizationContext)
+    const wallet = useTvmWallet()
 
     React.useEffect(() => {
         Settings.defaultLocale = localization.locale
     }, [localization.locale])
 
     return (
-        <IntlProvider
-            key="intl"
-            locale={localization.locale}
-            defaultLocale="en"
-            messages={localization.messages}
-            onError={noop}
-        >
+        <TvmWalletServiceProvider wallet={wallet}>
             <Router>
                 <ScrollManager>
                     <div className="wrapper">
@@ -127,18 +118,18 @@ export function App(): JSX.Element {
                                     <Farming />
                                 </Route>
 
-                                <Route exact path={appRoutes.dao.path}>
-                                    <Dao />
-                                </Route>
-                                <Route exact path={appRoutes.daoEpoch.path}>
-                                    <Epoch />
-                                </Route>
-                                <Route exact path={appRoutes.daoBalance.path}>
-                                    <Balance />
-                                </Route>
-                                <Route exact path={appRoutes.daoWhitelisting.path}>
-                                    <CreateCandidate />
-                                </Route>
+                                 <Route exact path={appRoutes.dao.path}>
+                                 <Dao />
+                                 </Route>
+                                 <Route exact path={appRoutes.daoEpoch.path}>
+                                 <Epoch />
+                                 </Route>
+                                 <Route exact path={appRoutes.daoBalance.path}>
+                                 <Balance />
+                                 </Route>
+                                 <Route exact path={appRoutes.daoWhitelisting.path}>
+                                 <CreateCandidate />
+                                 </Route>
 
                                 <Route exact path={appRoutes.gauges.path}>
                                     <Gauges />
@@ -182,21 +173,9 @@ export function App(): JSX.Element {
                         : toast.POSITION.BOTTOM_RIGHT}
                 />
             </Router>
-            <Observer>
-                {() => (
-                    <>
-                        {wallet.isConnecting && (
-                            <WalletConnectingModal />
-                        )}
-                        {wallet.isInitialized && wallet.isOutdated ? (
-                            <WalletUpdateModal />
-                        ) : null}
 
-                        <TokensUpgradesModal />
-                    </>
-                )}
-            </Observer>
-            <P2PGlobalNotify />
-        </IntlProvider>
+            <TokensUpgradesModal />
+            {/* <P2PGlobalNotify /> */}
+        </TvmWalletServiceProvider>
     )
-}
+})

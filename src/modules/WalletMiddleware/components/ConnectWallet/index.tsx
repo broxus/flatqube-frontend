@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
+import { useTvmWalletService, TvmConnectButton } from '@broxus/tvm-connect/lib'
 
 import { Button } from '@/components/common/Button'
-import { useWallet } from '@/stores/WalletService'
 
 type Props = {
     message?: string;
@@ -10,7 +10,7 @@ type Props = {
 
 export function ConnectWallet({ message }: Props): JSX.Element {
     const intl = useIntl()
-    const wallet = useWallet()
+    const walletService = useTvmWalletService()
 
     return (
         <div className="card card--small card--flat wallet-connect-card">
@@ -24,14 +24,22 @@ export function ConnectWallet({ message }: Props): JSX.Element {
                     )}
                 </div>
 
-                <Button
-                    size="md"
-                    type="primary"
-                    onClick={wallet.connect}
-                >
-                    {intl.formatMessage({ id: 'WALLET_CONNECT_BTN_TEXT' })}
-                </Button>
-
+                <TvmConnectButton
+                    trigger={({ connect, disabled }) => (
+                        <Button
+                            aria-disabled={disabled}
+                            disabled={disabled}
+                            size="md"
+                            type="primary"
+                            onClick={connect}
+                        >
+                            {intl.formatMessage({
+                                id: 'WALLET_CONNECT_BTN_TEXT',
+                            })}
+                        </Button>
+                    )}
+                    standalone={walletService.providers.length === 1}
+                />
             </div>
         </div>
     )

@@ -1537,7 +1537,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
             this.isEnoughLiquidity
             && (this.isEnoughTokenBalance || this.isEnoughCoinBalance || this.isEnoughCombinedBalance)
             && this.leftTokenAddress !== undefined
-            && this.leftToken?.wallet !== undefined
+            // && this.leftToken?.wallet !== undefined
             && this.route !== undefined
             && this.route.steps.length > 0
             && this.data.transfer?.abi !== undefined
@@ -1729,7 +1729,7 @@ export class SwapFormStore extends BaseSwapStore<SwapFormStoreData, SwapFormStor
         }
         storage.remove('amounts')
 
-        this.setState('isPreparing', this.wallet.isInitializing || this.wallet.isConnecting)
+        this.setState('isPreparing', false)
 
         this.walletAccountDisposer = reaction(
             () => this.wallet.account?.address,

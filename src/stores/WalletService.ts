@@ -1,31 +1,22 @@
 import BigNumber from 'bignumber.js'
 import {
-    Address,
     AssetType,
     Contract,
     ContractState,
     FullContractState,
     hasEverscaleProvider,
     Permissions,
-    Subscription,
 } from 'everscale-inpage-provider'
-import {
-    action,
-    computed,
-    makeObservable,
-    reaction,
-} from 'mobx'
+import { action, computed, makeObservable } from 'mobx'
+import { TvmWalletService } from '@broxus/tvm-connect/lib'
 
 import { MinWalletVersion } from '@/config'
 import { useRpc } from '@/hooks/useRpc'
 import { useStaticRpc } from '@/hooks/useStaticRpc'
-import {
-    DexAbi,
-    DexConstants, getFullContractState,
-    Token,
-} from '@/misc'
+import { DexAbi, DexConstants, Token } from '@/misc'
 import { BaseStore } from '@/stores/BaseStore'
-import { debug, error, log } from '@/utils'
+import { error, log } from '@/utils'
+import { useTvmWallet } from '@/hooks'
 
 
 export type Account = Permissions['accountInteraction']
@@ -39,11 +30,11 @@ export type WalletData = {
 
 export type WalletState = {
     hasProvider: boolean;
-    isConnecting: boolean;
-    isDisconnecting: boolean;
-    isInitialized: boolean;
-    isInitializing: boolean;
-    isUpdatingContract: boolean;
+    isConnecting?: boolean;
+    isDisconnecting?: boolean;
+    isInitialized?: boolean;
+    isInitializing?: boolean;
+    isUpdatingContract?: boolean;
 }
 
 export type WalletServiceCtorOptions = {
@@ -87,13 +78,13 @@ export async function connect(): Promise<Permissions['accountInteraction'] | und
 
 export class WalletService extends BaseStore<WalletData, WalletState> {
 
+    private _service: TvmWalletService = useTvmWallet()
+
     constructor(
         protected readonly nativeCoin?: WalletNativeCoin,
         protected readonly options?: WalletServiceCtorOptions,
     ) {
         super()
-
-        this.contractSubscriber = undefined
 
         this.setData(() => DEFAULT_WALLET_DATA)
         this.setState(() => ({
@@ -118,31 +109,9 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
             isOutdated: computed,
             isReady: computed,
             isUpdatingContract: computed,
+            service: computed,
             walletContractCallbacks: computed,
         })
-
-        reaction(
-            () => this.contract?.balance,
-            balance => {
-                this.setData('balance', balance || '0')
-            },
-            { fireImmediately: true },
-        )
-
-        reaction(
-            () => this.account,
-            (account, prevAccount) => {
-                if (prevAccount?.address?.toString() === account?.address?.toString()) {
-                    this.setState('isConnecting', false)
-                    return
-                }
-
-                this.onAccountChange(account).then(() => {
-                    this.setState('isConnecting', false)
-                })
-            },
-            { fireImmediately: true },
-        )
 
         this.init().catch(reason => {
             error('Wallet init error', reason)
@@ -150,40 +119,16 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
         })
     }
 
+    public get service(): TvmWalletService {
+        return this._service
+    }
+
     /**
      * Manually connect to the wallet
      * @returns {Promise<void>}
      */
     public async connect(): Promise<void> {
-        if (this.isConnecting) {
-            return
-        }
-
-        this.setState('isConnecting', true)
-
-        try {
-            const hasProvider = await hasEverscaleProvider()
-            this.setState('hasProvider', hasProvider)
-        }
-        catch (e) {
-            this.setState('hasProvider', false)
-            return
-        }
-
-        if (!this.hasProvider) {
-            return
-        }
-
-        try {
-            const account = await connect()
-            this.setData('account', account)
-        }
-        catch (e) {
-            error('Wallet connect error', e)
-        }
-        finally {
-            this.setState('isConnecting', false)
-        }
+        await this._service.connect()
     }
 
     /**
@@ -191,22 +136,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {Promise<void>}
      */
     public async disconnect(): Promise<void> {
-        if (this.isConnecting) {
-            return
-        }
-
-        this.setState('isDisconnecting', true)
-
-        try {
-            await rpc.disconnect()
-            this.reset()
-        }
-        catch (e) {
-            error('Wallet disconnect error', e)
-        }
-        finally {
-            this.setState('isDisconnecting', false)
-        }
+        await this._service.disconnect()
     }
 
     /**
@@ -215,17 +145,8 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @param {AssetType} [type]
      */
     public async addAsset(root: string, type: AssetType = 'tip3_token'): Promise<{ newAsset: boolean } | undefined> {
-        if (this.account?.address === undefined) {
-            return undefined
-        }
-
-        return rpc.addAsset({
-            account: this.account.address,
-            params: {
-                rootContract: new Address(root),
-            },
-            type,
-        })
+        const result = await this._service.addAsset(root, type) ?? false
+        return { newAsset: result }
     }
 
     /**
@@ -233,7 +154,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {string | undefined}
      */
     public get address(): string | undefined {
-        return this.account?.address.toString()
+        return this._service.address?.toString()
     }
 
     /**
@@ -241,7 +162,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {string | undefined}
      */
     public get balance(): WalletData['balance'] {
-        return this.data.balance
+        return this._service.balance
     }
 
     /**
@@ -249,7 +170,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {BigNumber}
      */
     public get balanceNumber(): BigNumber {
-        return new BigNumber(this.balance || 0).shiftedBy(-this.coin.decimals)
+        return BigNumber(this.balance || 0).shiftedBy(-this._service.currency.decimals)
     }
 
     /**
@@ -258,7 +179,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {boolean}
      */
     public get hasProvider(): WalletState['hasProvider'] {
-        return this.state.hasProvider
+        return this._service.hasProvider
     }
 
     /**
@@ -274,7 +195,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {boolean}
      */
     public get isConnecting(): WalletState['isConnecting'] {
-        return this.state.isConnecting
+        return this._service.isConnecting
     }
 
     /**
@@ -282,7 +203,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {boolean}
      */
     public get isInitialized(): WalletState['isInitialized'] {
-        return this.state.isInitialized
+        return this._service.isInitialized
     }
 
     /**
@@ -290,36 +211,14 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {boolean}
      */
     public get isInitializing(): WalletState['isInitializing'] {
-        return this.state.isInitializing
+        return this._service.isInitializing
     }
 
     /**
      * Returns `true` if installed wallet has outdated version
      */
     public get isOutdated(): boolean {
-        if (this.data.version === undefined || this.options?.minWalletVersion === undefined) {
-            return false
-        }
-
-        const [
-            currentMajorVersion = '0',
-            currentMinorVersion = '0',
-            currentPatchVersion = '0',
-        ] = this.data.version.split('.')
-        const [
-            minMajorVersion,
-            minMinorVersion,
-            minPatchVersion,
-        ] = this.options.minWalletVersion.split('.')
-        return (
-            currentMajorVersion < minMajorVersion
-            || (currentMajorVersion <= minMajorVersion && currentMinorVersion < minMinorVersion)
-            || (
-                currentMajorVersion <= minMajorVersion
-                && currentMinorVersion <= minMinorVersion
-                && currentPatchVersion < minPatchVersion
-            )
-        )
+        return this._service.isOutdated
     }
 
     /**
@@ -327,12 +226,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {boolean}
      */
     public get isReady(): boolean {
-        return (
-            !this.isInitializing
-            && !this.isConnecting
-            && this.isInitialized
-            && this.isConnected
-        )
+        return this._service.isReady
     }
 
     /**
@@ -340,7 +234,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {boolean}
      */
     public get isUpdatingContract(): WalletState['isUpdatingContract'] {
-        return this.state.isUpdatingContract
+        return this._service.isSyncing
     }
 
     /**
@@ -348,7 +242,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {WalletData['account']}
      */
     public get account(): WalletData['account'] {
-        return this.data.account
+        return this._service.account
     }
 
     /**
@@ -358,10 +252,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
     public get coin(): WalletNativeCoin {
         return {
             balance: this.balance,
-            decimals: this.nativeCoin?.decimals ?? DexConstants.CoinDecimals,
-            icon: this.nativeCoin?.icon || DexConstants.CoinLogoURI,
-            name: this.nativeCoin?.name || DexConstants.CoinSymbol,
-            symbol: this.nativeCoin?.symbol || DexConstants.CoinSymbol,
+            ...this._service.currency,
         }
     }
 
@@ -370,7 +261,7 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @returns {WalletData['contract']}
      */
     public get contract(): WalletData['contract'] {
-        return this.data.contract
+        return this._service.contract
     }
 
     /**
@@ -389,144 +280,8 @@ export class WalletService extends BaseStore<WalletData, WalletState> {
      * @protected
      */
     protected async init(): Promise<void> {
-        this.setState('isInitializing', true)
-
-        try {
-            await rpc.ensureInitialized()
-        }
-        catch (e) {
-            this.setState({
-                hasProvider: false,
-                isInitialized: false,
-                isInitializing: false,
-            })
-            return
-        }
-
-        let hasProvider = false
-
-        try {
-            hasProvider = await hasEverscaleProvider()
-        }
-        catch (e) {}
-
-        if (!hasProvider) {
-            this.setState({
-                hasProvider: false,
-                isInitializing: false,
-            })
-            return
-        }
-
-        this.setState({
-            hasProvider,
-        })
-
-        const currentProviderState = await rpc.getProviderState()
-
-        if (currentProviderState.permissions.accountInteraction === undefined) {
-            this.setState({
-                isInitialized: true,
-                isInitializing: false,
-            })
-            return
-        }
-
-        const account = await connect()
-
-        this.setData({
-            account,
-            version: currentProviderState.version,
-        })
-
-        this.setState({
-            isInitialized: true,
-            isInitializing: false,
-        })
-
-        const permissionsSubscriber = await staticRpc.subscribe('permissionsChanged')
-        permissionsSubscriber.on('data', event => {
-            this.setData('account', event.permissions.accountInteraction)
-        })
+        await this._service.init()
     }
-
-    /**
-     * Internal callback to subscribe for contract and transactions updates.
-     *
-     * Run it when account was changed or disconnected.
-     * @param {Account} [account]
-     * @returns {Promise<void>}
-     * @protected
-     */
-    protected async onAccountChange(account?: Account): Promise<void> {
-        if (this.contractSubscriber !== undefined) {
-            if (account !== undefined) {
-                try {
-                    await this.contractSubscriber.unsubscribe()
-                }
-                catch (e) {
-                    error('Wallet contract unsubscribe error', e)
-                }
-            }
-            this.contractSubscriber = undefined
-        }
-
-        if (account === undefined) {
-            return
-        }
-
-        this.setState('isUpdatingContract', true)
-
-        try {
-            const state = await getFullContractState(account.address)
-
-            this.setData('contract', state)
-            this.setState('isUpdatingContract', false)
-        }
-        catch (e) {
-            error('Get account full contract state error', e)
-        }
-        finally {
-            this.setState('isUpdatingContract', false)
-        }
-
-        try {
-            this.contractSubscriber = await staticRpc.subscribe(
-                'contractStateChanged',
-                { address: account.address },
-            )
-
-            this.contractSubscriber.on('data', event => {
-                debug(
-                    '%cRPC%c The wallet\'s `contractStateChanged` event was captured',
-                    'font-weight: bold; background: #4a5772; color: #fff; border-radius: 2px; padding: 3px 6.5px',
-                    'color: #c5e4f3',
-                    event,
-                )
-
-                this.setData('contract', event.state)
-            })
-        }
-        catch (e) {
-            error('Contract subscribe error', e)
-            this.contractSubscriber = undefined
-        }
-    }
-
-    /**
-     * Reset wallet data to defaults
-     * @protected
-     */
-    protected reset(): void {
-        this.setData(() => DEFAULT_WALLET_DATA)
-    }
-
-    /**
-     * Internal instance of the Ton Subscription for Contract updates
-     * @type {Subscription<'contractStateChanged'> | undefined}
-     * @protected
-     */
-    protected contractSubscriber: Subscription<'contractStateChanged'> | undefined
 
 }
 

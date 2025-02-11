@@ -60,7 +60,7 @@ export default (_: any, options: any): WebpackConfig => {
         splitChunks: false,
     } : {
         splitChunks: {
-            chunks: (chunk) => !/^(polyfills|pages|modules)$/.test(chunk.name),
+            chunks: 'all',
             cacheGroups: {
                 vendor: {
                     chunks: 'all',
@@ -124,8 +124,8 @@ export default (_: any, options: any): WebpackConfig => {
                     },
                     {
                         context: 'public',
-                        from: 'meta-image.png',
-                        to: 'assets/meta-image.png'
+                        from: 'assets',
+                        to: 'assets',
                     },
                 ],
             }),
@@ -146,29 +146,53 @@ export default (_: any, options: any): WebpackConfig => {
                 use: isProduction ? 'babel-loader' : 'swc-loader',
             },
             {
-                exclude: /\.module.(s[ac]ss)$/,
-                test: /\.s[ac]ss$/i,
-                use: [
-                    isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
-                    'css-loader',
-                    'sass-loader',
-                ],
-            },
-            {
-                test: /\.module\.s[ac]ss$/,
+                // exclude: /react-uikit/gi,
+                test: /\.s[ac]ss$/,
                 use: [
                     isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
                     {
                         loader: 'css-loader',
                         options: {
+                            esModule: true,
                             modules: {
-                                localIdentName: isProduction
-                                    ? '[hash:base64:15]'
-                                    : '[path][name]__[local]--[hash:base64:5]',
+                                auto: true,
+                                localIdentName: isProduction ? 'css-[hash:base64:8]' : '[path][name]__[local]--[hash:base64:8]',
+                                namedExport: false,
+                            },
+                            url: {
+                                filter: (url: string) => !/^\/assets\//.test(url),
                             },
                         },
                     },
-                    'sass-loader',
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            // additionalData: [
+                            //     '@import \'@/app/styles/resources/variables.scss\';',
+                            //     '@import \'@/app/styles/resources/mixins.scss\';',
+                            // ].join('\n'),
+                            implementation: require.resolve('sass'),
+                            sassOptions: {
+                                quietDeps: true,
+                            },
+                        },
+                    },
+                ],
+            },
+            // Since sass-loader@16.0.0
+            {
+                test: /\.css$/,
+                use: [
+                    isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            esModule: true,
+                            url: {
+                                filter: (url: string) => !/^\/assets\//.test(url),
+                            },
+                        },
+                    },
                 ],
             },
             {

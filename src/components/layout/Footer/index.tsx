@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { Observer } from 'mobx-react-lite'
 import { useIntl } from 'react-intl'
 import { Link, NavLink } from 'react-router-dom'
 
@@ -7,38 +6,14 @@ import { Button } from '@/components/common/Button'
 import { Icon } from '@/components/common/Icon'
 import { Logo } from '@/components/layout/Logo'
 import { appRoutes } from '@/routes'
-import { useWallet } from '@/stores/WalletService'
 
 import './index.scss'
 
 
 export function Footer(): JSX.Element {
     const intl = useIntl()
-    const wallet = useWallet()
-
     const toolbar = (
         <div className="toolbar">
-            <Observer>
-                {() => (
-                    // eslint-disable-next-line react/jsx-no-useless-fragment
-                    <>
-                        {(!wallet.isInitialized && !wallet.isInitializing) && (
-                            <Button
-                                href="https://l1.broxus.com/everscale/wallet"
-                                className="footer-tool"
-                                rel="noopener noreferrer"
-                                size="md"
-                                target="_blank"
-                                type="secondary"
-                            >
-                                {intl.formatMessage({
-                                    id: 'WALLET_INSTALLATION_LINK_TEXT',
-                                })}
-                            </Button>
-                        )}
-                    </>
-                )}
-            </Observer>
             <Button
                 className="footer-tool"
                 ghost

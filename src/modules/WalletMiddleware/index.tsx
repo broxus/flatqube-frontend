@@ -2,7 +2,6 @@ import * as React from 'react'
 import { observer } from 'mobx-react-lite'
 
 import { ContentLoader } from '@/components/common/ContentLoader'
-import { InstallWallet } from '@/modules/WalletMiddleware/components/InstallWallet'
 import { useWallet } from '@/stores/WalletService'
 import { ConnectWallet } from '@/modules/WalletMiddleware/components/ConnectWallet'
 
@@ -18,9 +17,6 @@ export const WalletMiddleware = observer(({ children, message }: React.PropsWith
     switch (true) {
         case wallet.isInitializing:
             return <ContentLoader key="loader" />
-
-        case !wallet.hasProvider:
-            return <InstallWallet key="installation" />
 
         case !wallet.isReady:
             return <ConnectWallet key="connector" message={message} />

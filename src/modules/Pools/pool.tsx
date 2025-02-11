@@ -7,7 +7,6 @@ import { NotFoundError } from '@/components/common/Error'
 import { SectionTitle } from '@/components/common/SectionTitle'
 import {
     PoolPageHeader,
-    PoolRelatedGauges,
     PoolStats,
     PoolTransactions,
     PoolUserStats,
@@ -72,15 +71,6 @@ export function Pool(): JSX.Element {
                             >
                                 <PoolUserStats />
                             </WalletMiddleware>
-                        </section>
-
-                        <section className="section">
-                            <header className="section__header">
-                                <SectionTitle size="small">
-                                    {intl.formatMessage({ id: 'POOL_GAUGES_LIST_TITLE' })}
-                                </SectionTitle>
-                            </header>
-                            <PoolRelatedGauges />
                         </section>
                     </PoolRelatedGaugesStoreProvider>
 

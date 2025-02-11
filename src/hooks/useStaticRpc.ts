@@ -1,7 +1,8 @@
-import { ProviderRpcClient, StaticProviderAdapter } from 'everscale-inpage-provider'
-import { EverscaleStandaloneClient } from 'everscale-standalone-client'
+import { ProviderRpcClient } from 'everscale-inpage-provider'
+import { StandaloneClientAdapter } from '@broxus/js-core'
 
 import { debug } from '@/utils'
+
 
 let rpc: ProviderRpcClient
 
@@ -12,11 +13,15 @@ export function useStaticRpc(): ProviderRpcClient {
             'color: #bae701',
         )
         rpc = new ProviderRpcClient({
-            provider: new StaticProviderAdapter(
-                EverscaleStandaloneClient.create({
-                    connection: 'mainnetJrpc',
-                }),
-            ),
+            provider: new StandaloneClientAdapter({
+                connection: {
+                    data: {
+                        endpoint: 'https://jrpc.everwallet.net',
+                    },
+                    id: 42,
+                    type: process.env.NODE_ENV === 'production' ? 'proto' : 'jrpc',
+                },
+            }),
         })
     }
     return rpc

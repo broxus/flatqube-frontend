@@ -1,3 +1,4 @@
+import { DEFAULT_NATIVE_CURRENCY_DECIMALS, TvmChains, TvmNetworkConfig } from '@broxus/js-core'
 import { Address, AddressLiteral } from 'everscale-inpage-provider'
 
 
@@ -80,3 +81,28 @@ export const ScamTokens = [
     new AddressLiteral('0:1b056cffcd9f5dc9e30a8dd13346463f7a914292d6b25571c44ae24648bbfdd6'),
     new AddressLiteral('0:63f338a42ad02ddec8c3b7b12c46dc6cf609e601e96dba2ce0df3ee86843e66f'),
 ]
+
+export const network: TvmNetworkConfig = {
+    chainId: TvmChains.EverscaleMainnet.toString(),
+    currency: {
+        decimals: DEFAULT_NATIVE_CURRENCY_DECIMALS,
+        icon: '/assets/icons/EverWallet.svg',
+        name: 'Everscale',
+        symbol: 'EVER',
+        wrappedCurrencyAddress: WEVERRootAddress,
+    },
+    explorer: {
+        accountsSubPath: 'accounts',
+        baseUrl: 'https://everscan.io',
+        title: 'Everscale Explorer',
+        transactionsSubPath: 'transactions',
+    },
+    icon: '/assets/icons/EVER.svg',
+    id: `tvm-${TvmChains.EverscaleMainnet}`,
+    name: 'Everscale',
+    rpcUrl: 'https://jrpc.everwallet.net/',
+    shortName: 'Everscale',
+    type: 'tvm',
+}
+
+export const networks: TvmNetworkConfig[] = [network]
