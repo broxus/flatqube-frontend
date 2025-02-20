@@ -57,7 +57,6 @@ export type QubeDaoWhitelistFormStoreCtorOptions = {
     callbacks?: QubeDaoWhitelistingCallbacks;
 }
 
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 export class QubeDaoWhitelistingFormStore extends BaseStore<
@@ -181,6 +180,7 @@ export class QubeDaoWhitelistingFormStore extends BaseStore<
                 })
                 .call({ cachedState: this.dao.veContractCachedState })
 
+            const rpc = useRpc()
             const message = await new rpc.Contract(TokenAbi.Wallet, walletAddress)
                 .methods.transfer({
                     amount: this.price,

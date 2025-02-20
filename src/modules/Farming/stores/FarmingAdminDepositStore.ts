@@ -20,8 +20,6 @@ const defaultState: State = Object.freeze({
 })
 
 
-const rpc = useRpc()
-
 
 export class FarmingAdminDepositStore {
 
@@ -74,6 +72,8 @@ export class FarmingAdminDepositStore {
             if (!token) {
                 throw new Error('Token must be exist in token cache store')
             }
+
+            const rpc = useRpc()
 
             const poolWalletAddress = await TokenWallet.walletAddress({
                 root: new Address(token.root),

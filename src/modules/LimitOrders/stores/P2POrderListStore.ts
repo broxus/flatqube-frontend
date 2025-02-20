@@ -51,7 +51,6 @@ import { LimitOrderApi, useP2pApi } from '@/modules/LimitOrders/hooks/useApi'
 import { useRpc, useStaticRpc } from '@/hooks'
 
 const staticRpc = useStaticRpc()
-const rpc = useRpc()
 
 export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POrderListStoreState> {
 
@@ -157,7 +156,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
     }
 
     /**
-     * 
+     *
      */
     public get rateDirection(): P2POrderListStoreState['rateDirection'] {
         return this.state.rateDirection
@@ -521,7 +520,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
     }
 
     /**
-     * Close order 
+     * Close order
      * @param {number} amount
      */
     public async acceptLimitOrder(
@@ -628,6 +627,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
             }
             debug('+++ 1 closeLimitOrder walletOf, payload, currentLimitOrder.accountAddr', remainingGasTo, payload, new Address(this.currentLimitOrder.accountAddr))
             debug('this.currentLimitOrder', this.currentLimitOrder)
+            const rpc = useRpc()
             const message = await new rpc.Contract(TokenAbi.Wallet, remainingGasTo)
                 .methods.transfer({
                     amount,
@@ -727,6 +727,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
                 .delayed(s => s.first())
 
 
+            const rpc = useRpc()
             const message = await new rpc
                 .Contract(OrderAbi.Order, new Address(accountAddr))
                 .methods
@@ -947,7 +948,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
     }
 
     /**
-     * Returns combined `isBusy` state 
+     * Returns combined `isBusy` state
      * @returns {boolean}
      */
     public get isBusy(): boolean {
@@ -957,7 +958,7 @@ export class P2POrderListStore extends P2PBaseStore<P2POrderListStoreData, P2POr
     }
 
     /**
-     * Returns combined `isValidTokens` state 
+     * Returns combined `isValidTokens` state
      * @returns {boolean}
      */
     public get isValidTokens(): P2POrderListStoreState['isValidTokens'] {

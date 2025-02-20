@@ -48,8 +48,6 @@ export type TokensCacheCtorConfig = {
 }
 
 
-const rpc = useRpc()
-
 
 export const IMPORTED_TOKENS_STORAGE_KEY = 'imported_tokens'
 
@@ -459,6 +457,8 @@ export class TokensCacheService extends BaseStore<TokensCacheData, TokensCacheSt
                 }
 
                 const address = new Address(token.wallet)
+
+                const rpc = useRpc()
 
                 const subscription = (await rpc.subscribe('contractStateChanged', {
                     address,

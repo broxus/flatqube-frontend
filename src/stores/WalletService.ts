@@ -61,13 +61,13 @@ const DEFAULT_WALLET_STATE: WalletState = {
 }
 
 const staticRpc = useStaticRpc()
-const rpc = useRpc()
 
 
 export async function connect(): Promise<Permissions['accountInteraction'] | undefined> {
     const hasProvider = await hasEverscaleProvider()
 
     if (hasProvider) {
+        const rpc = useRpc()
         await rpc.ensureInitialized()
         return (await rpc.requestPermissions({
             permissions: ['basic', 'accountInteraction'],

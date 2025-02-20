@@ -25,7 +25,6 @@ import { useWallet, WalletService } from '@/stores/WalletService'
 import { error } from '@/utils'
 
 
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
@@ -242,6 +241,7 @@ export class CreateTokenStore {
                 })
                 .delayed(s => s.first())
 
+            const rpc = useRpc()
             await new rpc.Contract(TokenAbi.Factory, TokenFactoryAddress)
                 .methods.createToken({
                     callId,

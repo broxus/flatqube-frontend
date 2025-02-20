@@ -4,8 +4,6 @@ import { useRpc, useStaticRpc } from '@/hooks'
 import { DexAbi, EverAbi, TokenAbi } from '@/misc/abi'
 import { resolveEverscaleAddress } from '@/utils'
 
-
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
@@ -90,14 +88,14 @@ export function tokenRootContract(
 
 export function tokenWalletContract(
     address: Address | string,
-    provider = rpc,
+    provider = useRpc(),
 ): Contract<typeof TokenAbi.Wallet> {
     return new provider.Contract(TokenAbi.Wallet, resolveEverscaleAddress(address))
 }
 
 export function wrappedCoinVaultContract(
     address: Address | string,
-    provider = rpc,
+    provider = useRpc(),
 ): Contract<typeof EverAbi.WeverVault> {
     return new provider.Contract(EverAbi.WeverVault, resolveEverscaleAddress(address))
 }

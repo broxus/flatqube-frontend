@@ -150,7 +150,6 @@ export type QubeDaoStoreCtorOptions = {
     veIcon?: string;
 }
 
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState> {
@@ -349,6 +348,7 @@ export class QubeDaoStore extends BaseStore<QubeDaoStoreData, QubeDaoStoreState>
                     ?.min_gas ?? '1500000000',
             ])
 
+            const rpc = useRpc()
             const message = await new rpc.Contract(TokenAbi.Wallet, walletAddress)
                 .methods.transfer({
                     amount: params.amount,

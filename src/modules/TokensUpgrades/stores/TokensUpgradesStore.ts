@@ -48,7 +48,6 @@ export type TokensUpgradesStoreState = {
 }
 
 
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
@@ -179,6 +178,7 @@ export class TokensUpgradesStore extends BaseStore<TokensUpgradesStoreData, Toke
         this.state.upgradingTokens.set(token.rootV4, true)
 
         const walletAddress = new Address(token.wallet)
+        const rpc = useRpc()
         const walletContract = new rpc.Contract(MigrationTokenAbi.WalletV4, walletAddress)
 
         try {

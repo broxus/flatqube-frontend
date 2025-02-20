@@ -1,5 +1,5 @@
-import { ProviderRpcClient } from 'everscale-inpage-provider'
 import { StandaloneClientAdapter } from '@broxus/js-core'
+import { ProviderRpcClient } from 'everscale-inpage-provider'
 
 import { debug } from '@/utils'
 

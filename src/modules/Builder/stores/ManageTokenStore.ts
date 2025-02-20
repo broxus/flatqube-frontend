@@ -18,9 +18,6 @@ import { useWallet, WalletService } from '@/stores/WalletService'
 import { error } from '@/utils'
 
 
-const rpc = useRpc()
-
-
 export class ManageTokenStore {
 
     protected data: ManageTokenStoreData = DEFAULT_MANAGE_TOKEN_STORE_DATA
@@ -84,6 +81,7 @@ export class ManageTokenStore {
         this.changeState('isMinting', true)
 
         try {
+            const rpc = useRpc()
             await new rpc.Contract(TokenAbi.Root, new Address(this.state.tokenRoot)).methods.mint({
                 deployWalletValue: '100000000',
                 recipient: new Address(this.data.targetAddress),
@@ -139,6 +137,7 @@ export class ManageTokenStore {
 
         this.changeState('isBurning', true)
 
+        const rpc = useRpc()
         const result = await rpc.packIntoCell({
             structure: [
                 { name: 'data', type: 'bytes' } as const,
@@ -201,6 +200,7 @@ export class ManageTokenStore {
         this.changeState('isTransfer', true)
 
         try {
+            const rpc = useRpc()
             await new rpc.Contract(TokenAbi.Root, new Address(this.state.tokenRoot)).methods.transferOwnership({
                 newOwner: new Address(this.data.newOwnerAddress),
                 remainingGasTo: new Address(this.wallet.address),

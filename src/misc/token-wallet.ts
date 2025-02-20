@@ -50,7 +50,6 @@ function params<T>(o?: T): Partial<T> | (<TOptional>(o: TOptional) => Partial<TO
 }
 
 
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
@@ -269,6 +268,7 @@ export class TokenWallet {
             })
         }
 
+        const rpc = useRpc()
         const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, address)
 
         const { id } = await tokenWalletContract.methods.transferToWallet({
@@ -307,6 +307,7 @@ export class TokenWallet {
             })
         }
 
+        const rpc = useRpc()
         const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, address)
 
         return tokenWalletContract.methods.transfer({
@@ -343,6 +344,7 @@ export class TokenWallet {
             })
         }
 
+        const rpc = useRpc()
         const tokenWalletContract = new rpc.Contract(TokenAbi.Wallet, address)
 
         return tokenWalletContract.methods.transferToWallet({

@@ -55,7 +55,6 @@ export type StablePairExpectedDepositLiquidity = {
 }
 
 
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 /**
@@ -261,6 +260,7 @@ export class Dex {
     }
 
     public static async createAccount(owner: Address): Promise<TransactionId> {
+        const rpc = useRpc()
         const rootContract = new rpc.Contract(DexAbi.Root, DexRootAddress)
         const { id } = await rootContract.methods.deployAccount({
             account_owner: owner,
@@ -278,6 +278,7 @@ export class Dex {
         right: Address,
         creator: Address,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const rootContract = new rpc.Contract(DexAbi.Root, DexRootAddress)
         return (await rootContract.methods.deployPair({
             left_root: left,
@@ -296,6 +297,7 @@ export class Dex {
         right: Address,
         creator: Address,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const accountContract = new rpc.Contract(DexAbi.Account, account)
         return (await accountContract.methods.addPair({
             left_root: left,
@@ -314,6 +316,7 @@ export class Dex {
         amount: string,
         callId: string,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { id } = await accountContract.methods.withdraw({
             amount,
@@ -340,6 +343,7 @@ export class Dex {
         amount: string,
         callId: string,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { id } = await accountContract.methods.withdrawLiquidity({
             call_id: callId,
@@ -421,6 +425,7 @@ export class Dex {
         autoChange: boolean,
         callId: string,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const accountContract = new rpc.Contract(DexAbi.Account, account)
         const { id } = await accountContract.methods.depositLiquidity({
             auto_change: autoChange,

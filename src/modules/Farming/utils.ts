@@ -11,9 +11,6 @@ import {
 import { error } from '@/utils'
 
 
-const rpc = useRpc()
-
-
 export function parseDate(value: string | undefined): Date | undefined {
     if (!value) {
         return undefined
@@ -29,6 +26,7 @@ export async function resolveToken(
     address: string | undefined,
 ): Promise<{symbol: string, decimals: number} | undefined> {
     try {
+        const rpc = useRpc()
         const rootAddress = new Address(address || '')
         const { state } = await rpc.getFullContractState({ address: rootAddress })
 
@@ -52,6 +50,7 @@ export async function executeAction(
     action: () => Promise<any>,
     handler: 'Claim' | 'Withdraw' | 'Deposit',
 ): Promise<string> {
+    const rpc = useRpc()
     const poolContract = new rpc.Contract(FarmAbi.Pool, new Address(poolAddress))
     let resolve: () => void | undefined
     const promise = new Promise<void>(r => {

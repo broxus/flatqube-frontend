@@ -15,7 +15,6 @@ export type UserPendingReward = DecodedAbiFunctionOutputs<typeof FarmAbi.User, '
 export type PoolCalculateRewardData = DecodedAbiFunctionOutputs<typeof FarmAbi.Pool, 'calculateRewardData'>;
 
 
-const rpc = useRpc()
 const staticRpc = useStaticRpc()
 
 
@@ -30,6 +29,7 @@ export class Farm {
         vestingPeriod: string, // int seconds, 86400 - day, 180 * 86400 - half of the year
         vestingRatio: string, // int percent, 1000 - 100%, 0 - 0%, 505 - 50.5 %
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const fabricContract = new rpc.Contract(FarmAbi.Fabric, FarmFabricAddress)
         const { id } = await fabricContract.methods.deployFarmPool({
             tokenRoot,
@@ -74,6 +74,7 @@ export class Farm {
         poolAddress: Address,
         owner: Address,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const poolContract = new rpc.Contract(FarmAbi.Pool, poolAddress)
         const { id } = await poolContract.methods.claimReward({
             nonce: 0,
@@ -91,6 +92,7 @@ export class Farm {
         poolAddress: Address,
         owner: Address,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const poolContract = new rpc.Contract(FarmAbi.Pool, poolAddress)
         const { id } = await poolContract.methods.withdraw({
             amount,
@@ -108,6 +110,7 @@ export class Farm {
         poolAddress: Address,
         owner: Address,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const poolContract = new rpc.Contract(FarmAbi.Pool, poolAddress)
         const { id } = await poolContract.methods.withdrawAll({
             nonce: 0,
@@ -124,6 +127,7 @@ export class Farm {
         poolAddress: Address,
         owner: Address,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const poolContract = new rpc.Contract(FarmAbi.Pool, poolAddress)
         const { id } = await poolContract.methods.withdrawUnclaimed({
             nonce: 0,
@@ -141,6 +145,7 @@ export class Farm {
         poolAddress: Address,
         owner: Address,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const poolContract = new rpc.Contract(FarmAbi.Pool, poolAddress)
         const { id } = await poolContract.methods.withdrawUnclaimedAll({
             nonce: 0,
@@ -160,6 +165,7 @@ export class Farm {
         startTime: string,
         rewardPerSecond: string[],
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const poolContract = new rpc.Contract(FarmAbi.Pool, poolAddress)
         const { id } = await poolContract.methods.addRewardRound({
             reward_round: {
@@ -180,6 +186,7 @@ export class Farm {
         owner: Address,
         endTime: string,
     ): Promise<TransactionId> {
+        const rpc = useRpc()
         const poolContract = new rpc.Contract(FarmAbi.Pool, poolAddress)
         const { id } = await poolContract.methods.setEndTime({
             farm_end_time: endTime,

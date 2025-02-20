@@ -42,7 +42,6 @@ import { useCurrenciesApi } from '@/modules/Currencies/hooks/useApi'
 import { P2PBaseStore } from '@/modules/LimitOrders/stores/P2PBaseStore'
 
 const staticRpc = useStaticRpc()
-const rpc = useRpc()
 
 const roundAmount = (val: string | number, decimals?: number): string => new BigNumber(val)
     .dp(decimals ?? 0).toFixed()
@@ -288,28 +287,28 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
     }
 
     /**
-     * 
+     *
      */
     public get ltrMarketPrice(): string | undefined {
         return this.data.currencyPrices?.ltrMarketPrice
     }
 
     /**
-     * 
+     *
      */
     public get rtlMarketPrice(): string | undefined {
         return this.data.currencyPrices?.rtlMarketPrice
     }
 
     /**
-     * 
+     *
      */
     public get rateDirection(): P2PFormStoreState['rateDirection'] {
         return this.state.rateDirection
     }
 
     /**
-     * 
+     *
      */
     public get priceLock(): P2PFormStoreState['priceLock'] {
         return this.state.priceLock
@@ -605,6 +604,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
             debug('+++ 4 makeLimitOrder payload, walletOf', payload, remainingGasTo, this.rightToken.root)
 
 
+            const rpc = useRpc()
             const message = await new rpc.Contract(TokenAbi.Wallet, remainingGasTo)
                 .methods.transfer({
                     amount: sellAmountBN.toFixed(),
@@ -733,6 +733,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
                 .delayed(s => s.first())
 
 
+            const rpc = useRpc()
             const message = await new rpc.Contract(OrderAbi.Factory, LimitOrderFactoryRoot)
                 .methods.createOrderRoot({
                     callbackId: callId,
@@ -927,7 +928,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
     }
 
     /**
-     * Returns combined `isBusy` state 
+     * Returns combined `isBusy` state
      * @returns {boolean}
      */
     public get isBusy(): boolean {
@@ -939,7 +940,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
     }
 
     /**
-     * Returns combined `isValidTokens` state 
+     * Returns combined `isValidTokens` state
      * @returns {boolean}
      */
     public get isValidTokens(): boolean {
@@ -947,7 +948,7 @@ export class P2PFormStore extends P2PBaseStore<P2PFormStoreData, P2PFormStoreSta
     }
 
     /**
-     * Returns combined `isValidTokens` state 
+     * Returns combined `isValidTokens` state
      * @returns {boolean}
      */
     public get isShowChartModal(): boolean {
