@@ -86,8 +86,8 @@ export const network: TvmNetworkConfig = {
     chainId: TvmChains.EverscaleMainnet.toString(),
     currency: {
         decimals: DEFAULT_NATIVE_CURRENCY_DECIMALS,
-        icon: '/assets/icons/EverWallet.svg',
-        name: 'Everscale',
+        icon: '/assets/icons/EVER.svg',
+        name: 'EVER',
         symbol: 'EVER',
         wrappedCurrencyAddress: WEVERRootAddress,
     },
